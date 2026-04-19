@@ -1,10 +1,11 @@
 {
   "manifest_version": 3,
   "name": "Search Optimizer",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Clean up your Google search results by hiding unwanted modules and specific sites.",
   "permissions": [
-    "storage"
+    "storage",
+    "tabs"
   ],
   "host_permissions": [
     "*://*.google.com/*",
