@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "SiteBlocker",
+  "version": "1.0",
+  "description": "Hides search results for specific domains on Google, Bing, and DuckDuckGo.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "*://*.google.com/*",
+    "*://*.google.de/*",
+    "*://*.google.at/*",
+    "*://*.google.ch/*",
+    "*://*.google.co.uk/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SiteBlocker Settings"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.google.com/*",
+        "*://*.google.de/*",
+        "*://*.google.at/*",
+        "*://*.google.ch/*",
+        "*://*.google.co.uk/*"
+      ],
+      "js": ["content_scripts/link_filter.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

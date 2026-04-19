@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SiteBlocker Filter</title>
+  <link rel="stylesheet" href="popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Search Filter</h1>
+      <p>Clean up your search results</p>
+    </header>
+
+    <div class="modules-section">
+      <h3>Hide Google Modules</h3>
+      <div class="module-toggles">
+        <label><input type="checkbox" id="mod-sponsored"> Sponsored Posts</label>
+        <label><input type="checkbox" id="mod-latest"> Latest posts from...</label>
+        <label><input type="checkbox" id="mod-products"> Products (Shopping)</label>
+        <label><input type="checkbox" id="mod-videos"> Videos</label>
+        <label><input type="checkbox" id="mod-ask"> People also ask</label>
+        <label><input type="checkbox" id="mod-search"> People also search for</label>
+      </div>
+    </div>
+
+    <div class="add-section">
+      <h3>Hide Specific Domains</h3>
+      <input type="text" id="site-input" placeholder="e.g. pinterest.com">
+      <button id="add-btn">Add Filter</button>
+    </div>
+
+    <div class="list-section">
+      <h3>Active Domain Filters</h3>
+      <ul id="site-list"></ul>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>
