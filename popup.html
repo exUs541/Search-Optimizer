@@ -14,11 +14,15 @@
     </header>
 
     <div class="modules-section">
-      <h3>Hide Google Modules</h3>
-      <div class="module-toggles">
+      <h3 class="collapse-toggle" id="modules-toggle">
+        Hide Google Modules
+        <span class="toggle-arrow" id="modules-arrow">&#9654;</span>
+      </h3>
+      <div class="module-toggles" id="modules-content" style="display:none">
         <label><input type="checkbox" id="mod-sponsored"> Sponsored Posts</label>
         <label><input type="checkbox" id="mod-latest"> Latest posts from...</label>
         <label><input type="checkbox" id="mod-products"> Products (Shopping)</label>
+        <label><input type="checkbox" id="mod-images"> Images</label>
         <label><input type="checkbox" id="mod-videos"> Videos</label>
         <label><input type="checkbox" id="mod-ask"> People also ask</label>
         <label><input type="checkbox" id="mod-search"> People also search for</label>

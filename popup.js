@@ -7,9 +7,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const modSponsored = document.getElementById('mod-sponsored');
   const modLatest = document.getElementById('mod-latest');
   const modProducts = document.getElementById('mod-products');
+  const modImages = document.getElementById('mod-images');
   const modVideos = document.getElementById('mod-videos');
   const modAsk = document.getElementById('mod-ask');
   const modSearch = document.getElementById('mod-search');
+
+  // Collapse toggle
+  const modulesToggle = document.getElementById('modules-toggle');
+  const modulesContent = document.getElementById('modules-content');
+  const modulesArrow = document.getElementById('modules-arrow');
+  modulesToggle.addEventListener('click', () => {
+    const isOpen = modulesContent.style.display !== 'none';
+    modulesContent.style.display = isOpen ? 'none' : 'flex';
+    modulesArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
+  });
 
   const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules']);
   let searchFilters = storeData.searchFilters || [];
@@ -18,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     sponsored: false,
     latest: false,
     products: false,
+    images: false,
     videos: false,
     ask: false,
     search: false
@@ -26,9 +38,17 @@ document.addEventListener('DOMContentLoaded', async () => {
   modSponsored.checked = googleModules.sponsored;
   modLatest.checked = googleModules.latest;
   modProducts.checked = googleModules.products;
+  modImages.checked = googleModules.images;
   modVideos.checked = googleModules.videos;
   modAsk.checked = googleModules.ask;
   modSearch.checked = googleModules.search;
+
+  // Show section open if any module is active
+  const anyActive = Object.values(googleModules).some(v => v === true);
+  if (anyActive) {
+    modulesContent.style.display = 'flex';
+    modulesArrow.style.transform = 'rotate(90deg)';
+  }
 
   async function triggerLiveUpdate() {
       const tabs = await chrome.tabs.query({url: ["*://*.google.com/*", "*://*.google.de/*", "*://*.google.co.uk/*", "*://*.google.at/*", "*://*.google.ch/*"]});
@@ -45,6 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         sponsored: modSponsored.checked,
         latest: modLatest.checked,
         products: modProducts.checked,
+        images: modImages.checked,
         videos: modVideos.checked,
         ask: modAsk.checked,
         search: modSearch.checked
@@ -54,7 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  [modSponsored, modLatest, modProducts, modVideos, modAsk, modSearch].forEach(chk => {
+  [modSponsored, modLatest, modProducts, modImages, modVideos, modAsk, modSearch].forEach(chk => {
     chk.addEventListener('change', saveModules);
   });
 

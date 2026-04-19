@@ -127,6 +127,9 @@
           }
       }
 
+      if (googleModules.images) {
+          killModuleByHeader(['images', 'bilder']);
+      }
       if (googleModules.latest) {
           killModuleByHeader([/^latest posts from/, /^neueste beiträge/, /^what people are saying/, /^trending posts/]);
       }
