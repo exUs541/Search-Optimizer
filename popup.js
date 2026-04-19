@@ -63,30 +63,96 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderSites() {
     siteList.innerHTML = '';
     searchFilters.forEach((rule, index) => {
+      const domain = rule.domain || rule;
       const li = document.createElement('li');
-      
-      const content = document.createElement('div');
-      content.className = 'li-content';
-      
+
+      // --- View Mode ---
+      const viewMode = document.createElement('div');
+      viewMode.className = 'li-view';
+
       const domainSpan = document.createElement('span');
       domainSpan.className = 'li-domain';
-      domainSpan.textContent = rule.domain || rule; // Fallback for old data structures if any
-      
-      content.appendChild(domainSpan);
-      
+      domainSpan.textContent = domain;
+
+      const editBtn = document.createElement('button');
+      editBtn.textContent = '✎';
+      editBtn.className = 'edit-btn';
+      editBtn.title = 'Edit';
+
       const delBtn = document.createElement('button');
       delBtn.textContent = '×';
       delBtn.className = 'delete-btn';
       delBtn.title = 'Remove';
+
+      viewMode.appendChild(domainSpan);
+      viewMode.appendChild(editBtn);
+      viewMode.appendChild(delBtn);
+
+      // --- Edit Mode ---
+      const editMode = document.createElement('div');
+      editMode.className = 'li-edit';
+      editMode.style.display = 'none';
+
+      const editInput = document.createElement('input');
+      editInput.type = 'text';
+      editInput.value = domain;
+      editInput.className = 'edit-input';
+
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = '✓';
+      saveBtn.className = 'save-btn';
+      saveBtn.title = 'Save';
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.textContent = '✕';
+      cancelBtn.className = 'cancel-btn';
+      cancelBtn.title = 'Cancel';
+
+      editMode.appendChild(editInput);
+      editMode.appendChild(saveBtn);
+      editMode.appendChild(cancelBtn);
+
+      // Toggle to edit mode
+      editBtn.onclick = () => {
+        viewMode.style.display = 'none';
+        editMode.style.display = 'flex';
+        editInput.focus();
+        editInput.select();
+      };
+
+      // Cancel edit
+      cancelBtn.onclick = () => {
+        editMode.style.display = 'none';
+        viewMode.style.display = 'flex';
+      };
+
+      // Save edit
+      const saveEdit = async () => {
+        let newDomain = editInput.value.trim().toLowerCase();
+        newDomain = newDomain.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0];
+        if (newDomain && newDomain !== domain) {
+          searchFilters[index] = { domain: newDomain };
+          await chrome.storage.local.set({ searchFilters });
+          triggerLiveUpdate();
+          renderSites();
+        } else {
+          cancelBtn.onclick();
+        }
+      };
+      saveBtn.onclick = saveEdit;
+      editInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') saveEdit(); });
+      editInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelBtn.onclick(); });
+
+      // Delete
       delBtn.onclick = async () => {
         searchFilters.splice(index, 1);
         await chrome.storage.local.set({ searchFilters });
         renderSites();
         triggerLiveUpdate();
       };
-      
-      li.appendChild(content);
-      li.appendChild(delBtn);
+
+      li.appendChild(viewMode);
+      li.appendChild(editMode);
       siteList.appendChild(li);
     });
   }
