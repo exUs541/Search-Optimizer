@@ -45,11 +45,13 @@
   let searchFilters = [];
   let googleModules = {};
   let activeDomains = [];
+  let infiniteScrollEnabled = true;
 
   async function loadConfig() {
-    const data = await chrome.storage.local.get(['searchFilters', 'googleModules']);
+    const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll']);
     searchFilters = data.searchFilters || [];
     googleModules = data.googleModules || {};
+    infiniteScrollEnabled = data.infiniteScroll !== false; // default true
     activeDomains = searchFilters.map(rule => rule.domain || rule);
   }
 
@@ -209,17 +211,48 @@
 
   // ─── Infinite Scroll ───────────────────────────────────────────────────────
   function getNextPageUrl() {
-    // Try multiple selectors Google uses for the Next button
-    const nextLink = document.querySelector('#pnnext, a[aria-label="Next"], td.b a[href*="start="], .d6cvqb a[href*="start="]');
+    const nextLink = document.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"]');
     return nextLink ? nextLink.href : null;
   }
 
   function setupInfiniteScroll() {
     const rso = document.getElementById('rso');
     const botstuff = document.getElementById('botstuff');
-    if (!rso || !botstuff) return;
+    if (!rso) return;
 
-    // Insert loader and end-of-results message after botstuff
+    // ── Mode A: Google has classic pagination with a Next button ──────────────
+    const useClassicPagination = !!getNextPageUrl();
+
+    // ── Mode B: Google already uses its own "More results" / continuous scroll ─
+    // In this case, there may be no #botstuff at all, or no #pnnext.
+    // We simply watch for a "More results" button that Google injects itself.
+    if (!useClassicPagination) {
+      // Google's own continuous scroll — just observe for their trigger button
+      // and click it automatically when it enters the viewport
+      const moreResultsObserver = new MutationObserver(() => {
+        const moreBtn = document.querySelector(
+          '[jsname="UUbT9"] button, .T3kxre button, button[data-async-context*="query"]'
+        );
+        if (moreBtn && !moreBtn.dataset.sbfAuto) {
+          moreBtn.dataset.sbfAuto = '1';
+          // Observe when it enters viewport and auto-click
+          const io = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting) {
+              setTimeout(() => moreBtn.click(), 300);
+              io.disconnect();
+            }
+          }, { rootMargin: '400px' });
+          io.observe(moreBtn);
+        }
+      });
+      moreResultsObserver.observe(document.body, { childList: true, subtree: true });
+      return; // Google handles the fetching, MutationObserver handles our filtering
+    }
+
+    // ── Classic pagination mode: we fetch and inject next pages ourselves ──────
+    if (!botstuff) return;
+
+    // Insert loader and end-of-results message below botstuff
     const loader = document.createElement('div');
     loader.id = 'sbf-loader';
     loader.innerHTML = '<div class="sbf-spinner"></div><span>Loading more results…</span>';
@@ -230,26 +263,27 @@
     endMsg.textContent = '— End of results —';
     loader.after(endMsg);
 
-    let isFetching = false;
-    let nextUrl = getNextPageUrl();
-
-    if (!nextUrl) return; // No pagination found (e.g., already at last page)
-
-    // Hide the original pagination quietly
+    // Hide the original pagination
     botstuff.style.visibility = 'hidden';
     botstuff.style.height = '0';
     botstuff.style.overflow = 'hidden';
 
-    const scrollObserver = new IntersectionObserver(async (entries) => {
-      if (!entries[0].isIntersecting || isFetching || !nextUrl) return;
-      isFetching = true;
+    let isFetching = false;
+    let nextUrl = getNextPageUrl();
+    let pageNumber = 2;
 
+    console.log('[Search Optimizer] Infinite scroll ready. Next URL:', nextUrl);
+
+    async function fetchNextPage() {
+      if (isFetching || !nextUrl) return;
+      isFetching = true;
       loader.classList.add('active');
+      console.log('[Search Optimizer] Fetching page', pageNumber, nextUrl);
 
       try {
         const response = await fetch(nextUrl, {
-          headers: { 'Accept': 'text/html' },
-          credentials: 'include' // send Google session cookies so results match user preferences
+          headers: { 'Accept': 'text/html', 'X-Requested-With': '' },
+          credentials: 'include'
         });
 
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -258,58 +292,62 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
-        // Extract new results
         const newRso = doc.getElementById('rso');
-        if (newRso) {
-          // Add a subtle divider with the page number
-          const pageNum = new URL(nextUrl).searchParams.get('start');
-          const pageLabel = pageNum ? Math.floor(parseInt(pageNum) / 10) + 2 : '…';
+        console.log('[Search Optimizer] Fetched RSO children:', newRso?.children?.length);
 
+        if (newRso && newRso.children.length > 0) {
           const divider = document.createElement('div');
-          divider.style.cssText = 'display:flex;align-items:center;gap:12px;padding:20px 0 10px;color:#9aa0a6;font-family:Google Sans,Roboto,sans-serif;font-size:12px;';
-          divider.innerHTML = `<hr style="flex:1;border:none;border-top:1px solid #3c4043;"><span>Page ${pageLabel}</span><hr style="flex:1;border:none;border-top:1px solid #3c4043;">`;
+          divider.style.cssText = 'display:flex;align-items:center;gap:12px;padding:24px 0 12px;color:#9aa0a6;font-family:Google Sans,Roboto,sans-serif;font-size:12px;';
+          divider.innerHTML = `<hr style="flex:1;border:none;border-top:1px solid #3c4043;"><span>Page ${pageNumber}</span><hr style="flex:1;border:none;border-top:1px solid #3c4043;">`;
           rso.appendChild(divider);
+          pageNumber++;
 
-          // Append new result blocks
           Array.from(newRso.children).forEach(child => {
             rso.appendChild(child.cloneNode(true));
           });
         }
 
-        // Get next page URL from the fetched page
-        const newBotstuff = doc.getElementById('botstuff');
-        const newNextLink = newBotstuff
-          ? newBotstuff.querySelector('#pnnext, a[aria-label="Next"]')
-          : doc.querySelector('#pnnext, a[aria-label="Next"]');
-
+        const newNextLink = doc.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"]');
         nextUrl = newNextLink ? newNextLink.href : null;
+        console.log('[Search Optimizer] Next URL after fetch:', nextUrl);
 
         if (!nextUrl) {
           endMsg.style.display = 'block';
+          window.removeEventListener('scroll', onScroll);
         }
       } catch (err) {
-        console.warn('[Search Optimizer] Infinite scroll fetch failed:', err);
-        // Restore original pagination on error
+        console.error('[Search Optimizer] Fetch failed:', err);
         botstuff.style.visibility = '';
         botstuff.style.height = '';
         botstuff.style.overflow = '';
         nextUrl = null;
+        endMsg.style.display = 'block';
+        window.removeEventListener('scroll', onScroll);
       }
 
       loader.classList.remove('active');
       isFetching = false;
-    }, {
-      rootMargin: '300px' // Trigger 300px before the loader comes into view
-    });
+    }
 
-    scrollObserver.observe(loader);
+    function onScroll() {
+      // Trigger when user is within 600px of the bottom of the page
+      const distanceFromBottom = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
+      if (distanceFromBottom < 600) {
+        fetchNextPage();
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Also try immediately in case the page is already short enough
+    setTimeout(onScroll, 500);
   }
 
-  // Wait for full page load before initialising infinite scroll,
-  // so that the pagination links are definitely in the DOM.
   if (document.readyState === 'complete') {
-    setupInfiniteScroll();
+    if (infiniteScrollEnabled) setupInfiniteScroll();
   } else {
-    window.addEventListener('load', setupInfiniteScroll, { once: true });
+    window.addEventListener('load', () => {
+      if (infiniteScrollEnabled) setupInfiniteScroll();
+    }, { once: true });
   }
 })();

@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const siteInput = document.getElementById('site-input');
   const addBtn = document.getElementById('add-btn');
   const siteList = document.getElementById('site-list');
+  const toggleInfiniteScroll = document.getElementById('toggle-infinite-scroll');
 
   // Google Modules Setup
   const modSponsored = document.getElementById('mod-sponsored');
@@ -22,8 +23,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     modulesArrow.style.transform = isOpen ? 'rotate(0deg)' : 'rotate(90deg)';
   });
 
-  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules']);
+  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll']);
   let searchFilters = storeData.searchFilters || [];
+  const infiniteScrollEnabled = storeData.infiniteScroll !== false; // default: true
+  toggleInfiniteScroll.checked = infiniteScrollEnabled;
   
   const googleModules = storeData.googleModules || {
     sponsored: false,
@@ -74,6 +77,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         triggerLiveUpdate();
     });
   }
+
+  toggleInfiniteScroll.addEventListener('change', () => {
+    chrome.storage.local.set({ infiniteScroll: toggleInfiniteScroll.checked }, triggerLiveUpdate);
+  });
 
   [modSponsored, modLatest, modProducts, modImages, modVideos, modAsk, modSearch].forEach(chk => {
     chk.addEventListener('change', saveModules);

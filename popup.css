@@ -30,7 +30,7 @@ header p {
   color: #94a3b8;
 }
 
-.modules-section, .add-section {
+.modules-section, .add-section, .settings-section {
   margin-bottom: 20px;
   background-color: #1e293b;
   padding: 12px;
@@ -262,4 +262,65 @@ li:hover {
 .delete-btn:hover {
   color: #b91c1c;
   background: #0f172a;
+}
+
+/* Settings row */
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.setting-label span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #f8fafc;
+  display: block;
+}
+
+.setting-label small {
+  font-size: 11px;
+  color: #64748b;
+}
+
+/* iOS-style toggle switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: #334155;
+  border-radius: 22px;
+  transition: 0.2s;
+}
+
+.slider:before {
+  content: "";
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #94a3b8;
+  border-radius: 50%;
+  transition: 0.2s;
+}
+
+.switch input:checked + .slider {
+  background-color: #0ea5e9;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(18px);
+  background-color: white;
 }
