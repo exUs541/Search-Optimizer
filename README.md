@@ -1,4 +1,4 @@
-# Google SiteBlocker Filter
+# Search Optimizer
 
 A modern Google Search cleanup extension.
 

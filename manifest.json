@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "SiteBlocker",
+  "name": "Search Optimizer",
   "version": "1.0",
-  "description": "Hides search results for specific domains on Google, Bing, and DuckDuckGo.",
+  "description": "Clean up your Google search results by hiding unwanted modules and specific sites.",
   "permissions": [
     "storage"
   ],
@@ -15,7 +15,7 @@
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "SiteBlocker Settings"
+    "default_title": "Search Optimizer Settings"
   },
   "content_scripts": [
     {

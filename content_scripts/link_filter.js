@@ -106,8 +106,12 @@
                   
                   while (current && current.parentElement && current.tagName !== 'BODY') {
                       const pid = current.parentElement.id;
-                      if (pid === 'rso' || pid === 'botstuff' || pid === 'tvcap' || pid === 'tads') {
+                      if (pid === 'rso' || pid === 'tvcap' || pid === 'tads') {
                           target = current;
+                          break;
+                      }
+                      if (pid === 'botstuff') {
+                          // Break without setting target, so we don't hide the entire bottom area
                           break;
                       }
                       current = current.parentElement;
@@ -116,7 +120,7 @@
                   if (target) {
                       target.classList.add('sbf-hidden');
                   } else {
-                      const fallback = el.closest('.MjjYud, .hlcw0c, .O9g5cc, block-component, .RyIFgf');
+                      const fallback = el.closest('.MjjYud, .hlcw0c, .O9g5cc, block-component, .RyIFgf, [data-hveid]');
                       if (fallback) fallback.classList.add('sbf-hidden');
                   }
               }
