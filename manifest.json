@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Search Optimizer",
+  "name": "Search Filter & Site Blocker - Clean Search Results",
   "version": "1.1",
-  "description": "Clean up your Google search results by hiding unwanted modules and specific sites.",
+  "description": "Block sites from search results, hide ads, sponsored posts, videos & more. Infinite scroll included. Filter Google search results instantly.",
   "permissions": [
     "storage",
     "tabs"
