@@ -133,9 +133,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Event Handlers
   async function triggerLiveUpdate() {
-    const tabs = await chrome.tabs.query({url: ["*://*.google.com/*", "*://*.google.de/*", "*://*.google.co.uk/*", "*://*.google.at/*", "*://*.google.ch/*"]});
+    const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
+    console.log(`[Search Optimizer] Sending live_update to ${tabs.length} tabs`);
     for (let tab of tabs) {
-      try { await chrome.tabs.sendMessage(tab.id, { action: "live_update" }); } catch (e) {}
+      try { await chrome.tabs.sendMessage(tab.id, { action: "live_update" }); } catch (e) {
+        console.warn(`[Search Optimizer] Failed to message tab ${tab.id}:`, e);
+      }
     }
   }
 
