@@ -4,167 +4,152 @@
   <meta charset="UTF-8">
   <title>Search Optimizer</title>
   <link rel="stylesheet" href="popup.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Search Optimizer</h1>
-      <p>Clean up your search results</p>
+      <div class="header-main">
+        <h1>Search Optimizer</h1>
+        <span class="badge">v1.4.0</span>
+      </div>
+      <p>Master your Google Search experience</p>
     </header>
 
-    <!-- Hide Google Modules -->
-    <div class="modules-section">
-      <h3 class="collapse-toggle" id="modules-toggle">
-        Hide Google Modules
-        <span class="toggle-arrow" id="modules-arrow">&#9654;</span>
-      </h3>
-      <div class="module-toggles" id="modules-content" style="display:none">
-        <button id="mod-select-all" style="width:100%;margin-bottom:8px;padding:5px;font-size:12px;background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;cursor:pointer;">Select All</button>
-        <label><input type="checkbox" id="mod-sponsored"> Sponsored Posts</label>
-        <label><input type="checkbox" id="mod-latest"> Latest posts from...</label>
-        <label><input type="checkbox" id="mod-products"> Products (Shopping)</label>
-        <label><input type="checkbox" id="mod-images"> Images</label>
-        <label><input type="checkbox" id="mod-videos"> Videos</label>
-        <label><input type="checkbox" id="mod-ask"> People also ask</label>
-        <label><input type="checkbox" id="mod-search"> People also search for</label>
-      </div>
+    <div class="tabs-nav">
+      <button class="tab-btn active" data-tab="tab-general">General</button>
+      <button class="tab-btn" data-tab="tab-google">Google UI</button>
+      <button class="tab-btn" data-tab="tab-filters">Filters</button>
     </div>
 
-    <!-- Hide Search Tabs -->
-    <div class="modules-section">
-      <h3 class="collapse-toggle" id="tabs-toggle">
-        Hide Search Tabs
-        <span class="toggle-arrow" id="tabs-arrow">&#9654;</span>
-      </h3>
-      <div class="module-toggles" id="tabs-content" style="display:none">
-        <label><input type="checkbox" id="tab-images"> Images</label>
-        <label><input type="checkbox" id="tab-videos"> Videos</label>
-        <label><input type="checkbox" id="tab-short-videos"> Short videos</label>
-        <label><input type="checkbox" id="tab-products"> Products</label>
-        <label><input type="checkbox" id="tab-product-sites"> Product sites</label>
-        <label><input type="checkbox" id="tab-news"> News</label>
-        <label><input type="checkbox" id="tab-maps"> Maps</label>
-        <label><input type="checkbox" id="tab-books"> Books</label>
-        <label><input type="checkbox" id="tab-shopping"> Shopping</label>
-        <label><input type="checkbox" id="tab-more"> More</label>
-        <label><input type="checkbox" id="tab-tools"> Tools</label>
-      </div>
-    </div>
-
-    <!-- Infinite Scroll -->
-    <div class="settings-section">
-      <div class="setting-row">
-        <div class="setting-label">
-          <span>Infinite Scroll</span>
-          <small>Automatically load more results when scrolling</small>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="toggle-infinite-scroll">
-          <span class="slider"></span>
-        </label>
-      </div>
-    </div>
-
-    <!-- Hide Specific Domains -->
-    <div class="modules-section">
-      <h3 class="collapse-toggle" id="domains-toggle">
-        Hide Specific Domains
-        <span class="toggle-arrow" id="domains-arrow">&#9654;</span>
-      </h3>
-      <div id="domains-content" style="display:none;margin-top:10px;">
-        <input type="text" id="site-input" placeholder="e.g. pinterest.com" style="margin-bottom:8px;">
-        <button id="add-btn">Add Filter</button>
-        <ul id="site-list" style="margin-top:10px;"></ul>
-      </div>
-    </div>
-
-    <!-- Preferred Domains -->
-    <div class="modules-section">
-      <h3 class="collapse-toggle" id="pref-toggle">
-        Preferred Domains <span style="font-size:11px;color:#22c55e;font-weight:400;">★ green</span>
-        <span class="toggle-arrow" id="pref-arrow">&#9654;</span>
-      </h3>
-      <div id="pref-content" style="display:none;margin-top:10px;">
-        <input type="text" id="pref-input" placeholder="e.g. wikipedia.org" style="margin-bottom:8px;">
-        <button id="pref-btn">Add Preferred</button>
-        <ul id="pref-list" style="margin-top:10px;"></ul>
-      </div>
-    </div>
-
-    <!-- Hide by Keyword -->
-    <div class="modules-section">
-      <h3 class="collapse-toggle" id="kw-toggle">
-        Hide by Keyword
-        <span class="toggle-arrow" id="kw-arrow">&#9654;</span>
-      </h3>
-      <div id="kw-content" style="display:none;margin-top:10px;">
-        <input type="text" id="kw-input" placeholder="e.g. buy now, clickbait..." style="margin-bottom:8px;">
-        <button id="kw-btn">Add Keyword</button>
-        <ul id="kw-list" style="margin-top:10px;"></ul>
-      </div>
-    </div>
-
-    <!-- Backup & Restore -->
-    <div class="settings-section">
-      <div class="setting-row">
-        <div class="setting-label">
-          <span>Backup &amp; Restore</span>
-          <small>Export or import all settings as JSON</small>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px;">
-        <button id="export-btn" style="flex:1;font-size:12px;padding:7px;">⬇ Export</button>
-        <label style="flex:1;">
-          <button id="import-label-btn" style="width:100%;font-size:12px;padding:7px;" onclick="document.getElementById('import-file').click()">⬆ Import</button>
-          <input type="file" id="import-file" accept=".json" style="display:none;">
-        </label>
-      </div>
-      <!-- Google Fun Section -->
-      <div class="section">
-        <div class="section-header" id="fun-toggle">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="arrow" id="fun-arrow">▶</span>
-            <span class="section-title">Google Fun & Games</span>
+    <!-- TAB 1: GENERAL -->
+    <div id="tab-general" class="tab-content active">
+      <div class="settings-section">
+        <div class="setting-row">
+          <div class="setting-label">
+            <span>Infinite Scroll</span>
+            <small>Automatically load more results as you scroll</small>
           </div>
-          <span class="badge">New</span>
-        </div>
-        <div class="section-content" id="fun-content" style="display: none;">
-          <label class="toggle-row">
-            <span>Enable Fun Features</span>
-            <div class="toggle-switch">
-              <input type="checkbox" id="google-fun">
-              <span class="slider"></span>
-            </div>
+          <label class="switch">
+            <input type="checkbox" id="infinite-scroll">
+            <span class="slider"></span>
           </label>
-          <div class="info-text">Adds a "Fun" section to the Operators panel for quick access to Google games and easter eggs.</div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span>Advanced Search</span>
+            <small>Show gear icon in Google search bar</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="advanced-search">
+            <span class="slider"></span>
+          </label>
         </div>
       </div>
 
-      <!-- Advanced Search Section -->
-      <div class="section">
-        <div class="section-header" id="adv-toggle">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="arrow" id="adv-arrow">▶</span>
-            <span class="section-title">Advanced Search</span>
+      <div class="section-card">
+        <h3 class="collapse-toggle" id="fun-toggle">
+          Google Fun & Animations
+          <span class="toggle-arrow" id="fun-arrow">&#9654;</span>
+        </h3>
+        <div id="fun-content" style="display:none; margin-top: 10px;">
+          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Click to trigger a Google animation:</p>
+          <div class="fun-grid">
+            <button class="fun-btn" data-q="do a barrel roll">Barrel Roll 🌀</button>
+            <button class="fun-btn" data-q="askew">Askew 📐</button>
+            <button class="fun-btn" data-q="blink html">Blink ✨</button>
+            <button class="fun-btn" data-q="recursion">Recursion 🔄</button>
+            <button class="fun-btn" data-q="pacman">Pac-man 🕹️</button>
+            <button class="fun-btn" data-q="google snake">Snake 🐍</button>
+            <button class="fun-btn" data-q="minecraft">Minecraft ⛏️</button>
+            <button class="fun-btn" data-q="sonic the hedgehog">Sonic 🏃</button>
           </div>
         </div>
-        <div class="section-content" id="adv-content" style="display: none;">
-          <label class="toggle-row">
-            <span>Show Operators Icon</span>
-            <div class="toggle-switch">
-              <input type="checkbox" id="advanced-search">
-              <span class="slider"></span>
-            </div>
-          </label>
-          <div class="info-text">Shows the ⚙ gear icon in the search bar for quick operator access.</div>
+      </div>
+
+      <div class="backup-section">
+        <h4>Backup & Restore</h4>
+        <div class="btn-group">
+          <button id="export-btn" class="action-btn">↓ Export</button>
+          <button id="import-btn" class="action-btn">↑ Import</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: GOOGLE UI -->
+    <div id="tab-google" class="tab-content">
+      <div class="modules-section">
+        <h3 class="collapse-toggle" id="modules-toggle">
+          Hide Google Modules
+          <span class="toggle-arrow" id="modules-arrow">&#9660;</span>
+        </h3>
+        <div class="module-toggles" id="modules-content">
+          <button id="mod-select-all" class="secondary-btn">Select All</button>
+          <label><input type="checkbox" id="mod-sponsored"> Sponsored Posts (Ads)</label>
+          <label><input type="checkbox" id="mod-latest"> Latest posts / Discussions</label>
+          <label><input type="checkbox" id="mod-products"> Products (Shopping)</label>
+          <label><input type="checkbox" id="mod-images"> Image Blocks</label>
+          <label><input type="checkbox" id="mod-videos"> Video Blocks / Reels</label>
+          <label><input type="checkbox" id="mod-ask"> People also ask</label>
+          <label><input type="checkbox" id="mod-search"> Related Searches</label>
         </div>
       </div>
 
-      <div class="footer">
-        Search Optimizer v1.4 • Premium Build
+      <div class="modules-section">
+        <h3 class="collapse-toggle" id="tabs-toggle">
+          Hide Search Tabs
+          <span class="toggle-arrow" id="tabs-arrow">&#9654;</span>
+        </h3>
+        <div class="module-toggles" id="tabs-content" style="display:none">
+          <label><input type="checkbox" id="tab-images"> Images</label>
+          <label><input type="checkbox" id="tab-videos"> Videos</label>
+          <label><input type="checkbox" id="tab-short-videos"> Short videos</label>
+          <label><input type="checkbox" id="tab-products"> Products</label>
+          <label><input type="checkbox" id="tab-product-sites"> Product sites</label>
+          <label><input type="checkbox" id="tab-news"> News</label>
+          <label><input type="checkbox" id="tab-maps"> Maps</label>
+          <label><input type="checkbox" id="tab-books"> Books</label>
+          <label><input type="checkbox" id="tab-shopping"> Shopping</label>
+          <label><input type="checkbox" id="tab-more"> More</label>
+          <label><input type="checkbox" id="tab-tools"> Tools</label>
+        </div>
       </div>
     </div>
+
+    <!-- TAB 3: FILTERS -->
+    <div id="tab-filters" class="tab-content">
+      <div class="section-card">
+        <h3>Hide Specific Domains</h3>
+        <div class="input-group">
+          <input type="text" id="site-input" placeholder="e.g. pinterest.com">
+          <button id="add-btn">Add</button>
+        </div>
+        <ul id="site-list" class="item-list"></ul>
+      </div>
+
+      <div class="section-card">
+        <h3>Preferred Domains (Highlight)</h3>
+        <div class="input-group">
+          <input type="text" id="pref-site-input" placeholder="e.g. reddit.com">
+          <button id="add-pref-btn">Add</button>
+        </div>
+        <ul id="pref-site-list" class="item-list"></ul>
+      </div>
+
+      <div class="section-card">
+        <h3>Hide by Keyword</h3>
+        <div class="input-group">
+          <input type="text" id="keyword-input" placeholder="e.g. AI, Crypto">
+          <button id="add-keyword-btn">Add</button>
+        </div>
+        <ul id="keyword-list" class="item-list"></ul>
+      </div>
+    </div>
+
+    <footer>
+      <p>Search Optimizer • Premium Build</p>
+    </footer>
   </div>
   <script src="popup.js"></script>
 </body>

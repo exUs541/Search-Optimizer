@@ -144,6 +144,9 @@
             <div class="sop-chip fun-item" data-q="minecraft">Minecraft</div>
             <div class="sop-chip fun-item" data-q="google pacman">Pac-man</div>
             <div class="sop-chip fun-item" data-q="google snake">Snake</div>
+            <div class="sop-chip fun-item" data-q="do a barrel roll">Barrel Roll 🌀</div>
+            <div class="sop-chip fun-item" data-q="askew">Askew 📐</div>
+            <div class="sop-chip fun-item" data-q="blink html">Blink HTML ✨</div>
             <div class="sop-chip fun-item" data-q="tic tac toe">Tic Tac Toe</div>
             <div class="sop-chip fun-item" data-q="solitaire">Solitaire</div>
             <div class="sop-chip fun-item" data-q="minesweeper">Minesweeper</div>
@@ -223,6 +226,19 @@
       }
     });
     obs.observe(document.body, { childList: true, subtree: true });
+
+    chrome.runtime.onMessage.addListener((request) => {
+      if (request.action === 'live_update') {
+        loadAndMount().then(() => {
+          const btn = document.getElementById('sop-btn-search');
+          if (!config.advancedSearch && btn) {
+            btn.remove();
+          } else if (config.advancedSearch && !btn) {
+            mountOperatorsUI();
+          }
+        });
+      }
+    });
   }
   tryMount();
 
