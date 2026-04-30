@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v1.4.0</span>
+        <span class="badge">v1.4.3</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -20,6 +20,7 @@
       <button class="tab-btn active" data-tab="tab-general">General</button>
       <button class="tab-btn" data-tab="tab-google">Google UI</button>
       <button class="tab-btn" data-tab="tab-filters">Filters</button>
+      <button class="tab-btn" data-tab="tab-fun">Fun</button>
     </div>
 
     <!-- TAB 1: GENERAL -->
@@ -45,26 +46,6 @@
             <input type="checkbox" id="advanced-search">
             <span class="slider"></span>
           </label>
-        </div>
-      </div>
-
-      <div class="section-card">
-        <h3 class="collapse-toggle" id="fun-toggle">
-          Google Fun & Animations
-          <span class="toggle-arrow" id="fun-arrow">&#9654;</span>
-        </h3>
-        <div id="fun-content" style="display:none; margin-top: 10px;">
-          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 10px;">Click to trigger a Google animation:</p>
-          <div class="fun-grid">
-            <button class="fun-btn" data-q="do a barrel roll">Barrel Roll 🌀</button>
-            <button class="fun-btn" data-q="askew">Askew 📐</button>
-            <button class="fun-btn" data-q="blink html">Blink ✨</button>
-            <button class="fun-btn" data-q="recursion">Recursion 🔄</button>
-            <button class="fun-btn" data-q="pacman">Pac-man 🕹️</button>
-            <button class="fun-btn" data-q="google snake">Snake 🐍</button>
-            <button class="fun-btn" data-q="minecraft">Minecraft ⛏️</button>
-            <button class="fun-btn" data-q="sonic the hedgehog">Sonic 🏃</button>
-          </div>
         </div>
       </div>
 
@@ -144,6 +125,55 @@
           <button id="add-keyword-btn">Add</button>
         </div>
         <ul id="keyword-list" class="item-list"></ul>
+      </div>
+    </div>
+
+    <!-- TAB 4: FUN -->
+    <div id="tab-fun" class="tab-content">
+      <div class="fun-section">
+        <h4 class="fun-cat">🌀 Animations</h4>
+        <div class="fun-grid">
+          <button class="fun-btn" data-q="do a barrel roll">Barrel Roll</button>
+          <button class="fun-btn" data-q="askew">Askew</button>
+          <button class="fun-btn" data-q="dutch angle">Dutch Angle</button>
+          <button class="fun-btn" data-q="chicxulub">Asteroid ☄️</button>
+          <button class="fun-btn" data-q="meteor shower">Meteor Shower</button>
+          <button class="fun-btn" data-q="blink html">Blink Tag</button>
+          <button class="fun-btn" data-q="googly eyes">Googly Eyes 👀</button>
+          <button class="fun-btn" data-q="webdriver torso">Webdriver Torso</button>
+        </div>
+
+        <h4 class="fun-cat">🎮 Games</h4>
+        <div class="fun-grid">
+          <button class="fun-btn" data-q="google pacman">Pac-man</button>
+          <button class="fun-btn" data-q="google snake">Snake</button>
+          <button class="fun-btn" data-q="minesweeper">Minesweeper</button>
+          <button class="fun-btn" data-q="tic tac toe">Tic Tac Toe</button>
+          <button class="fun-btn" data-q="solitaire">Solitaire</button>
+          <button class="fun-btn" data-q="dino game">Dino Game 🦖</button>
+          <button class="fun-btn" data-q="minecraft">Minecraft ⛏️</button>
+          <button class="fun-btn" data-q="katamari">Katamari 🏐</button>
+        </div>
+
+        <h4 class="fun-cat">🅰️ Fonts</h4>
+        <div class="fun-grid">
+          <button class="fun-btn" data-q="comic sans">Comic Sans</button>
+          <button class="fun-btn" data-q="times new roman">Times New Roman</button>
+          <button class="fun-btn" data-q="courier font">Courier</button>
+          <button class="fun-btn" data-q="impact font">Impact</button>
+        </div>
+
+        <h4 class="fun-cat">✨ More Easter Eggs</h4>
+        <div class="fun-grid">
+          <button class="fun-btn" data-q="friends glossary">Friends ☕</button>
+          <button class="fun-btn" data-q="wizard of oz">Wizard of Oz</button>
+          <button class="fun-btn" data-q="conway's game of life">Game of Life</button>
+          <button class="fun-btn" data-q="sonic the hedgehog">Sonic 🦔</button>
+          <button class="fun-btn" data-q="pi">Pi Memory 🥧</button>
+          <button class="fun-btn" data-q="mariah carey">Mariah Carey ❄️</button>
+          <button class="fun-btn" data-q="the last of us">Cordyceps 🍄</button>
+          <button class="fun-btn" data-q="wicked">Defying Gravity 🧹</button>
+        </div>
       </div>
     </div>
 

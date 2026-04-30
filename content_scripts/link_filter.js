@@ -132,7 +132,7 @@
   }
 
   function injectBlockButtons() {
-    document.querySelectorAll('.yuRUbf, .v5yQqb, .ca_1, .MjjYud h3, .g h3, .tF2Cxc h3').forEach(header => {
+    document.querySelectorAll('.yuRUbf, .v5yQqb, .ca_1, .MjjYud h3, .g h3, .tF2Cxc h3, .csY6hd').forEach(header => {
       if (header.dataset.sbfBlockDone) return;
       const link = header.querySelector('a[href]');
       if (!link) return;
@@ -152,7 +152,17 @@
           }
         }
       };
-      header.appendChild(btn);
+      
+      // Attempt to find the menu area (the three dots)
+      const menu = header.closest('.g, .MjjYud, .tF2Cxc')?.querySelector('.VqP7ub, .XNo29b, .rwoS6c, .csY6hd');
+      if (menu) {
+        menu.style.display = 'flex';
+        menu.style.alignItems = 'center';
+        menu.style.gap = '6px';
+        menu.prepend(btn);
+      } else {
+        header.prepend(btn);
+      }
     });
   }
 
@@ -167,11 +177,13 @@
   // ─── Infinite Scroll ───────────────────────────────────────────────────────
   let isFetching = false;
   async function onScroll() {
-    if (!infiniteScrollEnabled) return;
+    // CRITICAL: Check both the local variable AND re-fetch if needed
+    if (infiniteScrollEnabled === false) return;
+    
     if (isFetching) return;
-    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
-      const nextLink = document.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"]');
-      if (nextLink) {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1200) {
+      const nextLink = document.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"], a[data-next]');
+      if (nextLink && nextLink.href) {
         isFetching = true;
         console.log('[Search Optimizer] Fetching next page...');
         try {
@@ -181,14 +193,16 @@
           const newRso = doc.getElementById('rso');
           const rso = document.getElementById('rso');
           if (newRso && rso) {
+            // Append only unique results
             Array.from(newRso.children).forEach(child => rso.appendChild(child.cloneNode(true)));
             incrementalScan();
           }
           const newNext = doc.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"]');
           const oldNext = document.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"]');
-          if (oldNext) oldNext.href = newNext ? newNext.href : '';
+          if (oldNext && newNext) oldNext.href = newNext.href;
+          else if (oldNext) oldNext.remove(); 
         } catch(e) { console.error(e); }
-        isFetching = false;
+        setTimeout(() => { isFetching = false; }, 1000); // Throttling
       }
     }
   }
