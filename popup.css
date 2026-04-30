@@ -7,6 +7,16 @@ body {
   width: 320px;
 }
 
+.badge {
+  background: #0ea5e9;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
 .container {
   padding: 20px;
 }
@@ -14,7 +24,7 @@ body {
 header {
   border-bottom: 1px solid #334155;
   padding-bottom: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 24px;
 }
 
 header h1 {

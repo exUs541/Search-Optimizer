@@ -41,6 +41,17 @@
       ],
       "js": ["content_scripts/link_filter.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://*.google.com/*",
+        "*://*.google.de/*",
+        "*://*.google.at/*",
+        "*://*.google.ch/*",
+        "*://*.google.co.uk/*"
+      ],
+      "js": ["content_scripts/operators_panel.js"],
+      "run_at": "document_idle"
     }
   ]
 }

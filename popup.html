@@ -13,12 +13,14 @@
       <p>Clean up your search results</p>
     </header>
 
+    <!-- Hide Google Modules -->
     <div class="modules-section">
       <h3 class="collapse-toggle" id="modules-toggle">
         Hide Google Modules
         <span class="toggle-arrow" id="modules-arrow">&#9654;</span>
       </h3>
       <div class="module-toggles" id="modules-content" style="display:none">
+        <button id="mod-select-all" style="width:100%;margin-bottom:8px;padding:5px;font-size:12px;background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:6px;cursor:pointer;">Select All</button>
         <label><input type="checkbox" id="mod-sponsored"> Sponsored Posts</label>
         <label><input type="checkbox" id="mod-latest"> Latest posts from...</label>
         <label><input type="checkbox" id="mod-products"> Products (Shopping)</label>
@@ -28,6 +30,29 @@
         <label><input type="checkbox" id="mod-search"> People also search for</label>
       </div>
     </div>
+
+    <!-- Hide Search Tabs -->
+    <div class="modules-section">
+      <h3 class="collapse-toggle" id="tabs-toggle">
+        Hide Search Tabs
+        <span class="toggle-arrow" id="tabs-arrow">&#9654;</span>
+      </h3>
+      <div class="module-toggles" id="tabs-content" style="display:none">
+        <label><input type="checkbox" id="tab-images"> Images</label>
+        <label><input type="checkbox" id="tab-videos"> Videos</label>
+        <label><input type="checkbox" id="tab-short-videos"> Short videos</label>
+        <label><input type="checkbox" id="tab-products"> Products</label>
+        <label><input type="checkbox" id="tab-product-sites"> Product sites</label>
+        <label><input type="checkbox" id="tab-news"> News</label>
+        <label><input type="checkbox" id="tab-maps"> Maps</label>
+        <label><input type="checkbox" id="tab-books"> Books</label>
+        <label><input type="checkbox" id="tab-shopping"> Shopping</label>
+        <label><input type="checkbox" id="tab-more"> More</label>
+        <label><input type="checkbox" id="tab-tools"> Tools</label>
+      </div>
+    </div>
+
+    <!-- Infinite Scroll -->
     <div class="settings-section">
       <div class="setting-row">
         <div class="setting-label">
@@ -41,15 +66,104 @@
       </div>
     </div>
 
-    <div class="add-section">
-      <h3>Hide Specific Domains</h3>
-      <input type="text" id="site-input" placeholder="e.g. pinterest.com">
-      <button id="add-btn">Add Filter</button>
+    <!-- Hide Specific Domains -->
+    <div class="modules-section">
+      <h3 class="collapse-toggle" id="domains-toggle">
+        Hide Specific Domains
+        <span class="toggle-arrow" id="domains-arrow">&#9654;</span>
+      </h3>
+      <div id="domains-content" style="display:none;margin-top:10px;">
+        <input type="text" id="site-input" placeholder="e.g. pinterest.com" style="margin-bottom:8px;">
+        <button id="add-btn">Add Filter</button>
+        <ul id="site-list" style="margin-top:10px;"></ul>
+      </div>
     </div>
 
-    <div class="list-section">
-      <h3>Active Domain Filters</h3>
-      <ul id="site-list"></ul>
+    <!-- Preferred Domains -->
+    <div class="modules-section">
+      <h3 class="collapse-toggle" id="pref-toggle">
+        Preferred Domains <span style="font-size:11px;color:#22c55e;font-weight:400;">★ green</span>
+        <span class="toggle-arrow" id="pref-arrow">&#9654;</span>
+      </h3>
+      <div id="pref-content" style="display:none;margin-top:10px;">
+        <input type="text" id="pref-input" placeholder="e.g. wikipedia.org" style="margin-bottom:8px;">
+        <button id="pref-btn">Add Preferred</button>
+        <ul id="pref-list" style="margin-top:10px;"></ul>
+      </div>
+    </div>
+
+    <!-- Hide by Keyword -->
+    <div class="modules-section">
+      <h3 class="collapse-toggle" id="kw-toggle">
+        Hide by Keyword
+        <span class="toggle-arrow" id="kw-arrow">&#9654;</span>
+      </h3>
+      <div id="kw-content" style="display:none;margin-top:10px;">
+        <input type="text" id="kw-input" placeholder="e.g. buy now, clickbait..." style="margin-bottom:8px;">
+        <button id="kw-btn">Add Keyword</button>
+        <ul id="kw-list" style="margin-top:10px;"></ul>
+      </div>
+    </div>
+
+    <!-- Backup & Restore -->
+    <div class="settings-section">
+      <div class="setting-row">
+        <div class="setting-label">
+          <span>Backup &amp; Restore</span>
+          <small>Export or import all settings as JSON</small>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button id="export-btn" style="flex:1;font-size:12px;padding:7px;">⬇ Export</button>
+        <label style="flex:1;">
+          <button id="import-label-btn" style="width:100%;font-size:12px;padding:7px;" onclick="document.getElementById('import-file').click()">⬆ Import</button>
+          <input type="file" id="import-file" accept=".json" style="display:none;">
+        </label>
+      </div>
+      <!-- Google Fun Section -->
+      <div class="section">
+        <div class="section-header" id="fun-toggle">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="arrow" id="fun-arrow">▶</span>
+            <span class="section-title">Google Fun & Games</span>
+          </div>
+          <span class="badge">New</span>
+        </div>
+        <div class="section-content" id="fun-content" style="display: none;">
+          <label class="toggle-row">
+            <span>Enable Fun Features</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="google-fun">
+              <span class="slider"></span>
+            </div>
+          </label>
+          <div class="info-text">Adds a "Fun" section to the Operators panel for quick access to Google games and easter eggs.</div>
+        </div>
+      </div>
+
+      <!-- Advanced Search Section -->
+      <div class="section">
+        <div class="section-header" id="adv-toggle">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="arrow" id="adv-arrow">▶</span>
+            <span class="section-title">Advanced Search</span>
+          </div>
+        </div>
+        <div class="section-content" id="adv-content" style="display: none;">
+          <label class="toggle-row">
+            <span>Show Operators Icon</span>
+            <div class="toggle-switch">
+              <input type="checkbox" id="advanced-search">
+              <span class="slider"></span>
+            </div>
+          </label>
+          <div class="info-text">Shows the ⚙ gear icon in the search bar for quick operator access.</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        Search Optimizer v1.4 • Premium Build
+      </div>
     </div>
   </div>
   <script src="popup.js"></script>
