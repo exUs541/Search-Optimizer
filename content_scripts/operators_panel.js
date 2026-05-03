@@ -119,19 +119,50 @@
       };
     });
 
-    // Mount Gear Icon
-    const micBtn = document.querySelector('div[aria-label="Search by voice"], div[aria-label="Sprachsuche"], .XNo29b');
-    if (micBtn) {
+    // Mount Gear Icon - try multiple anchor points
+    const micBtn = document.querySelector('div[aria-label="Search by voice"], div[aria-label="Sprachsuche"], .XNo29b, .M2vUub, .RNNXbe .BKZ7n');
+    const searchBtn = document.querySelector('button[type="submit"], .Tg7LZd');
+    const anchor = micBtn || searchBtn;
+
+    if (anchor) {
       const btn = document.createElement('div');
       btn.id = 'sop-btn-search';
-      btn.innerHTML = '<svg focusable="false" viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M13.85 22.25h-3.7c-.74 0-1.36-.54-1.45-1.27l-.27-1.89c-.27-.14-.53-.29-.79-.46l-1.8.72c-.7.26-1.47-.03-1.81-.65L2.2 15.53c-.35-.66-.2-1.44.36-1.88l1.53-1.19c-.01-.15-.02-.3-.02-.46s.01-.31.02-.46l-1.53-1.19c-.56-.44-.71-1.22-.36-1.88l1.83-3.17c.34-.62 1.11-.91 1.81-.65l1.8.72c.26-.17.52-.32.79-.46l.27-1.89c.09-.73.71-1.27 1.45-1.27h3.7c.74 0 1.36.54 1.45 1.27l.27 1.89c.27.14.53.29.79.46l1.8-.72c.71-.26 1.48.03 1.82.65l1.83 3.17c.35.66.21 1.44-.35 1.88l-1.53 1.19c.01.15.02.3.02.46s-.01.31-.02.46l1.53 1.19c.56.44.71 1.22.35 1.88l-1.83 3.17c-.34.62-1.11.91-1.82.65l-1.8-.72c-.26.17-.52.32-.79.46l-.27 1.89c-.09.73-.71 1.27-1.45 1.27zM11.08 20.25h1.84l.25-1.71.37-.15c.44-.18.86-.42 1.23-.7l.34-.26 1.63.65 1-1.73-1.38-1.07.06-.41c.02-.21.03-.42.03-.63s-.01-.42-.03-.63l-.06-.41 1.38-1.07-1-1.73-1.63.65-.34-.26c-.37-.28-.79-.52-1.23-.7l-.37-.15-.25-1.71h-1.84l-.25 1.71-.37.15c-.44.18-.86.42-1.23.7l-.34.26-1.63-.65-1 1.73 1.38 1.07-.06.41c-.02.21-.03.42-.03.63s.01.42.03.63l.06.41-1.38 1.07 1 1.73 1.63-.65.34.26c.37.28.79.52 1.23.7l.37.15.25 1.71zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/></svg>';
+      // Native Google Settings Icon SVG
+      btn.innerHTML = `
+        <svg focusable="false" viewBox="0 0 24 24" width="20" height="20">
+          <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path>
+        </svg>
+      `;
+      
       const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const baseColor = isDarkMode ? '#9aa0a6' : '#70757a';
-      btn.style.cssText = `display:flex;align-items:center;justify-content:center;width:36px;height:36px;cursor:pointer;color:${baseColor};transition:all 0.2s;border-radius:50%;margin-right:4px;flex-shrink:0;`;
+      const baseColor = '#bfbfbf';
+      
+      btn.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        color: ${baseColor};
+        transition: background 0.2s, color 0.2s;
+        border-radius: 50%;
+        margin-right: 2px;
+        flex-shrink: 0;
+      `;
+      
       btn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); open(); };
-      btn.onmouseenter = () => { btn.style.color = '#1a73e8'; btn.style.background = 'rgba(60,64,67,0.08)'; };
-      btn.onmouseleave = () => { btn.style.color = baseColor; btn.style.background = 'none'; };
-      micBtn.before(btn);
+      btn.onmouseenter = () => { 
+        btn.style.background = isDarkMode ? 'rgba(232,234,237,.08)' : 'rgba(60,64,67,.08)';
+        btn.style.color = isDarkMode ? '#e8eaed' : '#202124';
+      };
+      btn.onmouseleave = () => { 
+        btn.style.background = 'none';
+        btn.style.color = baseColor;
+      };
+      
+      if (micBtn) micBtn.before(btn);
+      else anchor.after(btn);
     }
   }
 

@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v1.4.3</span>
+        <span class="badge">v1.5.2</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -60,71 +60,132 @@
 
     <!-- TAB 2: GOOGLE UI -->
     <div id="tab-google" class="tab-content">
-      <div class="modules-section">
-        <h3 class="collapse-toggle" id="modules-toggle">
-          Hide Google Modules
-          <span class="toggle-arrow" id="modules-arrow">&#9660;</span>
-        </h3>
-        <div class="module-toggles" id="modules-content">
-          <button id="mod-select-all" class="secondary-btn">Select All</button>
-          <label><input type="checkbox" id="mod-sponsored"> Sponsored Posts (Ads)</label>
-          <label><input type="checkbox" id="mod-latest"> Latest posts / Discussions</label>
-          <label><input type="checkbox" id="mod-products"> Products (Shopping)</label>
-          <label><input type="checkbox" id="mod-images"> Image Blocks</label>
-          <label><input type="checkbox" id="mod-videos"> Video Blocks / Reels</label>
-          <label><input type="checkbox" id="mod-ask"> People also ask</label>
-          <label><input type="checkbox" id="mod-search"> Related Searches</label>
-        </div>
-      </div>
-
+      <!-- 1. HIDE SEARCH TABS (Now First) -->
       <div class="modules-section">
         <h3 class="collapse-toggle" id="tabs-toggle">
           Hide Search Tabs
-          <span class="toggle-arrow" id="tabs-arrow">&#9654;</span>
+          <span class="toggle-arrow" id="tabs-arrow">&#9660;</span>
         </h3>
-        <div class="module-toggles" id="tabs-content" style="display:none">
-          <label><input type="checkbox" id="tab-images"> Images</label>
-          <label><input type="checkbox" id="tab-videos"> Videos</label>
-          <label><input type="checkbox" id="tab-short-videos"> Short videos</label>
-          <label><input type="checkbox" id="tab-products"> Products</label>
-          <label><input type="checkbox" id="tab-product-sites"> Product sites</label>
-          <label><input type="checkbox" id="tab-news"> News</label>
-          <label><input type="checkbox" id="tab-maps"> Maps</label>
-          <label><input type="checkbox" id="tab-books"> Books</label>
-          <label><input type="checkbox" id="tab-shopping"> Shopping</label>
-          <label><input type="checkbox" id="tab-more"> More</label>
-          <label><input type="checkbox" id="tab-tools"> Tools</label>
+        <div class="module-toggles" id="tabs-content">
+          <div class="setting-row" style="padding: 4px 0; margin-bottom: 8px; background: transparent; border: none;">
+            <div class="setting-label">
+              <span>Unpack "More" Menu</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="tab-unpack-more">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="eye-row">
+            <span>Tools Button</span>
+            <button class="eye-btn" id="eye-tab-tools" data-hide="tab-tools"></button>
+          </div>
+          <div class="eye-row">
+            <span>More Button</span>
+            <button class="eye-btn" id="eye-tab-more" data-hide="tab-more"></button>
+          </div>
+          <div style="border-top: 1px solid var(--border-color); margin: 8px 0;"></div>
+          <div class="eye-row"><span>Images</span><button class="eye-btn" id="eye-tab-images" data-hide="tab-images"></button></div>
+          <div class="eye-row"><span>Videos</span><button class="eye-btn" id="eye-tab-videos" data-hide="tab-videos"></button></div>
+          <div class="eye-row"><span>Short videos</span><button class="eye-btn" id="eye-tab-short-videos" data-hide="tab-short-videos"></button></div>
+          <div class="eye-row"><span>Products</span><button class="eye-btn" id="eye-tab-products" data-hide="tab-products"></button></div>
+          <div class="eye-row"><span>Product sites</span><button class="eye-btn" id="eye-tab-product-sites" data-hide="tab-product-sites"></button></div>
+          <div class="eye-row"><span>News</span><button class="eye-btn" id="eye-tab-news" data-hide="tab-news"></button></div>
+          <div class="eye-row"><span>Web</span><button class="eye-btn" id="eye-tab-web" data-hide="tab-web"></button></div>
+          <div class="eye-row"><span>Finance</span><button class="eye-btn" id="eye-tab-finance" data-hide="tab-finance"></button></div>
+          <div class="eye-row"><span>Forums</span><button class="eye-btn" id="eye-tab-forums" data-hide="tab-forums"></button></div>
+          <div class="eye-row"><span>Maps</span><button class="eye-btn" id="eye-tab-maps" data-hide="tab-maps"></button></div>
+          <div class="eye-row"><span>Books</span><button class="eye-btn" id="eye-tab-books" data-hide="tab-books"></button></div>
+          <div class="eye-row"><span>Shopping</span><button class="eye-btn" id="eye-tab-shopping" data-hide="tab-shopping"></button></div>
+        </div>
+      </div>
+
+      <!-- 2. HIDE GOOGLE MODULES (Now Second) -->
+      <div class="modules-section">
+        <h3 class="collapse-toggle" id="modules-toggle">
+          Hide Google Modules
+          <span class="toggle-arrow" id="modules-arrow" style="transform: rotate(0deg);">&#9654;</span>
+        </h3>
+        <div class="module-toggles" id="modules-content" style="display:none">
+          <div class="eye-row">
+            <span>AI Overviews (SGE)</span>
+            <button class="eye-btn" id="eye-ai" data-hide="mod-ai"></button>
+          </div>
+          <div class="eye-row">
+            <span>Sponsored Posts (Ads)</span>
+            <button class="eye-btn" id="eye-sponsored" data-hide="mod-sponsored"></button>
+          </div>
+          <div class="eye-row">
+            <span>Latest posts / Discussions</span>
+            <button class="eye-btn" id="eye-latest" data-hide="mod-latest"></button>
+          </div>
+          <div class="eye-row">
+            <span>Products (Shopping)</span>
+            <button class="eye-btn" id="eye-products" data-hide="mod-products"></button>
+          </div>
+          <div class="eye-row">
+            <span>Image Blocks</span>
+            <button class="eye-btn" id="eye-images" data-hide="mod-images"></button>
+          </div>
+          <div class="eye-row">
+            <span>Video Blocks / Reels</span>
+            <button class="eye-btn" id="eye-videos" data-hide="mod-videos"></button>
+          </div>
+          <div class="eye-row">
+            <span>People also ask</span>
+            <button class="eye-btn" id="eye-ask" data-hide="mod-ask"></button>
+          </div>
+          <div class="eye-row">
+            <span>Related Searches</span>
+            <button class="eye-btn" id="eye-search" data-hide="mod-search"></button>
+          </div>
+          <button id="mod-select-all" class="secondary-btn" style="margin-top: 8px;">Select All</button>
         </div>
       </div>
     </div>
 
     <!-- TAB 3: FILTERS -->
     <div id="tab-filters" class="tab-content">
-      <div class="section-card">
-        <h3>Hide Specific Domains</h3>
-        <div class="input-group">
-          <input type="text" id="site-input" placeholder="e.g. pinterest.com">
-          <button id="add-btn">Add</button>
+      <div class="modules-section">
+        <h3 class="collapse-toggle" id="block-domains-toggle">
+          Hide Specific Domains
+          <span class="toggle-arrow" id="block-domains-arrow">&#9660;</span>
+        </h3>
+        <div class="module-toggles" id="block-domains-content">
+          <div class="input-group">
+            <input type="text" id="site-input" placeholder="e.g. pinterest.com">
+            <button id="add-btn">Add</button>
+          </div>
+          <ul id="site-list" class="item-list"></ul>
         </div>
-        <ul id="site-list" class="item-list"></ul>
       </div>
 
-      <div class="section-card">
-        <h3>Preferred Domains (Highlight)</h3>
-        <div class="input-group">
-          <input type="text" id="pref-site-input" placeholder="e.g. reddit.com">
-          <button id="add-pref-btn">Add</button>
+      <div class="modules-section">
+        <h3 class="collapse-toggle" id="pref-domains-toggle">
+          Preferred Domains (Highlight)
+          <span class="toggle-arrow" id="pref-domains-arrow">&#9654;</span>
+        </h3>
+        <div class="module-toggles" id="pref-domains-content" style="display:none">
+          <div class="input-group">
+            <input type="text" id="pref-site-input" placeholder="e.g. reddit.com">
+            <button id="add-pref-btn">Add</button>
+          </div>
+          <ul id="pref-site-list" class="item-list"></ul>
         </div>
-        <ul id="pref-site-list" class="item-list"></ul>
       </div>
 
-      <div class="section-card">
-        <h3>Hide by Keyword</h3>
-        <div class="input-group">
-          <input type="text" id="keyword-input" placeholder="e.g. AI, Crypto">
-          <button id="add-keyword-btn">Add</button>
+      <div class="modules-section">
+        <h3 class="collapse-toggle" id="keywords-toggle">
+          Hide by Keyword
+          <span class="toggle-arrow" id="keywords-arrow">&#9654;</span>
+        </h3>
+        <div class="module-toggles" id="keywords-content" style="display:none">
+          <div class="input-group">
+            <input type="text" id="keyword-input" placeholder="e.g. AI, Crypto">
+            <button id="add-keyword-btn">Add</button>
+          </div>
+          <ul id="keyword-list" class="item-list"></ul>
         </div>
-        <ul id="keyword-list" class="item-list"></ul>
       </div>
     </div>
 

@@ -7,16 +7,24 @@
     style.textContent = `
       .sbf-hidden { display: none !important; visibility: hidden !important; }
       .sbf-preferred { border-left: 4px solid #22c55e !important; padding-left: 12px !important; background-color: rgba(34, 197, 94, 0.05) !important; }
-      .sbf-block-btn {
-        display: inline-flex; align-items: center; justify-content: center;
-        width: 24px; height: 24px; margin-left: 8px;
-        background: #ef4444; border: none; border-radius: 50%;
-        color: white; font-size: 13px; cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        vertical-align: middle; position: relative; z-index: 100; padding: 0;
-        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+      /* Aggressive CSS hiding for AI Overviews */
+      .sbf-hide-ai [data-component-type="22"], .sbf-hide-ai .SGE_container, .sbf-hide-ai #super_results, .sbf-hide-ai [data-sge-container] { display: none !important; }
+      /* More button hiding */
+      .sbf-hide-more .znY98, .sbf-hide-more .G9vS3e, .sbf-hide-more [aria-label*="More"], .sbf-hide-more [aria-label*="Mehr"] { display: none !important; }
+      /* Suppress Google's native continuous scroll containers */
+      .sbf-no-infinite .SJ974, .sbf-no-infinite .GNJ78, .sbf-no-infinite #botstuff .GNJ78 { display: none !important; }
+      #sbf-loader {
+        display: none; text-align: center; padding: 20px; color: #9aa0a6;
+        font-family: Google Sans, Roboto, sans-serif; font-size: 14px;
+        gap: 10px; align-items: center; justify-content: center;
       }
-      .sbf-block-btn:hover { background: #dc2626; transform: scale(1.1) rotate(15deg); }
+      #sbf-loader.active { display: flex; }
+      .sbf-spinner {
+        width: 18px; height: 18px; border: 2px solid #444; border-top-color: #8ab4f8;
+        border-radius: 50%; animation: sbf-spin 0.6s linear infinite;
+      }
+      @keyframes sbf-spin { to { transform: rotate(360deg); } }
+      .sbf-unpacked { margin-right: 16px !important; display: inline-block !important; }
     `;
     document.head.appendChild(style);
   }
@@ -24,20 +32,43 @@
   // ─── Config ───────────────────────────────────────────────────────────────
   let searchFilters = [];
   let googleModules = {};
-  let infiniteScrollEnabled = true;
+  let infiniteScrollEnabled = false;
   let hiddenTabs = {};
   let preferredDomains = [];
   let keywordFilters = [];
 
   async function loadConfig() {
-    const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords']);
-    searchFilters = (data.searchFilters || []).map(f => typeof f === 'string' ? f : (f.domain || ''));
-    googleModules = data.googleModules || { sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false };
-    infiniteScrollEnabled = data.infiniteScroll !== false;
-    hiddenTabs = data.hiddenTabs || {};
-    preferredDomains = (data.preferredDomains || []).map(d => typeof d === 'string' ? d : (d.domain || ''));
-    keywordFilters = data.blockedKeywords || [];
-    console.log('[Search Optimizer] Config loaded:', { infiniteScrollEnabled, googleModules });
+    try {
+      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords']);
+      searchFilters = (data.searchFilters || []).map(f => typeof f === 'string' ? f : (f.domain || ''));
+      googleModules = data.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false };
+      infiniteScrollEnabled = data.infiniteScroll === true;
+      hiddenTabs = data.hiddenTabs || {};
+      preferredDomains = (data.preferredDomains || []).map(d => typeof d === 'string' ? d : (d.domain || ''));
+      keywordFilters = data.blockedKeywords || [];
+      
+      if (infiniteScrollEnabled) {
+        document.body.classList.remove('sbf-no-infinite');
+      } else {
+        document.body.classList.add('sbf-no-infinite');
+      }
+      
+      if (googleModules.ai) {
+        document.body.classList.add('sbf-hide-ai');
+      } else {
+        document.body.classList.remove('sbf-hide-ai');
+      }
+
+      if (hiddenTabs['more'] || hiddenTabs['unpack-more']) {
+        document.body.classList.add('sbf-hide-more');
+      } else {
+        document.body.classList.remove('sbf-hide-more');
+      }
+      
+      console.log('[Search Optimizer] Config updated. Infinite Scroll:', infiniteScrollEnabled);
+    } catch (e) {
+      console.error('[Search Optimizer] Error loading config:', e);
+    }
   }
 
   // ─── Hiding Logic ──────────────────────────────────────────────────────────
@@ -49,12 +80,40 @@
   function scanGoogleModules() {
     if (!isAllTab()) return;
     
-    // Sponsored
+    // AI Overviews (SGE) - Aggressive selectors
+    if (googleModules.ai) {
+      const sgeSelectors = [
+        '[data-component-type="22"]', 
+        '.Z97S6d', '.V99yG', '.SGE_container', 
+        '.XQ4SFe', '.zbA0S', '#super_results',
+        '.MjjYud:has(div[aria-label^="AI Overview"])',
+        '.MjjYud:has(div[aria-label^="KI-Übersicht"])',
+        '.MjjYud:has(div[data-component-type="22"])',
+        '[data-sge-container]'
+      ];
+      document.querySelectorAll(sgeSelectors.join(',')).forEach(el => {
+        el.classList.add('sbf-hidden');
+        const wrapper = el.closest('.MjjYud, .g');
+        if (wrapper) wrapper.classList.add('sbf-hidden');
+      });
+      
+      // Text-based fallback scanning
+      document.querySelectorAll('div, section, [role="region"], h1, h2, h3').forEach(el => {
+        if (el.classList.contains('sbf-hidden')) return;
+        const label = el.getAttribute('aria-label') || '';
+        const text = el.innerText || '';
+        if (label.startsWith('AI Overview') || label.startsWith('KI-Übersicht') || text.startsWith('AI Overview') || text.startsWith('KI-Übersicht')) {
+          el.classList.add('sbf-hidden');
+          const wrapper = el.closest('.MjjYud, .g');
+          if (wrapper) wrapper.classList.add('sbf-hidden');
+        }
+      });
+    }
+
     if (googleModules.sponsored) {
       document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad, [data-text-ad], .MjjYud:has(.uEierd)').forEach(el => el.classList.add('sbf-hidden'));
     }
 
-    // Module blocks by header text
     const killByHeading = (texts, active) => {
       if (!active) return;
       document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
@@ -66,6 +125,7 @@
       });
     };
 
+    killByHeading(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
     killByHeading(['images', 'bilder'], googleModules.images);
     killByHeading(['videos', 'short videos', 'kurzvideos', 'reels'], googleModules.videos);
     killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
@@ -76,29 +136,93 @@
 
   function hideGoogleTabs() {
     const activeKeys = Object.keys(hiddenTabs).filter(k => hiddenTabs[k]);
-    if (!activeKeys.length) return;
+    
+    // 1. Unpack "More" Menu logic - Stable Static Injection
+    const moreBtn = Array.from(document.querySelectorAll('a, div[role="button"], .C6AK7c, .z1asCe, .hdtb-mitem, .znY98, .G9vS3e')).find(el => {
+      const t = el.innerText.toLowerCase().trim();
+      return (t === 'more' || t === 'mehr' || el.getAttribute('aria-label')?.toLowerCase().includes('more') || el.getAttribute('aria-label')?.toLowerCase().includes('mehr'));
+    });
 
+    if (hiddenTabs['unpack-more']) {
+      if (moreBtn && !moreBtn.dataset.sbfUnpackedDone) {
+        const tabBar = moreBtn.closest('#hdtb-msb, .MUFdbf, .K9vS3e, .OIn58, .crJ18e, .hdtb-mitem, .G9vS3e');
+        if (tabBar) {
+          const q = new URLSearchParams(window.location.search).get('q');
+          const createTab = (label, tbm, key) => {
+            if (hiddenTabs[key]) return null;
+            const a = document.createElement('a');
+            a.className = 'sbf-unpacked';
+            a.innerText = label;
+            a.href = `/search?q=${encodeURIComponent(q)}${tbm ? '&tbm=' + tbm : ''}`;
+            a.style.cssText = 'margin-right:16px; display:inline-block; color:#9aa0a6; text-decoration:none; font-size:14px; padding:0 4px;';
+            return a;
+          };
+
+          const items = [
+            { l: 'Web', t: '', k: 'web' },
+            { l: 'Finance', t: 'fin', k: 'finance' },
+            { l: 'Books', t: 'bks', k: 'books' }
+          ];
+          
+          items.forEach(item => {
+            const tab = createTab(item.l, item.t, item.k);
+            if (tab) {
+              const insertTarget = moreBtn.parentElement.classList.contains('hdtb-mitem') ? moreBtn.parentElement : moreBtn;
+              insertTarget.before(tab);
+            }
+          });
+
+          moreBtn.dataset.sbfUnpackedDone = '1';
+          const targetToHide = moreBtn.parentElement.classList.contains('hdtb-mitem') ? moreBtn.parentElement : moreBtn;
+          targetToHide.classList.add('sbf-hidden');
+        }
+      }
+    } else if (moreBtn) {
+      delete moreBtn.dataset.sbfUnpackedDone;
+      const targetToShow = moreBtn.parentElement.classList.contains('hdtb-mitem') ? moreBtn.parentElement : moreBtn;
+      targetToShow.classList.remove('sbf-hidden');
+    }
+
+    // 2. Hide specific tabs
     const tabTextMap = {
-      'images': ['images', 'bilder'], 'videos': ['videos'], 'short-videos': ['short videos', 'kurzvideos'],
-      'products': ['products', 'produkte'], 'product-sites': ['product sites'], 'news': ['news', 'nachrichten'],
-      'maps': ['maps', 'karten'], 'books': ['books', 'bücher'], 'shopping': ['shopping'], 'more': ['more', 'mehr'], 'tools': ['tools', 'werkzeuge']
+      'images': ['images', 'bilder'],
+      'videos': ['videos'],
+      'short-videos': ['short videos', 'kurzvideos'],
+      'products': ['products', 'produkte'],
+      'product-sites': ['product sites'],
+      'news': ['news', 'nachrichten'],
+      'web': ['web'],
+      'finance': ['finance', 'finanzen'],
+      'forums': ['forums', 'foren'],
+      'maps': ['maps', 'karten'],
+      'books': ['books', 'bücher'],
+      'shopping': ['shopping'],
+      'more': ['more', 'mehr']
     };
 
-    const tabBar = document.querySelector('#hdtb, #top_nav, .crJ18e, .Uo8X3b, #hdtb-msb, .MUFdbf, .K9vS3e, .OIn58');
-    if (!tabBar) return;
-
-    tabBar.querySelectorAll('a, div[role="link"], div[role="tab"], .C6AK7c, span').forEach(el => {
+    document.querySelectorAll('#hdtb-msb a, .MUFdbf a, .K9vS3e a, .OIn58 a, .crJ18e a, .Uo8X3b a, .C6AK7c').forEach(el => {
       const text = el.innerText.toLowerCase().trim();
+      el.classList.remove('sbf-hidden');
       for (const key of activeKeys) {
         if (tabTextMap[key] && tabTextMap[key].some(label => text === label)) {
-          let current = el;
-          while (current.parentElement && current.parentElement !== tabBar && !current.parentElement.classList.contains('crJ18e')) {
-            current = current.parentElement;
+          let target = el;
+          if (el.parentElement.tagName === 'DIV' && el.parentElement.children.length === 1) {
+            target = el.parentElement;
           }
-          current.classList.add('sbf-hidden');
+          target.classList.add('sbf-hidden');
         }
       }
     });
+
+    // 3. Hide "Tools" button
+    const toolsBtn = Array.from(document.querySelectorAll('a, div[role="button"], #hdtb-tls, .Uo8X3b')).find(el => {
+      const t = el.innerText.toLowerCase().trim();
+      return t === 'tools' || t === 'werkzeuge';
+    });
+    if (toolsBtn) {
+      if (hiddenTabs['tools']) toolsBtn.classList.add('sbf-hidden');
+      else toolsBtn.classList.remove('sbf-hidden');
+    }
   }
 
   function applyFiltersOnLink(link) {
@@ -107,14 +231,10 @@
     try {
       const url = new URL(link.href);
       const domain = url.hostname.replace(/^www\./, '');
-      
-      // Block
       if (searchFilters.some(d => domain === d || domain.endsWith('.' + d))) {
         const container = link.closest('.g, .MjjYud, .tF2Cxc, .hlcw0c, [role="listitem"]');
         if (container) container.classList.add('sbf-hidden');
       }
-      
-      // Highlight
       if (preferredDomains.some(d => domain === d || domain.endsWith('.' + d))) {
         const container = link.closest('.g, .MjjYud, .tF2Cxc, .hlcw0c');
         if (container) container.classList.add('sbf-preferred');
@@ -131,78 +251,57 @@
     });
   }
 
-  function injectBlockButtons() {
-    document.querySelectorAll('.yuRUbf, .v5yQqb, .ca_1, .MjjYud h3, .g h3, .tF2Cxc h3, .csY6hd').forEach(header => {
-      if (header.dataset.sbfBlockDone) return;
-      const link = header.querySelector('a[href]');
-      if (!link) return;
-      header.dataset.sbfBlockDone = '1';
-      const domain = new URL(link.href).hostname.replace(/^www\./, '');
-      const btn = document.createElement('button');
-      btn.className = 'sbf-block-btn'; btn.innerHTML = '🚫'; btn.title = `Block ${domain}`;
-      btn.onclick = async (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (confirm(`Block ${domain}?`)) {
-          const data = await chrome.storage.local.get('searchFilters');
-          const filters = data.searchFilters || [];
-          if (!filters.includes(domain)) {
-            filters.push(domain);
-            await chrome.storage.local.set({ searchFilters: filters });
-            chrome.runtime.sendMessage({ action: 'live_update' });
-          }
-        }
-      };
-      
-      // Attempt to find the menu area (the three dots)
-      const menu = header.closest('.g, .MjjYud, .tF2Cxc')?.querySelector('.VqP7ub, .XNo29b, .rwoS6c, .csY6hd');
-      if (menu) {
-        menu.style.display = 'flex';
-        menu.style.alignItems = 'center';
-        menu.style.gap = '6px';
-        menu.prepend(btn);
-      } else {
-        header.prepend(btn);
-      }
-    });
-  }
-
   function incrementalScan() {
     document.querySelectorAll('a[href]:not([data-sbf-done])').forEach(applyFiltersOnLink);
     scanGoogleModules();
     hideGoogleTabs();
     hideByKeywords();
-    injectBlockButtons();
   }
 
   // ─── Infinite Scroll ───────────────────────────────────────────────────────
   let isFetching = false;
+  let loader = null;
+
+  function ensureLoader() {
+    if (loader) return;
+    loader = document.createElement('div');
+    loader.id = 'sbf-loader';
+    loader.innerHTML = '<div class="sbf-spinner"></div><span>Loading more results...</span>';
+    const rso = document.getElementById('rso');
+    if (rso) rso.after(loader);
+  }
+
   async function onScroll() {
-    // CRITICAL: Check both the local variable AND re-fetch if needed
-    if (infiniteScrollEnabled === false) return;
-    
+    if (infiniteScrollEnabled === false) {
+      if (loader) loader.classList.remove('active');
+      return;
+    }
     if (isFetching) return;
-    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1200) {
-      const nextLink = document.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"], a[data-next]');
+    const scrollThreshold = document.body.offsetHeight - window.innerHeight - 1500;
+    if (window.scrollY >= scrollThreshold) {
+      const nextLink = document.querySelector('#pnnext, a[aria-label*="Next"], a[aria-label*="Weiter"]');
       if (nextLink && nextLink.href) {
         isFetching = true;
-        console.log('[Search Optimizer] Fetching next page...');
+        ensureLoader();
+        loader.classList.add('active');
         try {
           const resp = await fetch(nextLink.href);
           const html = await resp.text();
           const doc = new DOMParser().parseFromString(html, 'text/html');
           const newRso = doc.getElementById('rso');
-          const rso = document.getElementById('rso');
-          if (newRso && rso) {
-            // Append only unique results
-            Array.from(newRso.children).forEach(child => rso.appendChild(child.cloneNode(true)));
+          const currentRso = document.getElementById('rso');
+          if (newRso && currentRso) {
+            const fragment = document.createDocumentFragment();
+            Array.from(newRso.children).forEach(child => { fragment.appendChild(child.cloneNode(true)); });
+            currentRso.appendChild(fragment);
+            const newNext = doc.querySelector('#pnnext, a[aria-label*="Next"], a[aria-label*="Weiter"]');
+            const oldNext = document.querySelector('#pnnext, a[aria-label*="Next"], a[aria-label*="Weiter"]');
+            if (oldNext && newNext) oldNext.href = newNext.href;
+            else if (oldNext) oldNext.remove();
             incrementalScan();
           }
-          const newNext = doc.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"]');
-          const oldNext = document.querySelector('#pnnext, a[aria-label="Next"], a[aria-label="Weiter"]');
-          if (oldNext && newNext) oldNext.href = newNext.href;
-          else if (oldNext) oldNext.remove(); 
-        } catch(e) { console.error(e); }
-        setTimeout(() => { isFetching = false; }, 1000); // Throttling
+        } catch (e) { console.error('[Search Optimizer] Fetch failed:', e); }
+        finally { loader.classList.remove('active'); setTimeout(() => { isFetching = false; }, 800); }
       }
     }
   }
@@ -210,22 +309,19 @@
   // ─── Main ──────────────────────────────────────────────────────────────────
   await loadConfig();
   incrementalScan();
-  window.addEventListener('scroll', onScroll);
+  window.addEventListener('scroll', onScroll, { passive: true });
 
-  const observer = new MutationObserver(() => {
-    incrementalScan();
-  });
+  const observer = new MutationObserver(() => { incrementalScan(); });
   observer.observe(document.body, { childList: true, subtree: true });
 
   chrome.runtime.onMessage.addListener(async (request) => {
     if (request.action === 'live_update') {
-      console.log('[Search Optimizer] Live Update Received');
+      console.log('[Search Optimizer] Live Update');
       await loadConfig();
-      // Clean up previous states
       document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
       document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
+      document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
       document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
-      document.querySelectorAll('[data-sbf-block-done]').forEach(el => delete el.dataset.sbfBlockDone);
       incrementalScan();
     }
   });

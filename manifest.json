@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Search Filter & Site Blocker - Clean Search Results",
-  "version": "1.2",
+  "version": "1.5.2",
   "description": "Block sites from search results, hide ads, sponsored posts, videos & more. Infinite scroll for Google Search results.",
   "permissions": [
     "storage",
@@ -12,7 +12,12 @@
     "*://*.google.de/*",
     "*://*.google.at/*",
     "*://*.google.ch/*",
-    "*://*.google.co.uk/*"
+    "*://*.google.co.uk/*",
+    "*://*.google.fr/*",
+    "*://*.google.es/*",
+    "*://*.google.it/*",
+    "*://*.google.nl/*",
+    "*://*.google.be/*"
   ],
   "icons": {
     "16": "icons/icon16.png",
@@ -33,22 +38,32 @@
   "content_scripts": [
     {
       "matches": [
-        "*://*.google.com/*",
-        "*://*.google.de/*",
-        "*://*.google.at/*",
-        "*://*.google.ch/*",
-        "*://*.google.co.uk/*"
+        "*://*.google.com/search*",
+        "*://*.google.de/search*",
+        "*://*.google.at/search*",
+        "*://*.google.ch/search*",
+        "*://*.google.co.uk/search*",
+        "*://*.google.fr/search*",
+        "*://*.google.es/search*",
+        "*://*.google.it/search*",
+        "*://*.google.nl/search*",
+        "*://*.google.be/search*"
       ],
       "js": ["content_scripts/link_filter.js"],
       "run_at": "document_idle"
     },
     {
       "matches": [
-        "*://*.google.com/*",
-        "*://*.google.de/*",
-        "*://*.google.at/*",
-        "*://*.google.ch/*",
-        "*://*.google.co.uk/*"
+        "*://*.google.com/search*",
+        "*://*.google.de/search*",
+        "*://*.google.at/search*",
+        "*://*.google.ch/search*",
+        "*://*.google.co.uk/search*",
+        "*://*.google.fr/search*",
+        "*://*.google.es/search*",
+        "*://*.google.it/search*",
+        "*://*.google.nl/search*",
+        "*://*.google.be/search*"
       ],
       "js": ["content_scripts/operators_panel.js"],
       "run_at": "document_idle"
