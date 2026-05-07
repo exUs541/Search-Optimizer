@@ -20,7 +20,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const keywordList = document.getElementById('keyword-list');
   
   const infiniteToggle = document.getElementById('infinite-scroll');
+  const pauseToggle = document.getElementById('pause-infinite');
+  const pauseRow = document.getElementById('pause-row');
   const advSearchToggle = document.getElementById('advanced-search');
+  
+  const hideFaviconsToggle = document.getElementById('hide-favicons');
+  const highlightEnabledToggle = document.getElementById('highlight-enabled');
+  const highlightColorInput = document.getElementById('highlight-color');
+
   const exportBtn = document.getElementById('export-btn');
   const importBtn = document.getElementById('import-btn');
 
@@ -33,7 +40,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const arrow = document.getElementById(arrowId);
     if (!toggle || !content || !arrow) return;
     
-    // Sync initial arrow rotation
     const isOpen = content.style.display !== 'none';
     arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
 
@@ -67,17 +73,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  const TAB_IDS = ['unpack-more', 'tools', 'more', 'images', 'videos', 'short-videos', 'products', 'product-sites', 'news', 'web', 'finance', 'forums', 'maps', 'books', 'shopping'];
-
   // Load Data
-  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'advancedSearch', 'preferredDomains', 'blockedKeywords']);
+  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'advancedSearch', 'preferredDomains', 'blockedKeywords', 'hideFavicons', 'highlightEnabled', 'highlightColor', 'infiniteScrollPaused']);
   
-  // Clean Data (ensure strings)
   const cleanList = (list) => (list || []).map(item => {
     if (typeof item === 'string') return item;
     if (item && item.domain) return item.domain;
     if (item && item.keyword) return item.keyword;
-    if (typeof item === 'object') return JSON.stringify(item);
     return String(item);
   });
 
@@ -88,7 +90,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   let hiddenTabs = storeData.hiddenTabs || {};
 
   infiniteToggle.checked = storeData.infiniteScroll === true;
+  pauseToggle.checked = storeData.infiniteScrollPaused === true;
+  pauseRow.style.display = infiniteToggle.checked ? 'flex' : 'none';
   advSearchToggle.checked = storeData.advancedSearch !== false;
+  hideFaviconsToggle.checked = storeData.hideFavicons === true;
+  highlightEnabledToggle.checked = storeData.highlightEnabled === true;
+  highlightColorInput.value = storeData.highlightColor || '#38bdf8';
 
   // Eye Buttons Setup
   function updateEyeUI(btn, isHidden) {
@@ -97,10 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.title = isHidden ? 'Hidden (Click to Show)' : 'Visible (Click to Hide)';
   }
 
-  // Checkboxes for functional tab settings
   const unpackMoreToggle = document.getElementById('tab-unpack-more');
-
-  // Initialize Checkboxes
   unpackMoreToggle.checked = hiddenTabs['unpack-more'] === true;
 
   unpackMoreToggle.addEventListener('change', () => {
@@ -158,7 +162,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   async function triggerLiveUpdate() {
     const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
     for (let tab of tabs) {
-      try { await chrome.tabs.sendMessage(tab.id, { action: "live_update" }); } catch (e) {}
+      try { 
+        await chrome.tabs.sendMessage(tab.id, { action: "live_update" });
+        await chrome.tabs.sendMessage(tab.id, { action: "toggle_pause", paused: pauseToggle.checked });
+      } catch (e) {}
     }
   }
 
@@ -184,8 +191,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveModules();
   });
 
-  infiniteToggle.addEventListener('change', () => chrome.storage.local.set({ infiniteScroll: infiniteToggle.checked }, triggerLiveUpdate));
+  infiniteToggle.addEventListener('change', () => {
+    chrome.storage.local.set({ infiniteScroll: infiniteToggle.checked }, triggerLiveUpdate);
+    pauseRow.style.display = infiniteToggle.checked ? 'flex' : 'none';
+  });
+
+  pauseToggle.addEventListener('change', () => {
+    chrome.storage.local.set({ infiniteScrollPaused: pauseToggle.checked }, triggerLiveUpdate);
+  });
+
   advSearchToggle.addEventListener('change', () => chrome.storage.local.set({ advancedSearch: advSearchToggle.checked }, triggerLiveUpdate));
+  hideFaviconsToggle.addEventListener('change', () => chrome.storage.local.set({ hideFavicons: hideFaviconsToggle.checked }, triggerLiveUpdate));
+  highlightEnabledToggle.addEventListener('change', () => chrome.storage.local.set({ highlightEnabled: highlightEnabledToggle.checked }, triggerLiveUpdate));
+  highlightColorInput.addEventListener('change', () => chrome.storage.local.set({ highlightColor: highlightColorInput.value }, triggerLiveUpdate));
 
   addBtn.addEventListener('click', () => {
     const site = siteInput.value.trim().toLowerCase();

@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v1.5.5</span>
+        <span class="badge">v2.0.0</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -20,6 +20,7 @@
       <button class="tab-btn active" data-tab="tab-general">General</button>
       <button class="tab-btn" data-tab="tab-google">Google UI</button>
       <button class="tab-btn" data-tab="tab-filters">Filters</button>
+      <button class="tab-btn" data-tab="tab-custom">Custom</button>
       <button class="tab-btn" data-tab="tab-fun">Fun</button>
     </div>
 
@@ -31,8 +32,21 @@
             <span>Infinite Scroll</span>
             <small>Automatically load more results as you scroll</small>
           </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <label class="switch">
+              <input type="checkbox" id="infinite-scroll">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="setting-row" id="pause-row" style="display: none; padding-left: 20px; border-left: 2px solid var(--accent-color);">
+          <div class="setting-label">
+            <span>Pause Infinite Scroll</span>
+            <small>Temporarily stop loading to reach footer</small>
+          </div>
           <label class="switch">
-            <input type="checkbox" id="infinite-scroll">
+            <input type="checkbox" id="pause-infinite">
             <span class="slider"></span>
           </label>
         </div>
@@ -189,7 +203,37 @@
       </div>
     </div>
 
-    <!-- TAB 4: FUN -->
+    <!-- TAB 4: CUSTOM -->
+    <div id="tab-custom" class="tab-content">
+      <div class="settings-section">
+        <div class="setting-row">
+          <div class="setting-label">
+            <span>Hide Favicons</span>
+            <small>Remove website icons from search results</small>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="hide-favicons">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <span>Highlight Keywords</span>
+            <small>Highlight your search terms in results</small>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <input type="color" id="highlight-color" value="#38bdf8" style="width:30px; height:30px; border:none; padding:0; background:none; cursor:pointer;">
+            <label class="switch">
+              <input type="checkbox" id="highlight-enabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: FUN -->
     <div id="tab-fun" class="tab-content">
       <div class="fun-section">
         <h4 class="fun-cat">🌀 Animations</h4>

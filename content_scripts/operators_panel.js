@@ -73,26 +73,48 @@
       panel = document.createElement('div');
       panel.id = 'sop-panel';
       panel.innerHTML = `
-        <div class="sop-header"><h2>Search Operators</h2><button class="sop-close">✕</button></div>
+        <div class="sop-header"><h2>Advanced Tools</h2><button class="sop-close">✕</button></div>
         <div class="sop-body">
+          <div class="sop-section"><div class="sop-section-title">Essential Operators</div><div class="sop-chips">
+            <div class="sop-chip op-item" data-op='"' data-type="wrap" title="Exact Match">"Exact Match"</div>
+            <div class="sop-chip op-item" data-op="-" data-type="prefix" title="Exclude Keyword">-Exclude</div>
+            <div class="sop-chip op-item" data-op="site:" data-type="prefix" title="Search specific site">site:Domain</div>
+            <div class="sop-chip op-item" data-op="filetype:" data-type="prefix" title="Search file type">filetype:Ext</div>
+          </div></div>
+
+          <div class="sop-section"><div class="sop-section-title">Popular Sites</div><div class="sop-chips">
+            <div class="sop-chip op-item" data-op="site:reddit.com">Reddit</div>
+            <div class="sop-chip op-item" data-op="site:stackoverflow.com">Stack Overflow</div>
+            <div class="sop-chip op-item" data-op="site:wikipedia.org">Wikipedia</div>
+            <div class="sop-chip op-item" data-op="site:github.com">GitHub</div>
+          </div></div>
+
           <div class="sop-section"><div class="sop-section-title">File Types</div><div class="sop-chips">
             <div class="sop-chip op-item" data-op="filetype:pdf">PDF</div>
-            <div class="sop-chip op-item" data-op="filetype:doc">DOC</div>
-            <div class="sop-chip op-item" data-op="filetype:xls">XLS</div>
-            <div class="sop-chip op-item" data-op="filetype:ppt">PPT</div>
+            <div class="sop-chip op-item" data-op="filetype:xls">Excel</div>
+            <div class="sop-chip op-item" data-op="filetype:csv">CSV</div>
+            <div class="sop-chip op-item" data-op="filetype:doc">Word</div>
           </div></div>
+
           <div class="sop-section"><div class="sop-section-title">Time Filter</div><div class="sop-chips">
-            <div class="sop-chip op-item" data-op="&tbs=qdr:h">Last Hour</div>
-            <div class="sop-chip op-item" data-op="&tbs=qdr:d">Last 24h</div>
-            <div class="sop-chip op-item" data-op="&tbs=qdr:w">Last Week</div>
-            <div class="sop-chip op-item" data-op="&tbs=qdr:m">Last Month</div>
-            <div class="sop-chip op-item" data-op="&tbs=qdr:y">Last Year</div>
+            <div class="sop-chip op-item" data-op="&tbs=qdr:h">Past Hour</div>
+            <div class="sop-chip op-item" data-op="&tbs=qdr:d">Past 24h</div>
+            <div class="sop-chip op-item" data-op="&tbs=qdr:w">Past Week</div>
+            <div class="sop-chip op-item" data-op="&tbs=qdr:m">Past Month</div>
+            <div class="sop-chip op-item" data-op="&tbs=qdr:y">Past Year</div>
           </div></div>
-          <div class="sop-section"><div class="sop-section-title">Site Search</div><div class="sop-chips">
-            <div class="sop-chip op-item" data-op="site:reddit.com">Reddit</div>
-            <div class="sop-chip op-item" data-op="site:stackoverflow.com">StackOverflow</div>
-            <div class="sop-chip op-item" data-op="site:wikipedia.org">Wikipedia</div>
+
+          <div class="sop-section"><div class="sop-section-title">Date Operators</div><div class="sop-chips">
+            <div class="sop-chip op-item" data-op="before:2024" data-type="prefix">before:YYYY</div>
+            <div class="sop-chip op-item" data-op="after:2023" data-type="prefix">after:YYYY</div>
           </div></div>
+
+          <hr class="sop-hr">
+          <div class="sop-section">
+            <a href="https://www.google.com/advanced_search" target="_blank" style="display:block; text-align:center; color:#38bdf8; text-decoration:none; font-size:13px; font-weight:600; padding:10px; border:1px solid #334155; border-radius:8px;">
+              Go to Google Advanced Search ↗
+            </a>
+          </div>
         </div>
       `;
       document.body.appendChild(panel);
@@ -106,13 +128,25 @@
     panel.querySelectorAll('.op-item').forEach(chip => {
       chip.onclick = () => {
         const op = chip.dataset.op;
+        const type = chip.dataset.type;
         const searchInput = document.querySelector('input[name="q"], textarea[name="q"]');
         if (searchInput) {
           if (op.startsWith('&tbs=')) {
-            window.location.href = window.location.href + op;
+            const url = new URL(window.location.href);
+            url.searchParams.delete('tbs'); // Remove old time filter if exists
+            window.location.href = url.href + op;
           } else {
-            searchInput.value = searchInput.value + ' ' + op;
-            searchInput.form.submit();
+            let val = searchInput.value.trim();
+            if (type === 'wrap') {
+              searchInput.value = `"${val}"`;
+            } else if (type === 'prefix') {
+              searchInput.value = op + val;
+            } else {
+              searchInput.value = val + ' ' + op;
+            }
+            searchInput.focus();
+            // Don't auto-submit for prefix/wrap as user needs to edit
+            if (!type) searchInput.form.submit();
           }
         }
         close();

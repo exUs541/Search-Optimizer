@@ -1,12 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Search Filter & Site Blocker - Clean Search Results",
-  "version": "1.5.5",
+  "version": "2.0.0",
   "description": "Block sites from search results, hide ads, sponsored posts, videos & more. Infinite scroll for Google Search results.",
   "permissions": [
     "storage",
-    "tabs"
+    "tabs",
+    "downloads"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "host_permissions": [
     "*://*.google.com/*",
     "*://*.google.de/*",
@@ -49,23 +53,7 @@
         "*://*.google.nl/search*",
         "*://*.google.be/search*"
       ],
-      "js": ["content_scripts/link_filter.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
-        "*://*.google.com/search*",
-        "*://*.google.de/search*",
-        "*://*.google.at/search*",
-        "*://*.google.ch/search*",
-        "*://*.google.co.uk/search*",
-        "*://*.google.fr/search*",
-        "*://*.google.es/search*",
-        "*://*.google.it/search*",
-        "*://*.google.nl/search*",
-        "*://*.google.be/search*"
-      ],
-      "js": ["content_scripts/operators_panel.js"],
+      "js": ["content_scripts/link_filter.js", "content_scripts/operators_panel.js", "content_scripts/image_tools.js"],
       "run_at": "document_idle"
     }
   ]

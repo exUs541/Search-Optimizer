@@ -1,74 +1,59 @@
 # 🔍 Search Optimizer
 
-[![Version](https://img.shields.io/badge/version-1.4.0-blue.svg)](https://chrome.google.com/webstore)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://chrome.google.com/webstore)
 [![Platform](https://img.shields.io/badge/platform-Chrome-orange.svg)](https://chrome.google.com/webstore)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Search Optimizer** is a powerful browser extension designed to declutter your Google Search experience. It gives you full control over what you see, allowing you to block unwanted domains, hide distracting modules, and use advanced search operators with ease.
+**Search Optimizer** is a premium browser extension that transforms Google Search into a powerful, clean, and highly customizable tool. Whether you're a power user needing advanced operators or a minimalist wanting a decluttered UI, Search Optimizer gives you total control.
 
 ---
 
-## ✨ Key Features
+## 🚀 What's New in v2.0.0 (Power Update)
 
-### 🚫 Domain Blocker & Link Filter
-*   **Quick Block:** Block any domain directly from the search results with a single click.
-*   **Domain Management:** Manage your blocklist easily through the extension popup.
-*   **Preferred Domains:** Highlight results from your favorite websites in green for better visibility.
-
-### 🧹 UI Decluttering (Hide Google Modules)
-*   **Ad-Free Experience:** Automatically hides sponsored posts and ads.
-*   **Module Control:** Hide distracting "Latest from...", "People also ask", "Videos", "Images", and "Related Searches" blocks.
-*   **Tab Cleaner:** Hide specific search tabs (e.g., Shopping, Maps) to keep your navigation clean.
-
-### ⚙️ Advanced Search Operators Panel
-*   **Quick Operators:** Add `filetype:`, `site:`, `intitle:`, and date filters without typing complex queries.
-*   **PDF Search:** Dedicated shortcuts for finding documents and specific file types.
-*   **Search Integration:** Accessible directly via a gear icon next to the search bar.
-
-### 🎮 Google Fun & Games
-*   Quick access to hidden Google easter eggs and games like **Minecraft**, **Pac-man**, **Snake**, and more directly from the operators panel.
-
-### 🔄 Infinite Scroll
-*   Automatically loads the next page of results as you scroll down, providing a seamless browsing experience.
+*   **⚡ Expanded Infinite Scroll:** Now works seamlessly across **Images, Videos, News, and Shopping** tabs.
+*   **⏸ Scroll Pause:** Temporarily pause infinite scroll with a toggle to access the page footer.
+*   **📍 Navigation FAB:** Floating buttons to instantly jump to the **Top** or **Bottom** (Right-Click) of any results page.
+*   **🖼 Image Power Tools:** Directly **View**, **Download**, or **Copy** images from Google Image Search expanded results.
+*   **🎨 Visual Customization:** Hide favicons for a minimalist look and **Highlight Keywords** with your chosen color.
+*   **🛠 Advanced Operators 2.0:** More chips for Exact Match (`""`), Exclude (`-`), and precise **Date Ranges** (`before:`, `after:`).
 
 ---
 
-## 🚀 Installation
+## ✨ Core Features
 
-1.  **Download from the Chrome Web Store:**
-    [**👉 Install Search Optimizer**](https://chrome.google.com/webstore) *(Link to be updated once published)*
-2.  **Manual Installation (Developer Mode):**
-    *   Clone this repository.
-    *   Go to `chrome://extensions/` in your browser.
-    *   Enable "Developer mode".
-    *   Click "Load unpacked" and select the extension folder.
+### 🚫 Precision Filtering
+*   **Domain Blocker:** Instantly hide results from unwanted sites (e.g., Pinterest, Quora).
+*   **Keyword Filter:** Automatically hide result blocks containing specific "junk" keywords.
+*   **Preferred Domains:** Highlight trusted sources in green to find them faster.
+
+### 🧹 UI & AI Control
+*   **Hide AI Overviews (SGE):** Reclaim your screen space by suppressing AI-generated answers.
+*   **Ad-Free Experience:** Aggressively removes sponsored posts and distracting "People also ask" blocks.
+*   **Tab Manager:** Unpack the "More" menu and hide unused tabs (Maps, Finance, etc.) for a cleaner navigation bar.
+
+### ⚙️ Power Search Panel
+*   **Quick Operators:** One-click access to `site:`, `filetype:`, and specialized filters.
+*   **Direct Access:** Quick link to Google's official Advanced Search page for deep queries.
 
 ---
 
-## 🎨 Branding Assets
+## 🎨 Branding
+The extension features a modern, neon-accented design optimized for both dark and light modes.
 
-| Logo | Promo Banner |
+| Neon Logo | Dashboard |
 | :---: | :---: |
-| ![Logo](icons/logo_new_prototype.png) | ![Banner](promo_banner_new.png) |
+| ![Logo](icons/icon128.png) | ![Banner](promo_banner_new.png) |
 
 ---
 
-## 🛠 Technology Stack
-*   **Manifest V3** for modern security and performance.
-*   **Vanilla JavaScript** for lightweight execution.
-*   **CSS3** with a sleek, dark-themed UI.
-*   **Chrome Storage API** for settings synchronization.
-
----
-
-## 🛡 Privacy Policy
-Search Optimizer respects your privacy. All your settings (blocked domains, preferences) are stored locally on your device or synced via your Google Account. We **do not** collect, store, or transmit any of your personal data or search history.
+## 🛡 Security & Privacy
+*   **Manifest V3:** Built on the latest, most secure extension standard.
+*   **Local-First:** All blocklists and settings stay on your device or sync via your Chrome profile.
+*   **No Tracking:** We never collect or sell your search data.
 
 ---
 
 ## 📄 License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
 
 *Developed with ❤️ to make search better.*
