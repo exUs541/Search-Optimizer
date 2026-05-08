@@ -15,6 +15,11 @@
       .sbf-no-infinite .SJ974, .sbf-no-infinite .GNJ78, .sbf-no-infinite #botstuff .GNJ78 { display: none !important; }
       /* Favicon hiding */
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .H6McF, .sbf-hide-favicons .CA96S, .sbf-hide-favicons .kvH3mc img { display: none !important; }
+      
+      /* New Aggressive Hiding for Products/Shopping and Images */
+      .sbf-hide-products #tads, .sbf-hide-products .commercial-unit-desktop-top, .sbf-hide-products .commercial-unit-desktop-rhs, .sbf-hide-products .pla-unit, .sbf-hide-products .sh-pr__grid-result, .sbf-hide-products [data-asoch-dom-id] { display: none !important; }
+      .sbf-hide-images [data-attrid="images universal"], .sbf-hide-images .MjjYud:has(.O8S99), .sbf-hide-images .MjjYud:has(.isv-r) { display: none !important; }
+
       #sbf-loader {
         display: none; text-align: center; padding: 20px; color: #9aa0a6;
         font-family: Google Sans, Roboto, sans-serif; font-size: 14px;
@@ -81,6 +86,18 @@
         document.body.classList.add('sbf-hide-ai');
       } else {
         document.body.classList.remove('sbf-hide-ai');
+      }
+
+      if (googleModules.products) {
+        document.body.classList.add('sbf-hide-products');
+      } else {
+        document.body.classList.remove('sbf-hide-products');
+      }
+
+      if (googleModules.images) {
+        document.body.classList.add('sbf-hide-images');
+      } else {
+        document.body.classList.remove('sbf-hide-images');
       }
 
       if (hiddenTabs['more'] || hiddenTabs['unpack-more']) {
@@ -176,7 +193,15 @@
     }
 
     if (googleModules.sponsored) {
-      document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad, [data-text-ad], .MjjYud:has(.uEierd)').forEach(el => el.classList.add('sbf-hidden'));
+      document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad, [data-text-ad], .MjjYud:has(.uEierd), .commercial-unit-desktop-top, .commercial-unit-desktop-rhs').forEach(el => el.classList.add('sbf-hidden'));
+    }
+
+    if (googleModules.products) {
+      document.querySelectorAll('.pla-unit, .sh-pr__grid-result, [data-asoch-dom-id], .CU7eYc, .sh-pr__product-results').forEach(el => {
+        el.classList.add('sbf-hidden');
+        const container = el.closest('.MjjYud, .g, .commercial-unit-desktop-top, .commercial-unit-desktop-rhs');
+        if (container) container.classList.add('sbf-hidden');
+      });
     }
 
     const killByHeading = (texts, active) => {
