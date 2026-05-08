@@ -277,13 +277,31 @@
       'more': ['more', 'mehr']
     };
 
-    document.querySelectorAll('#hdtb-msb a, .MUFdbf a, .K9vS3e a, .OIn58 a, .crJ18e a, .Uo8X3b a, .C6AK7c').forEach(el => {
+    // Modern Google uses data-attrid for tabs
+    const tabAttrMap = {
+      'images': 'images',
+      'videos': 'videos',
+      'news': 'news',
+      'maps': 'maps',
+      'books': 'books',
+      'shopping': 'shopping',
+      'finance': 'finance'
+    };
+
+    document.querySelectorAll('#hdtb-msb a, .MUFdbf a, .K9vS3e a, .OIn58 a, .crJ18e a, .Uo8X3b a, .C6AK7c, [role="tab"], .hdtb-mitem a').forEach(el => {
       const text = (el.innerText || '').toLowerCase().trim();
+      const attrid = (el.getAttribute('data-attrid') || '').toLowerCase();
+      
       el.classList.remove('sbf-hidden');
+      if (el.parentElement.classList.contains('hdtb-mitem')) el.parentElement.classList.remove('sbf-hidden');
+
       for (const key of activeKeys) {
-        if (tabTextMap[key] && tabTextMap[key].some(label => text === label)) {
+        const matchesText = tabTextMap[key] && tabTextMap[key].some(label => text === label);
+        const matchesAttr = tabAttrMap[key] && attrid === tabAttrMap[key];
+        
+        if (matchesText || matchesAttr) {
           let target = el;
-          if (el.parentElement.tagName === 'DIV' && el.parentElement.children.length === 1) {
+          if (el.parentElement.classList.contains('hdtb-mitem') || (el.parentElement.tagName === 'DIV' && el.parentElement.children.length === 1)) {
             target = el.parentElement;
           }
           target.classList.add('sbf-hidden');
@@ -291,13 +309,14 @@
       }
     });
 
-    const toolsBtn = Array.from(document.querySelectorAll('a, div[role="button"], #hdtb-tls, .Uo8X3b')).find(el => {
+    const toolsBtn = Array.from(document.querySelectorAll('a, div[role="button"], #hdtb-tls, .Uo8X3b, .t7898b')).find(el => {
       const t = (el.innerText || '').toLowerCase().trim();
-      return t === 'tools' || t === 'werkzeuge';
+      return t === 'tools' || t === 'werkzeuge' || el.id === 'hdtb-tls';
     });
     if (toolsBtn) {
-      if (hiddenTabs['tools']) toolsBtn.classList.add('sbf-hidden');
-      else toolsBtn.classList.remove('sbf-hidden');
+      const target = toolsBtn.parentElement.classList.contains('hdtb-mitem') ? toolsBtn.parentElement : toolsBtn;
+      if (hiddenTabs['tools']) target.classList.add('sbf-hidden');
+      else target.classList.remove('sbf-hidden');
     }
   }
 

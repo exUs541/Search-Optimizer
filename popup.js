@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const importBtn = document.getElementById('import-btn');
 
   const modSelectAll = document.getElementById('mod-select-all');
+  const tabsSelectAll = document.getElementById('tabs-select-all');
 
   // Helper for Collapsibles
   function setupCollapsible(toggleId, contentId, arrowId, defaultFlex = 'flex') {
@@ -165,16 +166,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function saveModules() {
     chrome.storage.local.set({ googleModules }, triggerLiveUpdate);
-    updateSelectAllLabel();
+    updateSelectAllLabels();
   }
 
   function saveTabs() {
     chrome.storage.local.set({ hiddenTabs }, triggerLiveUpdate);
   }
 
-  function updateSelectAllLabel() {
-    const allHidden = Object.values(googleModules).every(v => v);
-    modSelectAll.textContent = allHidden ? 'Show All' : 'Hide All';
+  function updateSelectAllLabels() {
+    const allModHidden = Object.values(googleModules).every(v => v);
+    modSelectAll.textContent = allModHidden ? 'Show All' : 'Hide All';
+    
+    const allTabsHidden = Object.values(hiddenTabs).every(v => v);
+    tabsSelectAll.textContent = allTabsHidden ? 'Show All' : 'Hide All';
   }
 
   modSelectAll.addEventListener('click', () => {
@@ -183,6 +187,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     Object.keys(googleModules).forEach(k => { googleModules[k] = newState; });
     document.querySelectorAll('[data-hide^="mod-"]').forEach(btn => updateEyeUI(btn, newState));
     saveModules();
+  });
+
+  tabsSelectAll.addEventListener('click', () => {
+    const allHidden = Object.values(hiddenTabs).every(v => v);
+    const newState = !allHidden;
+    Object.keys(hiddenTabs).forEach(k => { hiddenTabs[k] = newState; });
+    document.querySelectorAll('[data-hide^="tab-"]').forEach(btn => updateEyeUI(btn, newState));
+    saveTabs();
   });
 
   infiniteToggle.addEventListener('change', () => {
@@ -248,5 +260,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     input.click();
   });
   
-  updateSelectAllLabel();
+  updateSelectAllLabels();
 });
