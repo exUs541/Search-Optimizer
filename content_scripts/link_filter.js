@@ -13,17 +13,23 @@
       .sbf-hide-more .znY98, .sbf-hide-more .G9vS3e, .sbf-hide-more [aria-label*="More"], .sbf-hide-more [aria-label*="Mehr"] { display: none !important; }
       /* Favicon hiding */
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .H6McF, .sbf-hide-favicons .CA96S, .sbf-hide-favicons .kvH3mc img { display: none !important; }
-      /* Products CSS-level hiding */
+      /* Products CSS-level hiding — selectors verified against live Google DOM */
+      /* wOPJ9c = product card, RyIFgf = carousel container */
+      .sbf-hide-products .wOPJ9c,
+      .sbf-hide-products div:has(> .wOPJ9c),
+      .sbf-hide-products .RyIFgf.rAdPSe:has(.wOPJ9c),
       .sbf-hide-products .commercial-unit-desktop-top,
       .sbf-hide-products .commercial-unit-desktop-rhs,
       .sbf-hide-products .pla-unit,
-      .sbf-hide-products .sh-pr__grid-result,
       .sbf-hide-products [data-asoch-dom-id],
       .sbf-hide-products #tvcap { display: none !important; }
+      /* Also hide the entire MjjYud block that contains a product grid */
+      .sbf-hide-products .MjjYud:has(.wOPJ9c) { display: none !important; }
       /* Images CSS-level hiding */
       .sbf-hide-images [data-attrid="images universal"],
       .sbf-hide-images .MjjYud:has(.O8S99),
-      .sbf-hide-images .MjjYud:has(.isv-r) { display: none !important; }
+      .sbf-hide-images .MjjYud:has(.isv-r),
+      .sbf-hide-images .MjjYud:has(.IWdOjd) { display: none !important; }
 
       #sbf-loader {
         display: none; text-align: center; padding: 20px; color: #9aa0a6;
@@ -155,11 +161,34 @@
       document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad, [data-text-ad], .commercial-unit-desktop-top, .commercial-unit-desktop-rhs').forEach(el => el.classList.add('sbf-hidden'));
     }
 
-    // Products — target the wrapper containers directly
+    // Products — multi-layered approach using live-verified selectors
     if (googleModules.products) {
-      document.querySelectorAll('.pla-unit, .sh-pr__grid-result, [data-asoch-dom-id], .CU7eYc, .sh-pr__product-results').forEach(el => {
-        const container = el.closest('.MjjYud, .g, .commercial-unit-desktop-top, .commercial-unit-desktop-rhs') || el;
-        container.classList.add('sbf-hidden');
+      // Layer 1: known class names from live DOM inspection
+      const productSelectors = [
+        '.wOPJ9c',           // individual product card (verified live)
+        '.pla-unit',         // legacy PLA unit
+        '[data-asoch-dom-id]',
+        '.CU7eYc',
+        '.commercial-unit-desktop-top',
+        '.commercial-unit-desktop-rhs',
+        '#tvcap'
+      ];
+      document.querySelectorAll(productSelectors.join(',')).forEach(el => {
+        // Walk up to find the MjjYud/g wrapper and hide the whole block
+        const wrapper = el.closest('.MjjYud, .g, .ULSxyf, .v7W49e') || el.parentElement?.parentElement;
+        if (wrapper) wrapper.classList.add('sbf-hidden');
+        else el.classList.add('sbf-hidden');
+      });
+
+      // Layer 2: find any block that contains price elements (€/$ signs + ratings)
+      document.querySelectorAll('.MjjYud, .g').forEach(block => {
+        if (block.classList.contains('sbf-hidden')) return;
+        // Detect: has multiple price spans AND star ratings → it's a product grid
+        const prices = block.querySelectorAll('[aria-label*="€"], [aria-label*="$"], .HRLxBb, .qIEPib');
+        const stars = block.querySelectorAll('.GpEInteractiveStar, .Fam1ne, [aria-label*="stars"], [aria-label*="Sterne"]');
+        if (prices.length >= 2 && stars.length >= 1) {
+          block.classList.add('sbf-hidden');
+        }
       });
     }
 
@@ -183,7 +212,6 @@
     killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
     killByHeading(['products', 'produkte', 'shop for', 'kaufen', 'sponsored'], googleModules.products);
     killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums'], googleModules.latest);
-    // FIX: "People also search for" and "Related searches" both covered here
     killByHeading(['related searches', 'verwandte suchanfragen', 'people also search for', 'ähnliche suchanfragen'], googleModules.search);
   }
 
