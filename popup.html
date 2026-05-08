@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v2.0.9</span>
+        <span class="badge">v2.1.0</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -61,7 +61,7 @@
 
     <!-- TAB 2: GOOGLE UI -->
     <div id="tab-google" class="tab-content">
-      <!-- 1. HIDE SEARCH TABS (Alphabetically Sorted) -->
+      <!-- 1. HIDE SEARCH TABS -->
       <div class="modules-section">
         <h3 class="collapse-toggle" id="tabs-toggle">
           Hide Search Tabs
@@ -77,26 +77,30 @@
               <span class="slider"></span>
             </label>
           </div>
+          
+          <!-- Primary Controls -->
+          <div class="eye-row"><span>More Button</span><button class="eye-btn" id="eye-tab-more" data-hide="tab-more"></button></div>
+          <div class="eye-row"><span>Tools Button</span><button class="eye-btn" id="eye-tab-tools" data-hide="tab-tools"></button></div>
+          
           <div style="border-top: 1px solid var(--border-color); margin: 4px 0 8px;"></div>
           
+          <!-- Sorted Tabs -->
           <div class="eye-row"><span>Books</span><button class="eye-btn" id="eye-tab-books" data-hide="tab-books"></button></div>
           <div class="eye-row"><span>Finance</span><button class="eye-btn" id="eye-tab-finance" data-hide="tab-finance"></button></div>
           <div class="eye-row"><span>Forums</span><button class="eye-btn" id="eye-tab-forums" data-hide="tab-forums"></button></div>
           <div class="eye-row"><span>Images</span><button class="eye-btn" id="eye-tab-images" data-hide="tab-images"></button></div>
           <div class="eye-row"><span>Maps</span><button class="eye-btn" id="eye-tab-maps" data-hide="tab-maps"></button></div>
-          <div class="eye-row"><span>More Button</span><button class="eye-btn" id="eye-tab-more" data-hide="tab-more"></button></div>
           <div class="eye-row"><span>News</span><button class="eye-btn" id="eye-tab-news" data-hide="tab-news"></button></div>
           <div class="eye-row"><span>Product sites</span><button class="eye-btn" id="eye-tab-product-sites" data-hide="tab-product-sites"></button></div>
           <div class="eye-row"><span>Products</span><button class="eye-btn" id="eye-tab-products" data-hide="tab-products"></button></div>
           <div class="eye-row"><span>Shopping</span><button class="eye-btn" id="eye-tab-shopping" data-hide="tab-shopping"></button></div>
           <div class="eye-row"><span>Short videos</span><button class="eye-btn" id="eye-tab-short-videos" data-hide="tab-short-videos"></button></div>
-          <div class="eye-row"><span>Tools Button</span><button class="eye-btn" id="eye-tab-tools" data-hide="tab-tools"></button></div>
           <div class="eye-row"><span>Videos</span><button class="eye-btn" id="eye-tab-videos" data-hide="tab-videos"></button></div>
           <div class="eye-row"><span>Web</span><button class="eye-btn" id="eye-tab-web" data-hide="tab-web"></button></div>
         </div>
       </div>
 
-      <!-- 2. HIDE GOOGLE MODULES (Alphabetically Sorted) -->
+      <!-- 2. HIDE GOOGLE MODULES -->
       <div class="modules-section">
         <h3 class="collapse-toggle" id="modules-toggle">
           Hide Google Modules
