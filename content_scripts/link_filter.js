@@ -49,10 +49,10 @@
       
       #sbf-nav-btns { position: fixed; bottom: 24px; left: 24px; z-index: 2147483640; display: none; flex-direction: column; gap: 8px; }
       .sbf-show-nav-btns #sbf-nav-btns.visible { display: flex; }
-      .sbf-nav-btn { width: 44px; height: 44px; border-radius: 50%; background: #1e293b; border: 1px solid #334155; color: var(--sbf-nav-color, #38bdf8); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s; user-select: none; }
+      .sbf-nav-btn { width: 44px; height: 44px; border-radius: 50%; background: #1e293b; border: 1px solid #334155; color: var(--sbf-nav-color, #38bdf8) !important; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s; user-select: none; }
       .sbf-nav-btn:hover { background: #334155; transform: scale(1.05); }
       .sbf-nav-btn.disabled { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
-      .sbf-nav-btn svg { width: 20px; height: 20px; pointer-events: none; }
+      .sbf-nav-btn svg { width: 20px; height: 20px; pointer-events: none; stroke: currentColor !important; }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -62,8 +62,6 @@
   let googleModules = {};
   let infiniteScrollEnabled = false;
   let hiddenTabs = {};
-  let preferredDomains = [];
-  let keywordFilters = [];
   let highlightEnabled = false;
   let highlightColor = '#38bdf8';
   let navBtnColor = '#38bdf8';
@@ -75,23 +73,18 @@
   function waitForBody(callback) {
     if (document.body) return callback();
     const observer = new MutationObserver((_, obs) => {
-      if (document.body) {
-        obs.disconnect();
-        callback();
-      }
+      if (document.body) { obs.disconnect(); callback(); }
     });
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
   async function loadConfig() {
     try {
-      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled', 'navBtnColor']);
+      const data = await chrome.storage.local.get(null);
       searchFilters = data.searchFilters || [];
       googleModules = data.googleModules || {};
       infiniteScrollEnabled = data.infiniteScroll === true;
       hiddenTabs = data.hiddenTabs || {};
-      preferredDomains = data.preferredDomains || [];
-      keywordFilters = data.blockedKeywords || [];
       highlightEnabled = data.highlightEnabled === true;
       highlightColor = data.highlightColor || '#38bdf8';
       navBtnColor = data.navBtnColor || '#38bdf8';
@@ -99,7 +92,6 @@
       
       waitForBody(() => {
         const b = document.body;
-        b.classList.toggle('sbf-no-infinite', !infiniteScrollEnabled);
         b.classList.toggle('sbf-hide-ai', !!googleModules.ai);
         b.classList.toggle('sbf-hide-products', !!googleModules.products);
         b.classList.toggle('sbf-hide-images', !!googleModules.images);
@@ -113,26 +105,20 @@
         
         document.documentElement.style.setProperty('--sbf-nav-color', navBtnColor);
         updateNavBtns();
+        updateHighlighting();
       });
-
-      updateHighlighting();
-    } catch (e) {
-      console.error('[Search Optimizer] Error loading config:', e);
-    }
+    } catch (e) { console.error('[Search Optimizer] Error loading config:', e); }
   }
 
   function updateHighlighting() {
     let style = document.getElementById('sbf-highlight-style');
     if (highlightEnabled) {
       if (!style) {
-        style = document.createElement('style');
-        style.id = 'sbf-highlight-style';
+        style = document.createElement('style'); style.id = 'sbf-highlight-style';
         (document.head || document.documentElement).appendChild(style);
       }
       style.textContent = `.g em, .g b, .MjjYud em, .MjjYud b { background-color: ${highlightColor}33 !important; color: ${highlightColor} !important; padding: 0 2px; border-radius: 2px; }`;
-    } else if (style) {
-      style.remove();
-    }
+    } else if (style) style.remove();
   }
 
   function scanGoogleModules() {
@@ -158,40 +144,29 @@
     bruteForceKill(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
     bruteForceKill(['discussions and forums', 'diskussionen und foren', 'forums', 'foren'], googleModules.forums);
     bruteForceKill(['products', 'produkte', 'shop for'], googleModules.products);
-
-    // Sponsored Ads
-    if (googleModules.sponsored) {
-      document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad').forEach(el => el.classList.add('sbf-hidden'));
-    }
+    if (googleModules.sponsored) document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad').forEach(el => el.classList.add('sbf-hidden'));
   }
 
   function hideGoogleTabs() {
     document.querySelectorAll('#hdtb-msb a, .MUFdbf a, [role="tab"]').forEach(el => {
       const text = (el.innerText || '').toLowerCase().trim();
-      const tabLabels = {
-        'images': ['images', 'bilder'], 'videos': ['videos'], 'news': ['news', 'nachrichten'],
-        'shopping': ['shopping'], 'more': ['more', 'mehr']
-      };
+      const tabLabels = { 'images': ['images', 'bilder'], 'videos': ['videos'], 'news': ['news', 'nachrichten'], 'shopping': ['shopping'], 'more': ['more', 'mehr'] };
       for (const key in hiddenTabs) {
         if (hiddenTabs[key] && tabLabels[key] && tabLabels[key].includes(text)) {
-          el.closest('.hdtb-mitem') ? el.closest('.hdtb-mitem').classList.add('sbf-hidden') : el.classList.add('sbf-hidden');
+          const target = el.closest('.hdtb-mitem') || el;
+          target.classList.add('sbf-hidden');
         }
       }
     });
   }
 
   function incrementalScan() {
-    scanGoogleModules();
-    hideGoogleTabs();
+    scanGoogleModules(); hideGoogleTabs();
     document.querySelectorAll('a[href]').forEach(link => {
-      if (link.dataset.sbfDone) return;
-      link.dataset.sbfDone = '1';
+      if (link.dataset.sbfDone) return; link.dataset.sbfDone = '1';
       try {
         const domain = new URL(link.href).hostname.replace(/^www\./, '');
-        if (searchFilters.includes(domain)) {
-          const container = link.closest('.g, .MjjYud, .tF2Cxc');
-          if (container) container.classList.add('sbf-hidden');
-        }
+        if (searchFilters.includes(domain)) { const container = link.closest('.g, .MjjYud, .tF2Cxc'); if (container) container.classList.add('sbf-hidden'); }
       } catch(e) {}
     });
     ensureLoader();
@@ -211,8 +186,7 @@
 
   function ensureNavBtns() {
     if (!document.body || document.getElementById('sbf-nav-btns')) return;
-    const container = document.createElement('div');
-    container.id = 'sbf-nav-btns';
+    const container = document.createElement('div'); container.id = 'sbf-nav-btns';
     container.innerHTML = `
       <div class="sbf-nav-btn" id="sbf-scroll-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg></div>
       <div class="sbf-nav-btn" id="sbf-scroll-bottom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
@@ -224,11 +198,9 @@
 
   function ensureLoader() {
     if (loader || !document.body) return;
-    loader = document.createElement('div');
-    loader.id = 'sbf-loader';
+    loader = document.createElement('div'); loader.id = 'sbf-loader';
     loader.innerHTML = `<div class="sbf-spinner"></div><span>Loading more results…</span>`;
-    const rso = document.getElementById('rso');
-    if (rso) rso.after(loader);
+    const rso = document.getElementById('rso'); if (rso) rso.after(loader);
   }
 
   async function onScroll() {
@@ -241,12 +213,10 @@
         try {
           const resp = await fetch(nextLink.href);
           const doc = new DOMParser().parseFromString(await resp.text(), 'text/html');
-          const targetRso = document.getElementById('rso');
-          const newRso = doc.querySelector('#rso');
+          const targetRso = document.getElementById('rso'); const newRso = doc.querySelector('#rso');
           if (newRso && targetRso) {
             Array.from(newRso.children).forEach(child => targetRso.appendChild(child.cloneNode(true)));
-            const newNext = doc.querySelector('#pnnext');
-            if (newNext) nextLink.href = newNext.href; else nextLink.remove();
+            const newNext = doc.querySelector('#pnnext'); if (newNext) nextLink.href = newNext.href; else nextLink.remove();
             incrementalScan();
           }
         } catch (e) {} finally { loader?.classList.remove('active'); setTimeout(() => { isFetching = false; }, 1000); }
@@ -254,6 +224,7 @@
     }
   }
 
+  chrome.runtime.onMessage.addListener((m) => { if (m.action === "live_update") loadConfig(); });
   chrome.storage.onChanged.addListener(() => loadConfig());
 
   await loadConfig();

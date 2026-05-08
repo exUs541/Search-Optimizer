@@ -3,98 +3,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   const EYE_OPEN = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
   const EYE_CLOSED = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
-  // Tabs
+  // State
+  let store = await chrome.storage.local.get(null);
+  let googleModules = store.googleModules || {};
+  let hiddenTabs = store.hiddenTabs || {};
+  let searchFilters = store.searchFilters || [];
+  let blockedKeywords = store.blockedKeywords || [];
+
+  // Elements
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
-      tabContents.forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      const content = document.getElementById(btn.dataset.tab);
-      if (content) content.classList.add('active');
-    });
-  });
-
-  // Load Data
-  const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled', 'themeColors', 'navBtnColor']);
-  
-  let searchFilters = data.searchFilters || [];
-  let googleModules = data.googleModules || {};
-  let hiddenTabs = data.hiddenTabs || {};
-  let preferredDomains = data.preferredDomains || [];
-  let blockedKeywords = data.blockedKeywords || [];
-
-  // General Settings
-  const infiniteToggle = document.getElementById('infinite-scroll');
-  const advSearchToggle = document.getElementById('advanced-search');
-  const navBtnsToggle = document.getElementById('nav-btns-enabled');
-  
-  infiniteToggle.checked = !!data.infiniteScroll;
-  advSearchToggle.checked = data.advancedSearch !== false;
-  navBtnsToggle.checked = data.navBtnsEnabled !== false;
-
-  const saveToStorage = () => {
-    chrome.storage.local.set({
-      infiniteScroll: infiniteToggle.checked,
-      advancedSearch: advSearchToggle.checked,
-      navBtnsEnabled: navBtnsToggle.checked,
-      googleModules,
-      hiddenTabs,
-      searchFilters,
-      preferredDomains,
-      blockedKeywords,
-      highlightEnabled: document.getElementById('highlight-enabled').checked,
-      highlightColor: document.getElementById('color-primary').value,
-      navBtnColor: document.getElementById('color-nav').value
-    }, triggerLiveUpdate);
-  };
-
-  [infiniteToggle, advSearchToggle, navBtnsToggle].forEach(el => el.addEventListener('change', saveToStorage));
-
-  // Collapsibles
-  function setupCollapsible(headerId, contentId, arrowId) {
-    const header = document.getElementById(headerId);
-    const content = document.getElementById(contentId);
-    const arrow = document.getElementById(arrowId);
-    if (!header || !content) return;
-    header.addEventListener('click', () => {
-      const isHidden = content.style.display === 'none';
-      content.style.display = isHidden ? 'block' : 'none';
-      if (arrow) arrow.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
-    });
-  }
-  setupCollapsible('tabs-toggle', 'tabs-content', 'tabs-arrow');
-  setupCollapsible('modules-toggle', 'modules-content', 'modules-arrow');
-  setupCollapsible('block-domains-toggle', 'block-domains-content', 'block-domains-arrow');
-  setupCollapsible('keywords-toggle', 'keywords-content', 'keywords-arrow');
-
-  // Eye Buttons
-  function updateEyeUI(btn, isHidden) {
-    btn.innerHTML = isHidden ? EYE_CLOSED : EYE_OPEN;
-    btn.classList.toggle('hidden', isHidden);
-  }
-
-  document.querySelectorAll('.eye-btn').forEach(btn => {
-    const key = btn.dataset.hide;
-    if (!key) return;
-    const isMod = key.startsWith('mod-');
-    const actualKey = key.replace('mod-', '').replace('tab-', '');
-    const stateObj = isMod ? googleModules : hiddenTabs;
-    updateEyeUI(btn, !!stateObj[actualKey]);
-    btn.addEventListener('click', () => {
-      stateObj[actualKey] = !stateObj[actualKey];
-      updateEyeUI(btn, !!stateObj[actualKey]);
-      saveToStorage();
-    });
-  });
-
-  // Theme System
   const colorPrimary = document.getElementById('color-primary');
   const colorBg = document.getElementById('color-bg');
   const colorSecondary = document.getElementById('color-secondary');
   const colorNav = document.getElementById('color-nav');
-  const themePresets = document.querySelectorAll('.theme-preset');
+  const saveBtn = document.querySelector('.save-btn');
 
   const themes = {
     midnight: { p: '#38bdf8', b: '#0f172a', s: '#1e293b' },
@@ -105,133 +28,163 @@ document.addEventListener('DOMContentLoaded', async () => {
     classic: { p: '#6366f1', b: '#111111', s: '#1f2937' }
   };
 
-  const applyTheme = (colors) => {
+  // ─── Core Functions ────────────────────────────────────────────────────────
+  async function triggerLiveUpdate() {
+    const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
+    for (let t of tabs) chrome.tabs.sendMessage(t.id, { action: "live_update" }).catch(() => {});
+  }
+
+  const applyThemeToUI = (colors, navColor) => {
     const r = document.documentElement;
     r.style.setProperty('--primary', colors.p);
     r.style.setProperty('--bg-main', colors.b);
     r.style.setProperty('--bg-card', colors.s);
     r.style.setProperty('--border', colors.s);
     r.style.setProperty('--bg-input', colors.s);
+    
     colorPrimary.value = colors.p;
     colorBg.value = colors.b;
     colorSecondary.value = colors.s;
-    if (!data.navBtnColor) colorNav.value = colors.p;
+    if (navColor) colorNav.value = navColor;
   };
 
-  if (data.themeColors) applyTheme(data.themeColors);
-  else applyTheme(themes.midnight);
-
-  if (data.navBtnColor) colorNav.value = data.navBtnColor;
-
-  themePresets.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const colors = themes[btn.dataset.theme];
-      if (colors) {
-        applyTheme(colors);
-        chrome.storage.local.set({ themeColors: colors, navBtnColor: colors.p });
-        colorNav.value = colors.p;
-      }
+  const saveAll = async () => {
+    const themeColors = { p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value };
+    const navBtnColor = colorNav.value;
+    
+    await chrome.storage.local.set({
+      infiniteScroll: document.getElementById('infinite-scroll').checked,
+      advancedSearch: document.getElementById('advanced-search').checked,
+      navBtnsEnabled: document.getElementById('nav-btns-enabled').checked,
+      highlightEnabled: document.getElementById('highlight-enabled').checked,
+      highlightColor: colorPrimary.value,
+      googleModules,
+      hiddenTabs,
+      searchFilters,
+      blockedKeywords,
+      themeColors,
+      navBtnColor
     });
+    triggerLiveUpdate();
+  };
+
+  // ─── Init ──────────────────────────────────────────────────────────────────
+  if (store.themeColors) applyThemeToUI(store.themeColors, store.navBtnColor);
+  else applyThemeToUI(themes.midnight, themes.midnight.p);
+
+  document.getElementById('infinite-scroll').checked = !!store.infiniteScroll;
+  document.getElementById('advanced-search').checked = store.advancedSearch !== false;
+  document.getElementById('nav-btns-enabled').checked = store.navBtnsEnabled !== false;
+  document.getElementById('highlight-enabled').checked = !!store.highlightEnabled;
+
+  // Tabs
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Collapsibles
+  const setupColl = (hId, cId) => {
+    const h = document.getElementById(hId);
+    const c = document.getElementById(cId);
+    if (h && c) h.onclick = () => { c.style.display = c.style.display === 'none' ? 'block' : 'none'; };
+  };
+  setupColl('tabs-toggle', 'tabs-content');
+  setupColl('modules-toggle', 'modules-content');
+  setupColl('block-domains-toggle', 'block-domains-content');
+  setupColl('keywords-toggle', 'keywords-content');
+
+  // Eyes
+  const updateEye = (btn, hide) => { btn.innerHTML = hide ? EYE_CLOSED : EYE_OPEN; btn.classList.toggle('hidden', hide); };
+  document.querySelectorAll('.eye-btn').forEach(btn => {
+    const key = btn.dataset.hide;
+    const isMod = key.startsWith('mod-');
+    const actualKey = key.replace('mod-', '').replace('tab-', '');
+    const obj = isMod ? googleModules : hiddenTabs;
+    updateEye(btn, !!obj[actualKey]);
+    btn.onclick = () => { obj[actualKey] = !obj[actualKey]; updateEye(btn, !!obj[actualKey]); saveAll(); };
+  });
+
+  // Theme Logic
+  document.querySelectorAll('.theme-preset').forEach(btn => {
+    btn.onclick = () => {
+      const c = themes[btn.dataset.theme];
+      applyThemeToUI(c, c.p);
+      saveAll();
+    };
   });
 
   [colorPrimary, colorBg, colorSecondary, colorNav].forEach(el => {
-    el.addEventListener('input', () => {
-      const colors = { p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value };
-      applyTheme(colors);
-      chrome.storage.local.set({ themeColors: colors, navBtnColor: colorNav.value });
-    });
+    el.oninput = () => {
+      applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value);
+      saveAll();
+    };
   });
 
-  // List Rendering
-  function renderList(list, elementId, storageKey) {
-    const el = document.getElementById(elementId);
-    if (!el) return;
-    el.innerHTML = '';
-    list.forEach((item, idx) => {
-      const li = document.createElement('li');
-      li.textContent = item;
-      const del = document.createElement('button');
-      del.textContent = '✕';
-      del.className = 'delete-btn';
-      del.onclick = () => {
-        list.splice(idx, 1);
-        saveToStorage();
-        renderList(list, elementId, storageKey);
-      };
-      li.appendChild(del);
-      el.appendChild(li);
-    });
-  }
+  // Select Alls
+  document.getElementById('mod-select-all').onclick = () => {
+    const state = !Object.values(googleModules).every(v => v);
+    Object.keys(googleModules).forEach(k => googleModules[k] = state);
+    document.querySelectorAll('[data-hide^="mod-"]').forEach(b => updateEye(b, state));
+    saveAll();
+  };
+  document.getElementById('tabs-select-all').onclick = () => {
+    const state = !Object.values(hiddenTabs).every(v => v);
+    Object.keys(hiddenTabs).forEach(k => hiddenTabs[k] = state);
+    document.querySelectorAll('[data-hide^="tab-"]').forEach(b => updateEye(b, state));
+    saveAll();
+  };
 
-  renderList(searchFilters, 'site-list', 'searchFilters');
-  renderList(blockedKeywords, 'keyword-list', 'blockedKeywords');
+  // Lists
+  const render = (list, elId, key) => {
+    const el = document.getElementById(elId); if (!el) return;
+    el.innerHTML = '';
+    list.forEach((it, i) => {
+      const li = document.createElement('li'); li.textContent = it;
+      const d = document.createElement('button'); d.textContent = '✕'; d.className = 'delete-btn';
+      d.onclick = () => { list.splice(i, 1); saveAll(); render(list, elId, key); };
+      li.appendChild(d); el.appendChild(li);
+    });
+  };
+  render(searchFilters, 'site-list', 'searchFilters');
+  render(blockedKeywords, 'keyword-list', 'blockedKeywords');
 
   document.getElementById('add-btn').onclick = () => {
-    const input = document.getElementById('site-input');
-    const val = input.value.trim().toLowerCase();
-    if (val && !searchFilters.includes(val)) {
-      searchFilters.push(val);
-      input.value = '';
-      saveToStorage();
-      renderList(searchFilters, 'site-list', 'searchFilters');
-    }
+    const i = document.getElementById('site-input');
+    if (i.value && !searchFilters.includes(i.value)) { searchFilters.push(i.value.toLowerCase()); i.value = ''; saveAll(); render(searchFilters, 'site-list'); }
   };
-
   document.getElementById('add-keyword-btn').onclick = () => {
-    const input = document.getElementById('keyword-input');
-    const val = input.value.trim().toLowerCase();
-    if (val && !blockedKeywords.includes(val)) {
-      blockedKeywords.push(val);
-      input.value = '';
-      saveToStorage();
-      renderList(blockedKeywords, 'keyword-list', 'blockedKeywords');
-    }
+    const i = document.getElementById('keyword-input');
+    if (i.value && !blockedKeywords.includes(i.value)) { blockedKeywords.push(i.value.toLowerCase()); i.value = ''; saveAll(); render(blockedKeywords, 'keyword-list'); }
   };
 
-  // Highlighting
-  const highToggle = document.getElementById('highlight-enabled');
-  highToggle.checked = !!data.highlightEnabled;
-  highToggle.addEventListener('change', saveToStorage);
+  // Switches
+  document.querySelectorAll('.switch input').forEach(s => s.onchange = saveAll);
 
-  // Global Save UI
-  const mainSaveBtn = document.querySelector('.save-btn');
-  mainSaveBtn.onclick = () => {
-    saveToStorage();
-    mainSaveBtn.textContent = '✓ Saved';
-    mainSaveBtn.style.background = '#10b981';
-    setTimeout(() => {
-      mainSaveBtn.textContent = 'Save Settings';
-      mainSaveBtn.style.background = 'var(--primary)';
-    }, 2000);
+  // Global Save
+  saveBtn.onclick = () => {
+    saveAll();
+    saveBtn.textContent = '✓ Saved';
+    saveBtn.style.background = '#10b981';
+    setTimeout(() => { saveBtn.textContent = 'Save Settings'; saveBtn.style.background = 'var(--primary)'; }, 2000);
   };
-
-  async function triggerLiveUpdate() {
-    const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
-    for (let t of tabs) chrome.tabs.sendMessage(t.id, { action: "live_update" }).catch(() => {});
-  }
 
   // Backup
   document.getElementById('export-btn').onclick = async () => {
     const d = await chrome.storage.local.get(null);
-    const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `search-optimizer-v2.3.1.json`;
-    a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }));
+    a.download = `search-optimizer-v2.3.2.json`; a.click();
   };
-
   document.getElementById('import-btn').onclick = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = e => {
-      const reader = new FileReader();
-      reader.onload = async re => {
-        await chrome.storage.local.set(JSON.parse(re.target.result));
-        window.location.reload();
-      };
-      reader.readAsText(e.target.files[0]);
+    const i = document.createElement('input'); i.type = 'file'; i.accept = '.json';
+    i.onchange = e => {
+      const r = new FileReader(); r.onload = async re => { await chrome.storage.local.set(JSON.parse(re.target.result)); window.location.reload(); };
+      r.readAsText(e.target.files[0]);
     };
-    input.click();
+    i.click();
   };
 });
