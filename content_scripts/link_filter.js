@@ -435,28 +435,7 @@
     ensureLoader();
   }
 
-  // ─── Nav Buttons ──────────────────────────────────────────────────────────
-  function updateNavBtns() {
-    if (!navBtnsEnabled) {
-      const container = document.getElementById('sbf-nav-btns');
-      if (container) container.classList.remove('visible');
-      return;
-    }
-    ensureNavBtns();
-    const container = document.getElementById('sbf-nav-btns');
-    if (container) {
-      container.classList.add('visible');
-      
-      const topBtn = document.getElementById('sbf-scroll-top');
-      const bottomBtn = document.getElementById('sbf-scroll-bottom');
-      
-      const isAtTop = window.scrollY < 50;
-      const isAtBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 50);
-      
-      if (topBtn) topBtn.classList.toggle('disabled', isAtTop);
-      if (bottomBtn) bottomBtn.classList.toggle('disabled', isAtBottom);
-    }
-  }
+
 
   function ensureNavBtns() {
     if (document.getElementById('sbf-nav-btns')) return;
@@ -580,17 +559,41 @@
     if (request.action === 'live_update') {
       console.log('[Search Optimizer] Live Update triggered');
       await loadConfig();
-      // Clear all previous state
+      
+      // Clear all previous state markers to force a re-scan
       document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
       document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
       document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
-      document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
       document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
-      document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
+      document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
+      
       incrementalScan();
       updateNavBtns();
     }
   });
+
+  function updateNavBtns() {
+    const container = document.getElementById('sbf-nav-btns');
+    if (!navBtnsEnabled) {
+      if (container) container.remove(); // Remove instead of just hiding for a clean state
+      return;
+    }
+    
+    ensureNavBtns();
+    const updatedContainer = document.getElementById('sbf-nav-btns');
+    if (updatedContainer) {
+      updatedContainer.classList.add('visible');
+      
+      const topBtn = document.getElementById('sbf-scroll-top');
+      const bottomBtn = document.getElementById('sbf-scroll-bottom');
+      
+      const isAtTop = window.scrollY < 50;
+      const isAtBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 50);
+      
+      if (topBtn) topBtn.classList.toggle('disabled', isAtTop);
+      if (bottomBtn) bottomBtn.classList.toggle('disabled', isAtBottom);
+    }
+  }
 
   const observer = new MutationObserver(() => { incrementalScan(); });
   observer.observe(document.body, { childList: true, subtree: true });
