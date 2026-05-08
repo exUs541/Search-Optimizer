@@ -56,6 +56,21 @@
       .sbf-hide-videos .MjjYud:has(.mnr-c),
       .sbf-hide-videos .MjjYud:has(.VibNM) { display: none !important; }
 
+      /* People Also Ask (PAA) CSS-level hiding */
+      .sbf-hide-ask [data-attrid="wa_paa"],
+      .sbf-hide-ask .WwS1pe,
+      .sbf-hide-ask .y8958c,
+      .sbf-hide-ask .MjjYud:has([data-attrid="wa_paa"]),
+      .sbf-hide-ask .MjjYud:has(.WwS1pe) { display: none !important; }
+
+      /* People Also Search For (PASF) CSS-level hiding */
+      .sbf-hide-pasf [data-attrid="people_also_search_for"],
+      .sbf-hide-pasf [data-pasf="true"],
+      .sbf-hide-pasf .nV_results,
+      .sbf-hide-pasf .V99SZd,
+      .sbf-hide-pasf .MjjYud:has([data-attrid="people_also_search_for"]),
+      .sbf-hide-pasf .MjjYud:has(.nV_results) { display: none !important; }
+
       #sbf-loader {
         display: none; text-align: center; padding: 20px; color: #9aa0a6;
         font-family: Google Sans, Roboto, sans-serif; font-size: 14px;
@@ -210,11 +225,21 @@
     killByHeading(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
     killByHeading(['images', 'bilder', 'show more images', 'weitere bilder', 'bilderergebnisse'], googleModules.images);
     killByHeading(['videos', 'short videos', 'kurzvideos', 'reels', 'video'], googleModules.videos);
-    killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu'], googleModules.ask);
+    killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu', 'andere suchten auch nach'], googleModules.ask);
     killByHeading(['products', 'produkte', 'shop for', 'kaufen'], googleModules.products);
     killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums', 'diskussionen'], googleModules.latest);
     killByHeading(['related searches', 'verwandte suchanfragen', 'ähnliche suchanfragen'], googleModules.search);
-    killByHeading(['people also search for', 'nutzer suchten auch nach'], googleModules.pasf);
+    killByHeading(['people also search for', 'nutzer suchten auch nach', 'similar searches'], googleModules.pasf);
+
+    // Aggressive PAA hiding via data attributes
+    if (googleModules.ask) {
+      document.querySelectorAll('[data-attrid="wa_paa"], .WwS1pe, .y8958c').forEach(el => {
+        const container = el.closest('.MjjYud, .g, .ULSxyf') || el;
+        container.classList.add('sbf-hidden');
+      });
+    }
+
+    // Aggressive PASF hiding via data attributes and classes
     killByHeading(['songs', 'titel', 'lieder'], googleModules.songs);
     killByHeading(['top stories', 'schlagzeilen', 'top-meldungen'], googleModules.topstories);
     killByHeading(['recipes', 'rezepte'], googleModules.recipes);
@@ -566,6 +591,8 @@
       document.body.classList.toggle('sbf-hide-products', !!googleModules.products);
       document.body.classList.toggle('sbf-hide-images', !!googleModules.images);
       document.body.classList.toggle('sbf-hide-videos', !!googleModules.videos);
+      document.body.classList.toggle('sbf-hide-ask', !!googleModules.ask);
+      document.body.classList.toggle('sbf-hide-pasf', !!googleModules.pasf);
       document.body.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
       document.body.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
 
