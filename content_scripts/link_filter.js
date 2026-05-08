@@ -196,6 +196,33 @@
     if (googleModules.knowledge) {
       document.querySelectorAll('.kp-wholepage, .liYKde, .kp-blk, .I6TXqe, .osrp-blk').forEach(el => el.classList.add('sbf-hidden'));
     }
+
+    // Aggressive Video Heuristics
+    if (googleModules.videos) {
+      document.querySelectorAll('.MjjYud, .g, .ULSxyf').forEach(block => {
+        if (block.classList.contains('sbf-hidden')) return;
+        const hasVideoThumb = block.querySelector('.RzdJxc, .dXiKIc, .sI5x9c, .mnr-c, video, [data-attrid="VideoResult"]');
+        const hasYtLink = block.querySelector('a[href*="youtube.com/watch"], a[href*="youtu.be/"]');
+        if (hasVideoThumb || (hasYtLink && block.querySelectorAll('a[href*="youtube.com/watch"], a[href*="youtu.be/"]').length >= 2)) {
+          block.classList.add('sbf-hidden');
+        }
+      });
+    }
+
+    // Aggressive Product Heuristics
+    if (googleModules.products) {
+      document.querySelectorAll('.wOPJ9c, .pla-unit, [data-asoch-dom-id], .CU7eYc').forEach(el => {
+        const wrapper = el.closest('.MjjYud, .g, .ULSxyf, .v7W49e') || el.parentElement?.parentElement;
+        if (wrapper) wrapper.classList.add('sbf-hidden');
+      });
+      document.querySelectorAll('.MjjYud, .g').forEach(block => {
+        if (!block.classList.contains('sbf-hidden')) {
+          const prices = block.querySelectorAll('[aria-label*="€"], [aria-label*="$"], .HRLxBb');
+          const stars = block.querySelectorAll('.GpEInteractiveStar, .Fam1ne, [aria-label*="stars"]');
+          if (prices.length >= 2 && stars.length >= 1) block.classList.add('sbf-hidden');
+        }
+      });
+    }
   }
 
   function hideGoogleTabs() {
@@ -312,11 +339,9 @@
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local') {
       loadConfig().then(() => {
-        if (changes.googleModules || changes.hiddenTabs || changes.searchFilters || changes.blockedKeywords) {
-          document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
-          document.querySelectorAll('[data-sbf-checked], [data-sbf-done]').forEach(el => { delete el.dataset.sbfChecked; delete el.dataset.sbfDone; });
-          incrementalScan();
-        }
+        document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
+        document.querySelectorAll('[data-sbf-checked], [data-sbf-done]').forEach(el => { delete el.dataset.sbfChecked; delete el.dataset.sbfDone; });
+        incrementalScan();
       });
     }
   });
