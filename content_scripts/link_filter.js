@@ -11,10 +11,21 @@
       .sbf-hide-ai [data-component-type="22"], .sbf-hide-ai .SGE_container, .sbf-hide-ai #super_results, .sbf-hide-ai [data-sge-container] { display: none !important; }
       /* More button hiding */
       .sbf-hide-more .znY98, .sbf-hide-more .G9vS3e, .sbf-hide-more [aria-label*="More"], .sbf-hide-more [aria-label*="Mehr"] { display: none !important; }
-      /* Favicon hiding */
-      .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .H6McF, .sbf-hide-favicons .CA96S, .sbf-hide-favicons .kvH3mc img { display: none !important; }
-      /* Products CSS-level hiding — selectors verified against live Google DOM */
-      /* wOPJ9c = product card, RyIFgf = carousel container */
+      
+      /* Favicon hiding — use visibility:hidden to preserve layout and prevent overlapping */
+      .sbf-hide-favicons .XNo29b, 
+      .sbf-hide-favicons .H6McF, 
+      .sbf-hide-favicons .CA96S, 
+      .sbf-hide-favicons .kvH3mc img,
+      .sbf-hide-favicons .D8YfIc,
+      .sbf-hide-favicons .V0690b,
+      .sbf-hide-favicons .r99E7 { 
+        visibility: hidden !important;
+        width: 0 !important;
+        margin: 0 !important;
+      }
+
+      /* Products CSS-level hiding */
       .sbf-hide-products .wOPJ9c,
       .sbf-hide-products div:has(> .wOPJ9c),
       .sbf-hide-products .RyIFgf.rAdPSe:has(.wOPJ9c),
@@ -23,8 +34,8 @@
       .sbf-hide-products .pla-unit,
       .sbf-hide-products [data-asoch-dom-id],
       .sbf-hide-products #tvcap { display: none !important; }
-      /* Also hide the entire MjjYud block that contains a product grid */
       .sbf-hide-products .MjjYud:has(.wOPJ9c) { display: none !important; }
+      
       /* Images CSS-level hiding */
       .sbf-hide-images [data-attrid="images universal"],
       .sbf-hide-images .MjjYud:has(.O8S99),
