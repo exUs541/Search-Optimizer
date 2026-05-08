@@ -16,7 +16,9 @@ body {
   color: var(--text-primary);
   margin: 0;
   padding: 0;
-  width: 360px;
+  width: 360px !important;
+  min-width: 360px !important;
+  max-width: 360px !important;
   overflow-x: hidden;
 }
 

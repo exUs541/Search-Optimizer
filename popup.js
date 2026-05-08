@@ -20,11 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const keywordList = document.getElementById('keyword-list');
   
   const infiniteToggle = document.getElementById('infinite-scroll');
-  const pauseToggle = document.getElementById('pause-infinite');
-  const pauseRow = document.getElementById('pause-row');
   const advSearchToggle = document.getElementById('advanced-search');
   
-  const hideFaviconsToggle = document.getElementById('hide-favicons');
   const highlightEnabledToggle = document.getElementById('highlight-enabled');
   const highlightColorInput = document.getElementById('highlight-color');
 
@@ -55,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupCollapsible('block-domains-toggle', 'block-domains-content', 'block-domains-arrow', 'flex');
   setupCollapsible('pref-domains-toggle', 'pref-domains-content', 'pref-domains-arrow', 'flex');
   setupCollapsible('keywords-toggle', 'keywords-content', 'keywords-arrow', 'flex');
+  setupCollapsible('highlight-toggle', 'highlight-content', 'highlight-arrow', 'flex');
 
   // Fun Buttons Logic
   document.querySelectorAll('.fun-btn').forEach(btn => {
@@ -74,7 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Load Data
-  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'advancedSearch', 'preferredDomains', 'blockedKeywords', 'hideFavicons', 'highlightEnabled', 'highlightColor', 'infiniteScrollPaused']);
+  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'advancedSearch', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor']);
   
   const cleanList = (list) => (list || []).map(item => {
     if (typeof item === 'string') return item;
@@ -86,14 +84,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   let searchFilters = cleanList(storeData.searchFilters);
   let preferredDomains = cleanList(storeData.preferredDomains);
   let blockedKeywords = cleanList(storeData.blockedKeywords);
-  let googleModules = storeData.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false };
+  let googleModules = storeData.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false, favicons: false };
   let hiddenTabs = storeData.hiddenTabs || {};
 
   infiniteToggle.checked = storeData.infiniteScroll === true;
-  pauseToggle.checked = storeData.infiniteScrollPaused === true;
-  pauseRow.style.display = infiniteToggle.checked ? 'flex' : 'none';
   advSearchToggle.checked = storeData.advancedSearch !== false;
-  hideFaviconsToggle.checked = storeData.hideFavicons === true;
   highlightEnabledToggle.checked = storeData.highlightEnabled === true;
   highlightColorInput.value = storeData.highlightColor || '#38bdf8';
 
@@ -164,7 +159,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (let tab of tabs) {
       try { 
         await chrome.tabs.sendMessage(tab.id, { action: "live_update" });
-        await chrome.tabs.sendMessage(tab.id, { action: "toggle_pause", paused: pauseToggle.checked });
       } catch (e) {}
     }
   }
@@ -193,15 +187,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   infiniteToggle.addEventListener('change', () => {
     chrome.storage.local.set({ infiniteScroll: infiniteToggle.checked }, triggerLiveUpdate);
-    pauseRow.style.display = infiniteToggle.checked ? 'flex' : 'none';
-  });
-
-  pauseToggle.addEventListener('change', () => {
-    chrome.storage.local.set({ infiniteScrollPaused: pauseToggle.checked }, triggerLiveUpdate);
   });
 
   advSearchToggle.addEventListener('change', () => chrome.storage.local.set({ advancedSearch: advSearchToggle.checked }, triggerLiveUpdate));
-  hideFaviconsToggle.addEventListener('change', () => chrome.storage.local.set({ hideFavicons: hideFaviconsToggle.checked }, triggerLiveUpdate));
   highlightEnabledToggle.addEventListener('change', () => chrome.storage.local.set({ highlightEnabled: highlightEnabledToggle.checked }, triggerLiveUpdate));
   highlightColorInput.addEventListener('change', () => chrome.storage.local.set({ highlightColor: highlightColorInput.value }, triggerLiveUpdate));
 

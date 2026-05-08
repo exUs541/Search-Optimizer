@@ -55,24 +55,21 @@
   let searchFilters = [];
   let googleModules = {};
   let infiniteScrollEnabled = false;
-  let infiniteScrollPaused = false;
   let hiddenTabs = {};
   let preferredDomains = [];
   let keywordFilters = [];
-  let hideFavicons = false;
   let highlightEnabled = false;
   let highlightColor = '#38bdf8';
 
   async function loadConfig() {
     try {
-      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'hideFavicons', 'highlightEnabled', 'highlightColor']);
+      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor']);
       searchFilters = (data.searchFilters || []).map(f => typeof f === 'string' ? f : (f.domain || ''));
-      googleModules = data.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false };
+      googleModules = data.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false, favicons: false };
       infiniteScrollEnabled = data.infiniteScroll === true;
       hiddenTabs = data.hiddenTabs || {};
       preferredDomains = (data.preferredDomains || []).map(d => typeof d === 'string' ? d : (d.domain || ''));
       keywordFilters = data.blockedKeywords || [];
-      hideFavicons = data.hideFavicons === true;
       highlightEnabled = data.highlightEnabled === true;
       highlightColor = data.highlightColor || '#38bdf8';
       
@@ -107,7 +104,7 @@
       }
 
       // Favicons
-      if (hideFavicons) {
+      if (googleModules.favicons) {
         document.body.classList.add('sbf-hide-favicons');
       } else {
         document.body.classList.remove('sbf-hide-favicons');
@@ -394,7 +391,7 @@
   async function onScroll() {
     updateNavBtns();
 
-    if (!infiniteScrollEnabled || infiniteScrollPaused) {
+    if (!infiniteScrollEnabled) {
       if (loader) loader.classList.remove('active');
       return;
     }
@@ -460,10 +457,6 @@
       document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
       document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
       incrementalScan();
-    }
-    if (request.action === 'toggle_pause') {
-      infiniteScrollPaused = request.paused;
-      console.log('[Search Optimizer] Infinite Scroll Paused:', infiniteScrollPaused);
     }
   });
 
