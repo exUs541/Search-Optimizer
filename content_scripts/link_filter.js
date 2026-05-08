@@ -588,6 +588,7 @@
       document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
       document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
       incrementalScan();
+      updateNavBtns();
     }
   });
 
