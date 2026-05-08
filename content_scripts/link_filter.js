@@ -101,35 +101,7 @@
   let loader = null;
   let navBtnsEnabled = true;
 
-  async function loadConfig() {
-    try {
-      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled']);
-      searchFilters = (data.searchFilters || []).map(f => typeof f === 'string' ? f : (f.domain || ''));
-      googleModules = data.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false, favicons: false };
-      infiniteScrollEnabled = data.infiniteScroll === true;
-      hiddenTabs = data.hiddenTabs || {};
-      preferredDomains = (data.preferredDomains || []).map(d => typeof d === 'string' ? d : (d.domain || ''));
-      keywordFilters = data.blockedKeywords || [];
-      highlightEnabled = data.highlightEnabled === true;
-      highlightColor = data.highlightColor || '#38bdf8';
-      navBtnsEnabled = data.navBtnsEnabled !== false;
-      
-      // Apply body classes immediately
-      document.body.classList.toggle('sbf-no-infinite', !infiniteScrollEnabled);
-      document.body.classList.toggle('sbf-hide-ai', !!googleModules.ai);
-      document.body.classList.toggle('sbf-hide-products', !!googleModules.products);
-      document.body.classList.toggle('sbf-hide-images', !!googleModules.images);
-      document.body.classList.toggle('sbf-hide-videos', !!googleModules.videos);
-      document.body.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
-      document.body.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
 
-      updateHighlighting();
-      console.log('[Search Optimizer] Config loaded. Infinite Scroll:', infiniteScrollEnabled, '| Modules:', JSON.stringify(googleModules));
-      updateNavBtns();
-    } catch (e) {
-      console.error('[Search Optimizer] Error loading config:', e);
-    }
-  }
 
   function updateHighlighting() {
     let style = document.getElementById('sbf-highlight-style');
@@ -555,27 +527,11 @@
   incrementalScan();
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  chrome.runtime.onMessage.addListener(async (request) => {
-    if (request.action === 'live_update') {
-      console.log('[Search Optimizer] Live Update triggered');
-      await loadConfig();
-      
-      // Clear all previous state markers to force a re-scan
-      document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
-      document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
-      document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
-      document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
-      document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
-      
-      incrementalScan();
-      updateNavBtns();
-    }
-  });
-
   function updateNavBtns() {
     const container = document.getElementById('sbf-nav-btns');
     if (!navBtnsEnabled) {
-      if (container) container.remove(); // Remove instead of just hiding for a clean state
+      console.log('[Search Optimizer] Nav Buttons disabled, removing container');
+      if (container) container.remove();
       return;
     }
     
@@ -583,18 +539,62 @@
     const updatedContainer = document.getElementById('sbf-nav-btns');
     if (updatedContainer) {
       updatedContainer.classList.add('visible');
-      
       const topBtn = document.getElementById('sbf-scroll-top');
       const bottomBtn = document.getElementById('sbf-scroll-bottom');
-      
       const isAtTop = window.scrollY < 50;
       const isAtBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 50);
-      
       if (topBtn) topBtn.classList.toggle('disabled', isAtTop);
       if (bottomBtn) bottomBtn.classList.toggle('disabled', isAtBottom);
     }
   }
 
+  async function loadConfig() {
+    try {
+      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled']);
+      searchFilters = (data.searchFilters || []).map(f => typeof f === 'string' ? f : (f.domain || ''));
+      googleModules = data.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false, favicons: false, pasf: false, songs: false, knowledge: false, topstories: false, recipes: false, events: false, flights: false, hotels: false, twitter: false };
+      infiniteScrollEnabled = data.infiniteScroll === true;
+      hiddenTabs = data.hiddenTabs || {};
+      preferredDomains = (data.preferredDomains || []).map(d => typeof d === 'string' ? d : (d.domain || ''));
+      keywordFilters = data.blockedKeywords || [];
+      highlightEnabled = data.highlightEnabled === true;
+      highlightColor = data.highlightColor || '#38bdf8';
+      navBtnsEnabled = data.navBtnsEnabled !== false;
+      
+      document.body.classList.toggle('sbf-no-infinite', !infiniteScrollEnabled);
+      document.body.classList.toggle('sbf-hide-ai', !!googleModules.ai);
+      document.body.classList.toggle('sbf-hide-products', !!googleModules.products);
+      document.body.classList.toggle('sbf-hide-images', !!googleModules.images);
+      document.body.classList.toggle('sbf-hide-videos', !!googleModules.videos);
+      document.body.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
+      document.body.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
+
+      updateHighlighting();
+      updateNavBtns();
+    } catch (e) {
+      console.error('[Search Optimizer] Error loading config:', e);
+    }
+  }
+
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'live_update') {
+      console.log('[Search Optimizer] Live Update Received');
+      loadConfig().then(() => {
+        document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
+        document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
+        document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
+        document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
+        document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
+        incrementalScan();
+        updateNavBtns();
+      });
+    }
+  });
+
   const observer = new MutationObserver(() => { incrementalScan(); });
   observer.observe(document.body, { childList: true, subtree: true });
+  
+  await loadConfig();
+  incrementalScan();
+  window.addEventListener('scroll', onScroll, { passive: true });
 })();
