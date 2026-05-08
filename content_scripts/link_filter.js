@@ -598,15 +598,28 @@
     }
   }
 
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local') {
+      console.log('[Search Optimizer] Settings changed, updating live...');
+      loadConfig().then(() => {
+        // If specific settings changed that require a full re-scan
+        if (changes.googleModules || changes.hiddenTabs || changes.searchFilters || changes.blockedKeywords) {
+          document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
+          document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
+          document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
+          document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
+          document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
+          incrementalScan();
+        }
+        updateNavBtns();
+      });
+    }
+  });
+
+  // Keep message listener for other actions if needed
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'live_update') {
-      console.log('[Search Optimizer] Live Update Received');
       loadConfig().then(() => {
-        document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
-        document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
-        document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
-        document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
-        document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
         incrementalScan();
         updateNavBtns();
       });
