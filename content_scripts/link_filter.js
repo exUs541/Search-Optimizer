@@ -73,10 +73,11 @@
   let highlightColor = '#38bdf8';
   let isFetching = false;
   let loader = null;
+  let navBtnsEnabled = true;
 
   async function loadConfig() {
     try {
-      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor']);
+      const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled']);
       searchFilters = (data.searchFilters || []).map(f => typeof f === 'string' ? f : (f.domain || ''));
       googleModules = data.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false, favicons: false };
       infiniteScrollEnabled = data.infiniteScroll === true;
@@ -85,6 +86,7 @@
       keywordFilters = data.blockedKeywords || [];
       highlightEnabled = data.highlightEnabled === true;
       highlightColor = data.highlightColor || '#38bdf8';
+      navBtnsEnabled = data.navBtnsEnabled !== false;
       
       // Apply body classes immediately
       document.body.classList.toggle('sbf-no-infinite', !infiniteScrollEnabled);
@@ -358,11 +360,16 @@
 
   // ─── Nav Buttons ──────────────────────────────────────────────────────────
   function updateNavBtns() {
+    if (!navBtnsEnabled) {
+      const container = document.getElementById('sbf-nav-btns');
+      if (container) container.classList.remove('visible');
+      return;
+    }
     ensureNavBtns();
     const container = document.getElementById('sbf-nav-btns');
     if (container) {
-      if (window.scrollY > 200) container.classList.add('visible');
-      else container.classList.remove('visible');
+      // User requested them to be visible from the beginning
+      container.classList.add('visible');
     }
   }
 

@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   const infiniteToggle = document.getElementById('infinite-scroll');
   const advSearchToggle = document.getElementById('advanced-search');
+  const navBtnsToggle = document.getElementById('nav-btns-enabled');
   
   const highlightEnabledToggle = document.getElementById('highlight-enabled');
   const highlightColorInput = document.getElementById('highlight-color');
@@ -73,7 +74,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Load Data
-  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'advancedSearch', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor']);
+  const storeData = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'advancedSearch', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled']);
   
   const cleanList = (list) => (list || []).map(item => {
     if (typeof item === 'string') return item;
@@ -90,6 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   infiniteToggle.checked = storeData.infiniteScroll === true;
   advSearchToggle.checked = storeData.advancedSearch !== false;
+  navBtnsToggle.checked = storeData.navBtnsEnabled !== false;
   highlightEnabledToggle.checked = storeData.highlightEnabled === true;
   highlightColorInput.value = storeData.highlightColor || '#38bdf8';
 
@@ -202,6 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   advSearchToggle.addEventListener('change', () => chrome.storage.local.set({ advancedSearch: advSearchToggle.checked }, triggerLiveUpdate));
+  navBtnsToggle.addEventListener('change', () => chrome.storage.local.set({ navBtnsEnabled: navBtnsToggle.checked }, triggerLiveUpdate));
   highlightEnabledToggle.addEventListener('change', () => chrome.storage.local.set({ highlightEnabled: highlightEnabledToggle.checked }, triggerLiveUpdate));
   highlightColorInput.addEventListener('change', () => chrome.storage.local.set({ highlightColor: highlightColorInput.value }, triggerLiveUpdate));
 
