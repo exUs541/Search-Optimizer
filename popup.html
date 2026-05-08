@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v2.0.8</span>
+        <span class="badge">v2.0.9</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -61,7 +61,7 @@
 
     <!-- TAB 2: GOOGLE UI -->
     <div id="tab-google" class="tab-content">
-      <!-- 1. HIDE SEARCH TABS -->
+      <!-- 1. HIDE SEARCH TABS (Alphabetically Sorted) -->
       <div class="modules-section">
         <h3 class="collapse-toggle" id="tabs-toggle">
           Hide Search Tabs
@@ -77,25 +77,26 @@
               <span class="slider"></span>
             </label>
           </div>
-          <div class="eye-row"><span>Tools Button</span><button class="eye-btn" id="eye-tab-tools" data-hide="tab-tools"></button></div>
-          <div class="eye-row"><span>More Button</span><button class="eye-btn" id="eye-tab-more" data-hide="tab-more"></button></div>
-          <div style="border-top: 1px solid var(--border-color); margin: 8px 0;"></div>
-          <div class="eye-row"><span>Images</span><button class="eye-btn" id="eye-tab-images" data-hide="tab-images"></button></div>
-          <div class="eye-row"><span>Videos</span><button class="eye-btn" id="eye-tab-videos" data-hide="tab-videos"></button></div>
-          <div class="eye-row"><span>Short videos</span><button class="eye-btn" id="eye-tab-short-videos" data-hide="tab-short-videos"></button></div>
-          <div class="eye-row"><span>Products</span><button class="eye-btn" id="eye-tab-products" data-hide="tab-products"></button></div>
-          <div class="eye-row"><span>Product sites</span><button class="eye-btn" id="eye-tab-product-sites" data-hide="tab-product-sites"></button></div>
-          <div class="eye-row"><span>News</span><button class="eye-btn" id="eye-tab-news" data-hide="tab-news"></button></div>
-          <div class="eye-row"><span>Web</span><button class="eye-btn" id="eye-tab-web" data-hide="tab-web"></button></div>
+          <div style="border-top: 1px solid var(--border-color); margin: 4px 0 8px;"></div>
+          
+          <div class="eye-row"><span>Books</span><button class="eye-btn" id="eye-tab-books" data-hide="tab-books"></button></div>
           <div class="eye-row"><span>Finance</span><button class="eye-btn" id="eye-tab-finance" data-hide="tab-finance"></button></div>
           <div class="eye-row"><span>Forums</span><button class="eye-btn" id="eye-tab-forums" data-hide="tab-forums"></button></div>
+          <div class="eye-row"><span>Images</span><button class="eye-btn" id="eye-tab-images" data-hide="tab-images"></button></div>
           <div class="eye-row"><span>Maps</span><button class="eye-btn" id="eye-tab-maps" data-hide="tab-maps"></button></div>
-          <div class="eye-row"><span>Books</span><button class="eye-btn" id="eye-tab-books" data-hide="tab-books"></button></div>
+          <div class="eye-row"><span>More Button</span><button class="eye-btn" id="eye-tab-more" data-hide="tab-more"></button></div>
+          <div class="eye-row"><span>News</span><button class="eye-btn" id="eye-tab-news" data-hide="tab-news"></button></div>
+          <div class="eye-row"><span>Product sites</span><button class="eye-btn" id="eye-tab-product-sites" data-hide="tab-product-sites"></button></div>
+          <div class="eye-row"><span>Products</span><button class="eye-btn" id="eye-tab-products" data-hide="tab-products"></button></div>
           <div class="eye-row"><span>Shopping</span><button class="eye-btn" id="eye-tab-shopping" data-hide="tab-shopping"></button></div>
+          <div class="eye-row"><span>Short videos</span><button class="eye-btn" id="eye-tab-short-videos" data-hide="tab-short-videos"></button></div>
+          <div class="eye-row"><span>Tools Button</span><button class="eye-btn" id="eye-tab-tools" data-hide="tab-tools"></button></div>
+          <div class="eye-row"><span>Videos</span><button class="eye-btn" id="eye-tab-videos" data-hide="tab-videos"></button></div>
+          <div class="eye-row"><span>Web</span><button class="eye-btn" id="eye-tab-web" data-hide="tab-web"></button></div>
         </div>
       </div>
 
-      <!-- 2. HIDE GOOGLE MODULES -->
+      <!-- 2. HIDE GOOGLE MODULES (Alphabetically Sorted) -->
       <div class="modules-section">
         <h3 class="collapse-toggle" id="modules-toggle">
           Hide Google Modules
@@ -107,36 +108,36 @@
             <button class="eye-btn" id="eye-ai" data-hide="mod-ai"></button>
           </div>
           <div class="eye-row">
-            <span>Sponsored Posts (Ads)</span>
-            <button class="eye-btn" id="eye-sponsored" data-hide="mod-sponsored"></button>
-          </div>
-          <div class="eye-row">
-            <span>Latest posts / Discussions</span>
-            <button class="eye-btn" id="eye-latest" data-hide="mod-latest"></button>
-          </div>
-          <div class="eye-row">
-            <span>Products (Shopping)</span>
-            <button class="eye-btn" id="eye-products" data-hide="mod-products"></button>
+            <span>Favicons</span>
+            <button class="eye-btn" id="eye-favicons" data-hide="mod-favicons"></button>
           </div>
           <div class="eye-row">
             <span>Image Blocks</span>
             <button class="eye-btn" id="eye-images" data-hide="mod-images"></button>
           </div>
           <div class="eye-row">
-            <span>Video Blocks / Reels</span>
-            <button class="eye-btn" id="eye-videos" data-hide="mod-videos"></button>
+            <span>Latest posts / Discussions</span>
+            <button class="eye-btn" id="eye-latest" data-hide="mod-latest"></button>
           </div>
           <div class="eye-row">
             <span>People also ask</span>
             <button class="eye-btn" id="eye-ask" data-hide="mod-ask"></button>
           </div>
           <div class="eye-row">
+            <span>Products (Shopping)</span>
+            <button class="eye-btn" id="eye-products" data-hide="mod-products"></button>
+          </div>
+          <div class="eye-row">
             <span>Related Searches</span>
             <button class="eye-btn" id="eye-search" data-hide="mod-search"></button>
           </div>
           <div class="eye-row">
-            <span>Favicons</span>
-            <button class="eye-btn" id="eye-favicons" data-hide="mod-favicons"></button>
+            <span>Sponsored Posts (Ads)</span>
+            <button class="eye-btn" id="eye-sponsored" data-hide="mod-sponsored"></button>
+          </div>
+          <div class="eye-row">
+            <span>Video Blocks / Reels</span>
+            <button class="eye-btn" id="eye-videos" data-hide="mod-videos"></button>
           </div>
           <button id="mod-select-all" class="secondary-btn" style="margin-top: 8px;">Select All</button>
         </div>
@@ -242,12 +243,12 @@
           <button class="fun-btn" data-q="minesweeper">Minesweeper</button>
           <button class="fun-btn" data-q="tic tac toe">Tic Tac Toe</button>
           <button class="fun-btn" data-q="solitaire">Solitaire</button>
-          <button class="fun-btn" data-q="dino game">Dino Game 🦖</button>
-          <button class="fun-btn" data-q="minecraft">Minecraft ⛏️</button>
-          <button class="fun-btn" data-q="katamari">Katamari 🏐</button>
+          <button class="fun-btn" data-q="dino game">Dino Game Rex</button>
+          <button class="fun-btn" data-q="minecraft">Minecraft</button>
+          <button class="fun-btn" data-q="katamari">Katamari</button>
         </div>
 
-        <h4 class="fun-cat">🅰️ Fonts</h4>
+        <h4 class="fun-cat">Fonts</h4>
         <div class="fun-grid">
           <button class="fun-btn" data-q="comic sans">Comic Sans</button>
           <button class="fun-btn" data-q="times new roman">Times New Roman</button>
@@ -257,14 +258,14 @@
 
         <h4 class="fun-cat">✨ More Easter Eggs</h4>
         <div class="fun-grid">
-          <button class="fun-btn" data-q="friends glossary">Friends ☕</button>
+          <button class="fun-btn" data-q="friends glossary">Friends</button>
           <button class="fun-btn" data-q="wizard of oz">Wizard of Oz</button>
           <button class="fun-btn" data-q="conway's game of life">Game of Life</button>
-          <button class="fun-btn" data-q="sonic the hedgehog">Sonic 🦔</button>
-          <button class="fun-btn" data-q="pi">Pi Memory 🥧</button>
-          <button class="fun-btn" data-q="mariah carey">Mariah Carey ❄️</button>
-          <button class="fun-btn" data-q="the last of us">Cordyceps 🍄</button>
-          <button class="fun-btn" data-q="wicked">Defying Gravity 🧹</button>
+          <button class="fun-btn" data-q="sonic the hedgehog">Sonic</button>
+          <button class="fun-btn" data-q="pi">Pi Memory</button>
+          <button class="fun-btn" data-q="mariah carey">Mariah Carey</button>
+          <button class="fun-btn" data-q="the last of us">Cordyceps</button>
+          <button class="fun-btn" data-q="wicked">Defying Gravity</button>
         </div>
       </div>
     </div>
