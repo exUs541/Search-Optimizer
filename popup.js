@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let searchFilters = cleanList(storeData.searchFilters);
   let preferredDomains = cleanList(storeData.preferredDomains);
   let blockedKeywords = cleanList(storeData.blockedKeywords);
-  let googleModules = storeData.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false, favicons: false };
+  let googleModules = storeData.googleModules || { ai: false, sponsored: false, latest: false, products: false, images: false, videos: false, ask: false, search: false, favicons: false, pasf: false };
   let hiddenTabs = storeData.hiddenTabs || {};
 
   infiniteToggle.checked = storeData.infiniteScroll === true;

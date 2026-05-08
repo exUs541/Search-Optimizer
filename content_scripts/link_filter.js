@@ -214,7 +214,16 @@
     killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
     killByHeading(['products', 'produkte', 'shop for', 'kaufen', 'sponsored'], googleModules.products);
     killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums'], googleModules.latest);
-    killByHeading(['related searches', 'verwandte suchanfragen', 'people also search for', 'ähnliche suchanfragen'], googleModules.search);
+    killByHeading(['related searches', 'verwandte suchanfragen', 'ähnliche suchanfragen'], googleModules.search);
+    killByHeading(['people also search for', 'nutzer suchten auch nach'], googleModules.pasf);
+
+    // Aggressive PASF hiding via data attributes and classes
+    if (googleModules.pasf) {
+      document.querySelectorAll('[data-attrid="people_also_search_for"], [data-pasf="true"], .nV_results, .V99SZd').forEach(el => {
+        const container = el.closest('.MjjYud, .g, .ULSxyf') || el;
+        container.classList.add('sbf-hidden');
+      });
+    }
   }
 
   // ─── Tab Bar Hiding ────────────────────────────────────────────────────────
