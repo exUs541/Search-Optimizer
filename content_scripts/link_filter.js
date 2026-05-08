@@ -40,7 +40,11 @@
       .sbf-hide-images [data-attrid="images universal"],
       .sbf-hide-images .MjjYud:has(.O8S99),
       .sbf-hide-images .MjjYud:has(.isv-r),
-      .sbf-hide-images .MjjYud:has(.IWdOjd) { display: none !important; }
+      .sbf-hide-images .MjjYud:has(.IWdOjd),
+      .sbf-hide-images .MjjYud:has([href*="tbm=isch"]),
+      .sbf-hide-images .MjjYud:has(.mqc2O),
+      .sbf-hide-images .MjjYud:has(.mloK6),
+      .sbf-hide-images .MjjYud:has(.cv2VAd) { display: none !important; }
 
       #sbf-loader {
         display: none; text-align: center; padding: 20px; color: #9aa0a6;
@@ -68,6 +72,7 @@
         transition: all 0.2s; user-select: none;
       }
       .sbf-nav-btn:hover { background: #334155; transform: scale(1.05); color: #7dd3fc; }
+      .sbf-nav-btn.disabled { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
       .sbf-nav-btn svg { width: 20px; height: 20px; pointer-events: none; }
     `;
     document.head.appendChild(style);
@@ -220,7 +225,7 @@
     };
 
     killByHeading(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
-    killByHeading(['images', 'bilder'], googleModules.images);
+    killByHeading(['images', 'bilder', 'show more images', 'weitere bilder', 'bilderergebnisse'], googleModules.images);
     killByHeading(['videos', 'short videos', 'kurzvideos', 'reels'], googleModules.videos);
     killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu'], googleModules.ask);
     killByHeading(['products', 'produkte', 'shop for', 'kaufen', 'sponsored'], googleModules.products);
@@ -388,8 +393,16 @@
     ensureNavBtns();
     const container = document.getElementById('sbf-nav-btns');
     if (container) {
-      // User requested them to be visible from the beginning
       container.classList.add('visible');
+      
+      const topBtn = document.getElementById('sbf-scroll-top');
+      const bottomBtn = document.getElementById('sbf-scroll-bottom');
+      
+      const isAtTop = window.scrollY < 50;
+      const isAtBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 50);
+      
+      if (topBtn) topBtn.classList.toggle('disabled', isAtTop);
+      if (bottomBtn) bottomBtn.classList.toggle('disabled', isAtBottom);
     }
   }
 
