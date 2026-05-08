@@ -38,12 +38,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!toggle || !content || !arrow) return;
     
     const isOpen = content.style.display !== 'none';
-    arrow.style.transform = isOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    arrow.style.transform = isOpen ? 'rotate(90deg)' : 'rotate(0deg)';
 
     toggle.addEventListener('click', () => {
       const isNowOpen = content.style.display === 'none';
       content.style.display = isNowOpen ? defaultFlex : 'none';
-      arrow.style.transform = isNowOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+      arrow.style.transform = isNowOpen ? 'rotate(90deg)' : 'rotate(0deg)';
     });
   }
 
