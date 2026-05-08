@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Load Data
-  const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled', 'themeColors']);
+  const data = await chrome.storage.local.get(['searchFilters', 'googleModules', 'infiniteScroll', 'hiddenTabs', 'preferredDomains', 'blockedKeywords', 'highlightEnabled', 'highlightColor', 'navBtnsEnabled', 'themeColors', 'navBtnColor']);
   
   let searchFilters = data.searchFilters || [];
   let googleModules = data.googleModules || {};
@@ -45,7 +45,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       preferredDomains,
       blockedKeywords,
       highlightEnabled: document.getElementById('highlight-enabled').checked,
-      highlightColor: document.getElementById('color-primary').value
+      highlightColor: document.getElementById('color-primary').value,
+      navBtnColor: document.getElementById('color-nav').value
     }, triggerLiveUpdate);
   };
 
@@ -76,12 +77,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   document.querySelectorAll('.eye-btn').forEach(btn => {
     const key = btn.dataset.hide;
+    if (!key) return;
     const isMod = key.startsWith('mod-');
     const actualKey = key.replace('mod-', '').replace('tab-', '');
     const stateObj = isMod ? googleModules : hiddenTabs;
-    
     updateEyeUI(btn, !!stateObj[actualKey]);
-    
     btn.addEventListener('click', () => {
       stateObj[actualKey] = !stateObj[actualKey];
       updateEyeUI(btn, !!stateObj[actualKey]);
@@ -93,6 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const colorPrimary = document.getElementById('color-primary');
   const colorBg = document.getElementById('color-bg');
   const colorSecondary = document.getElementById('color-secondary');
+  const colorNav = document.getElementById('color-nav');
   const themePresets = document.querySelectorAll('.theme-preset');
 
   const themes = {
@@ -111,30 +112,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     r.style.setProperty('--bg-card', colors.s);
     r.style.setProperty('--border', colors.s);
     r.style.setProperty('--bg-input', colors.s);
-    
     colorPrimary.value = colors.p;
     colorBg.value = colors.b;
     colorSecondary.value = colors.s;
+    if (!data.navBtnColor) colorNav.value = colors.p;
   };
 
   if (data.themeColors) applyTheme(data.themeColors);
   else applyTheme(themes.midnight);
+
+  if (data.navBtnColor) colorNav.value = data.navBtnColor;
 
   themePresets.forEach(btn => {
     btn.addEventListener('click', () => {
       const colors = themes[btn.dataset.theme];
       if (colors) {
         applyTheme(colors);
-        chrome.storage.local.set({ themeColors: colors });
+        chrome.storage.local.set({ themeColors: colors, navBtnColor: colors.p });
+        colorNav.value = colors.p;
       }
     });
   });
 
-  [colorPrimary, colorBg, colorSecondary].forEach(el => {
+  [colorPrimary, colorBg, colorSecondary, colorNav].forEach(el => {
     el.addEventListener('input', () => {
       const colors = { p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value };
       applyTheme(colors);
-      chrome.storage.local.set({ themeColors: colors });
+      chrome.storage.local.set({ themeColors: colors, navBtnColor: colorNav.value });
     });
   });
 
@@ -212,7 +216,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `search-optimizer-v2.3.0.json`;
+    a.download = `search-optimizer-v2.3.1.json`;
     a.click();
   };
 
