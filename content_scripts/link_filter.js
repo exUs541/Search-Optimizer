@@ -15,8 +15,8 @@
       
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .H6McF, .sbf-hide-favicons .CA96S, .sbf-hide-favicons .kvH3mc img { visibility: hidden !important; width: 0 !important; margin: 0 !important; }
 
-      .sbf-hide-products .wOPJ9c, .sbf-hide-products .commercial-unit-desktop-top, .sbf-hide-products .pla-unit, .sbf-hide-products #tvcap { display: none !important; }
-      .sbf-hide-images [data-attrid="images universal"], .sbf-hide-images .MjjYud:has(.isv-r) { display: none !important; }
+      .sbf-hide-products .wOPJ9c, .sbf-hide-products .pla-unit, .sbf-hide-products #tvcap { display: none !important; }
+      .sbf-hide-images [data-attrid="images universal"] { display: none !important; }
       .sbf-hide-videos .MjjYud:has(.RzdJxc), .sbf-hide-videos .MjjYud:has([data-attrid="VideoResult"]) { display: none !important; }
       .sbf-hide-ask [data-attrid="wa_paa"], .sbf-hide-ask .WwS1pe, .sbf-hide-ask .ez8I9c { display: none !important; }
       .sbf-hide-pasf [data-attrid="people_also_search_for"], .sbf-hide-pasf .nV_results { display: none !important; }
@@ -31,11 +31,13 @@
       .sbf-show-nav-btns #sbf-nav-btns.visible { display: flex; }
       .sbf-nav-btn { 
         width: 44px; height: 44px; border-radius: 50%; 
+        background: var(--sbf-nav-bg, #1e293b) !important; 
+        color: var(--sbf-nav-color, #38bdf8) !important; 
         display: flex; align-items: center; justify-content: center; cursor: pointer; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: all 0.2s; user-select: none; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s; user-select: none; 
         border: 1px solid rgba(255,255,255,0.1) !important;
       }
-      .sbf-nav-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
+      .sbf-nav-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
       .sbf-nav-btn.disabled { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
       .sbf-nav-btn svg { width: 22px; height: 22px; pointer-events: none; stroke: currentColor !important; }
     `;
@@ -43,55 +45,19 @@
   }
 
   // ─── Config State ─────────────────────────────────────────────────────────
+  let searchFilters = [];
+  let googleModules = {};
   let infiniteScrollEnabled = false;
+  let hiddenTabs = {};
+  let highlightEnabled = false;
+  let highlightColor = '#38bdf8';
+  let navBtnColor = '#38bdf8';
+  let navBtnBgColor = '#1e293b';
   let isFetching = false;
   let loader = null;
+  let navBtnsEnabled = true;
 
-  async function loadConfig() {
-    const data = await chrome.storage.local.get(null);
-    const googleModules = data.googleModules || {};
-    const hiddenTabs = data.hiddenTabs || {};
-    const searchFilters = data.searchFilters || [];
-    const highlightEnabled = data.highlightEnabled === true;
-    const highlightColor = data.highlightColor || '#38bdf8';
-    const navBtnColor = data.navBtnColor || '#38bdf8';
-    const navBtnBgColor = data.navBtnBgColor || '#1e293b';
-    const navBtnsEnabled = data.navBtnsEnabled !== false;
-    infiniteScrollEnabled = data.infiniteScroll === true;
-
-    waitForBody(() => {
-      const b = document.body;
-      b.classList.toggle('sbf-hide-ai', !!googleModules.ai);
-      b.classList.toggle('sbf-hide-products', !!googleModules.products);
-      b.classList.toggle('sbf-hide-images', !!googleModules.images);
-      b.classList.toggle('sbf-hide-videos', !!googleModules.videos);
-      b.classList.toggle('sbf-hide-ask', !!googleModules.ask);
-      b.classList.toggle('sbf-hide-pasf', !!googleModules.pasf);
-      b.classList.toggle('sbf-hide-forums', !!googleModules.forums);
-      b.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
-      b.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
-      b.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
-
-      // Apply Colors directly via style tag for maximum reliability
-      let colorStyle = document.getElementById('sbf-dynamic-colors');
-      if (!colorStyle) {
-        colorStyle = document.createElement('style');
-        colorStyle.id = 'sbf-dynamic-colors';
-        document.head.appendChild(colorStyle);
-      }
-      colorStyle.textContent = `
-        .sbf-nav-btn { background-color: ${navBtnBgColor} !important; color: ${navBtnColor} !important; }
-        .g em, .g b, .MjjYud em, .MjjYud b { 
-          background-color: ${highlightEnabled ? highlightColor + '33' : 'transparent'} !important; 
-          color: ${highlightEnabled ? highlightColor : 'inherit'} !important; 
-          padding: 0 2px; border-radius: 2px;
-        }
-      `;
-      
-      updateNavBtns();
-    });
-  }
-
+  // ─── Core Logic ────────────────────────────────────────────────────────────
   function waitForBody(callback) {
     if (document.body) return callback();
     const observer = new MutationObserver((_, obs) => {
@@ -100,30 +66,86 @@
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
+  async function loadConfig() {
+    try {
+      const data = await chrome.storage.local.get(null);
+      searchFilters = data.searchFilters || [];
+      googleModules = data.googleModules || {};
+      infiniteScrollEnabled = data.infiniteScroll === true;
+      hiddenTabs = data.hiddenTabs || {};
+      highlightEnabled = data.highlightEnabled === true;
+      highlightColor = data.highlightColor || '#38bdf8';
+      navBtnColor = data.navBtnColor || '#38bdf8';
+      navBtnBgColor = data.navBtnBgColor || '#1e293b';
+      navBtnsEnabled = data.navBtnsEnabled !== false;
+      
+      waitForBody(() => {
+        const b = document.body;
+        b.classList.toggle('sbf-hide-ai', !!googleModules.ai);
+        b.classList.toggle('sbf-hide-products', !!googleModules.products);
+        b.classList.toggle('sbf-hide-images', !!googleModules.images);
+        b.classList.toggle('sbf-hide-videos', !!googleModules.videos);
+        b.classList.toggle('sbf-hide-ask', !!googleModules.ask);
+        b.classList.toggle('sbf-hide-pasf', !!googleModules.pasf);
+        b.classList.toggle('sbf-hide-forums', !!googleModules.forums);
+        b.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
+        b.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
+        b.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
+        
+        document.documentElement.style.setProperty('--sbf-nav-color', navBtnColor);
+        document.documentElement.style.setProperty('--sbf-nav-bg', navBtnBgColor);
+        
+        updateNavBtns();
+        updateHighlighting();
+      });
+    } catch (e) { console.error('[Search Optimizer] Error loading config:', e); }
+  }
+
+  function updateHighlighting() {
+    let style = document.getElementById('sbf-highlight-style');
+    if (highlightEnabled) {
+      if (!style) {
+        style = document.createElement('style'); style.id = 'sbf-highlight-style';
+        (document.head || document.documentElement).appendChild(style);
+      }
+      style.textContent = `.g em, .g b, .MjjYud em, .MjjYud b { background-color: ${highlightColor}33 !important; color: ${highlightColor} !important; padding: 0 2px; border-radius: 2px; }`;
+    } else if (style) style.remove();
+  }
+
   function scanGoogleModules() {
-    const modules = await chrome.storage.local.get('googleModules');
-    const googleModules = modules.googleModules || {};
-    
     const bruteForceKill = (texts, active) => {
       if (!active) return;
-      document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
+      document.querySelectorAll('h1, h2, h3, h4, [role="heading"], div, span').forEach(el => {
         if (el.dataset.sbfChecked) return;
         const text = (el.innerText || '').toLowerCase().trim();
         if (texts.some(t => text === t || text.startsWith(t))) {
-          el.dataset.sbfChecked = '1';
-          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c');
-          if (container) container.classList.add('sbf-hidden');
+          const isHeading = ['H1','H2','H3','H4'].includes(el.tagName) || el.getAttribute('role') === 'heading';
+          if (isHeading || (el.tagName === 'DIV' && text.length < 50)) {
+            el.dataset.sbfChecked = '1';
+            const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c');
+            if (container) container.classList.add('sbf-hidden');
+          }
         }
       });
     };
-    bruteForceKill(['ai overview', 'ki-übersicht'], googleModules.ai);
+    bruteForceKill(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
     bruteForceKill(['images', 'bilder'], googleModules.images);
     bruteForceKill(['videos', 'video'], googleModules.videos);
     bruteForceKill(['people also ask', 'ähnliche fragen'], googleModules.ask);
+    bruteForceKill(['discussions and forums', 'diskussionen und foren'], googleModules.forums);
+    bruteForceKill(['products', 'produkte'], googleModules.products);
+    if (googleModules.sponsored) document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad').forEach(el => el.classList.add('sbf-hidden'));
   }
 
   function incrementalScan() {
     scanGoogleModules();
+    document.querySelectorAll('a[href]').forEach(link => {
+      if (link.dataset.sbfDone) return; link.dataset.sbfDone = '1';
+      try {
+        const domain = new URL(link.href).hostname.replace(/^www\./, '');
+        if (searchFilters.includes(domain)) { const container = link.closest('.g, .MjjYud, .tF2Cxc'); if (container) container.classList.add('sbf-hidden'); }
+      } catch(e) {}
+    });
     ensureLoader();
   }
 
