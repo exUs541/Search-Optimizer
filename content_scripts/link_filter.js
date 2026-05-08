@@ -5,20 +5,25 @@
     const style = document.createElement('style');
     style.id = 'sbf-style';
     style.textContent = `
-      .sbf-hidden { display: none !important; visibility: hidden !important; }
+      .sbf-hidden { display: none !important; }
       .sbf-preferred { border-left: 4px solid #22c55e !important; padding-left: 12px !important; background-color: rgba(34, 197, 94, 0.05) !important; }
       /* Aggressive CSS hiding for AI Overviews */
       .sbf-hide-ai [data-component-type="22"], .sbf-hide-ai .SGE_container, .sbf-hide-ai #super_results, .sbf-hide-ai [data-sge-container] { display: none !important; }
       /* More button hiding */
       .sbf-hide-more .znY98, .sbf-hide-more .G9vS3e, .sbf-hide-more [aria-label*="More"], .sbf-hide-more [aria-label*="Mehr"] { display: none !important; }
-      /* Suppress Google's native continuous scroll containers */
-      .sbf-no-infinite .SJ974, .sbf-no-infinite .GNJ78, .sbf-no-infinite #botstuff .GNJ78 { display: none !important; }
       /* Favicon hiding */
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .H6McF, .sbf-hide-favicons .CA96S, .sbf-hide-favicons .kvH3mc img { display: none !important; }
-      
-      /* New Aggressive Hiding for Products/Shopping and Images */
-      .sbf-hide-products #tads, .sbf-hide-products .commercial-unit-desktop-top, .sbf-hide-products .commercial-unit-desktop-rhs, .sbf-hide-products .pla-unit, .sbf-hide-products .sh-pr__grid-result, .sbf-hide-products [data-asoch-dom-id] { display: none !important; }
-      .sbf-hide-images [data-attrid="images universal"], .sbf-hide-images .MjjYud:has(.O8S99), .sbf-hide-images .MjjYud:has(.isv-r) { display: none !important; }
+      /* Products CSS-level hiding */
+      .sbf-hide-products .commercial-unit-desktop-top,
+      .sbf-hide-products .commercial-unit-desktop-rhs,
+      .sbf-hide-products .pla-unit,
+      .sbf-hide-products .sh-pr__grid-result,
+      .sbf-hide-products [data-asoch-dom-id],
+      .sbf-hide-products #tvcap { display: none !important; }
+      /* Images CSS-level hiding */
+      .sbf-hide-images [data-attrid="images universal"],
+      .sbf-hide-images .MjjYud:has(.O8S99),
+      .sbf-hide-images .MjjYud:has(.isv-r) { display: none !important; }
 
       #sbf-loader {
         display: none; text-align: center; padding: 20px; color: #9aa0a6;
@@ -43,10 +48,10 @@
         width: 44px; height: 44px; border-radius: 50%; background: #1e293b;
         border: 1px solid #334155; color: #38bdf8; display: flex; align-items: center;
         justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        transition: all 0.2s;
+        transition: all 0.2s; user-select: none;
       }
       .sbf-nav-btn:hover { background: #334155; transform: scale(1.05); color: #7dd3fc; }
-      .sbf-nav-btn svg { width: 20px; height: 20px; }
+      .sbf-nav-btn svg { width: 20px; height: 20px; pointer-events: none; }
     `;
     document.head.appendChild(style);
   }
@@ -60,6 +65,8 @@
   let keywordFilters = [];
   let highlightEnabled = false;
   let highlightColor = '#38bdf8';
+  let isFetching = false;
+  let loader = null;
 
   async function loadConfig() {
     try {
@@ -73,47 +80,16 @@
       highlightEnabled = data.highlightEnabled === true;
       highlightColor = data.highlightColor || '#38bdf8';
       
-      if (infiniteScrollEnabled) {
-        document.body.classList.remove('sbf-no-infinite');
-      } else {
-        document.body.classList.add('sbf-no-infinite');
-      }
-      
-      if (googleModules.ai) {
-        document.body.classList.add('sbf-hide-ai');
-      } else {
-        document.body.classList.remove('sbf-hide-ai');
-      }
+      // Apply body classes immediately
+      document.body.classList.toggle('sbf-no-infinite', !infiniteScrollEnabled);
+      document.body.classList.toggle('sbf-hide-ai', !!googleModules.ai);
+      document.body.classList.toggle('sbf-hide-products', !!googleModules.products);
+      document.body.classList.toggle('sbf-hide-images', !!googleModules.images);
+      document.body.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
+      document.body.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
 
-      if (googleModules.products) {
-        document.body.classList.add('sbf-hide-products');
-      } else {
-        document.body.classList.remove('sbf-hide-products');
-      }
-
-      if (googleModules.images) {
-        document.body.classList.add('sbf-hide-images');
-      } else {
-        document.body.classList.remove('sbf-hide-images');
-      }
-
-      if (hiddenTabs['more'] || hiddenTabs['unpack-more']) {
-        document.body.classList.add('sbf-hide-more');
-      } else {
-        document.body.classList.remove('sbf-hide-more');
-      }
-
-      // Favicons
-      if (googleModules.favicons) {
-        document.body.classList.add('sbf-hide-favicons');
-      } else {
-        document.body.classList.remove('sbf-hide-favicons');
-      }
-
-      // Keyword Highlighting
       updateHighlighting();
-      
-      console.log('[Search Optimizer] Config updated. Infinite Scroll:', infiniteScrollEnabled);
+      console.log('[Search Optimizer] Config loaded. Infinite Scroll:', infiniteScrollEnabled, '| Modules:', JSON.stringify(googleModules));
       updateNavBtns();
     } catch (e) {
       console.error('[Search Optimizer] Error loading config:', e);
@@ -130,7 +106,6 @@
       }
       const q = new URLSearchParams(window.location.search).get('q');
       if (q) {
-        const terms = q.split('+').join('|');
         style.textContent = `
           .g em, .g b, .MjjYud em, .MjjYud b { 
             background-color: ${highlightColor}33 !important; 
@@ -144,7 +119,7 @@
     }
   }
 
-  // ─── Hiding Logic ──────────────────────────────────────────────────────────
+  // ─── Tab Detection ──────────────────────────────────────────────────────────
   function isAllTab() {
     const p = new URLSearchParams(window.location.search);
     return !p.get('tbm') && (!p.get('udm') || p.get('udm') === '1');
@@ -155,15 +130,14 @@
     return p.get('tbm') === 'isch' || p.get('udm') === '2';
   }
 
+  // ─── Module Hiding ─────────────────────────────────────────────────────────
   function scanGoogleModules() {
     if (!isAllTab()) return;
-// ... (rest of scanGoogleModules is same)
-    
-    // AI Overviews (SGE) - Aggressive selectors
+
+    // AI Overviews (SGE)
     if (googleModules.ai) {
       const sgeSelectors = [
-        '[data-component-type="22"]', 
-        '.Z97S6d', '.V99yG', '.SGE_container', 
+        '[data-component-type="22"]', '.Z97S6d', '.V99yG', '.SGE_container',
         '.XQ4SFe', '.zbA0S', '#super_results',
         '.MjjYud:has(div[aria-label^="AI Overview"])',
         '.MjjYud:has(div[aria-label^="KI-Übersicht"])',
@@ -175,38 +149,29 @@
         const wrapper = el.closest('.MjjYud, .g');
         if (wrapper) wrapper.classList.add('sbf-hidden');
       });
-      
-      // Text-based fallback scanning
-      document.querySelectorAll('div, section, [role="region"], h1, h2, h3').forEach(el => {
-        if (el.classList.contains('sbf-hidden')) return;
-        const label = el.getAttribute('aria-label') || '';
-        const text = el.innerText || '';
-        if (label.startsWith('AI Overview') || label.startsWith('KI-Übersicht') || text.startsWith('AI Overview') || text.startsWith('KI-Übersicht')) {
-          el.classList.add('sbf-hidden');
-          const wrapper = el.closest('.MjjYud, .g');
-          if (wrapper) wrapper.classList.add('sbf-hidden');
-        }
-      });
     }
 
     if (googleModules.sponsored) {
-      document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad, [data-text-ad], .MjjYud:has(.uEierd), .commercial-unit-desktop-top, .commercial-unit-desktop-rhs').forEach(el => el.classList.add('sbf-hidden'));
+      document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad, [data-text-ad], .commercial-unit-desktop-top, .commercial-unit-desktop-rhs').forEach(el => el.classList.add('sbf-hidden'));
     }
 
+    // Products — target the wrapper containers directly
     if (googleModules.products) {
       document.querySelectorAll('.pla-unit, .sh-pr__grid-result, [data-asoch-dom-id], .CU7eYc, .sh-pr__product-results').forEach(el => {
-        el.classList.add('sbf-hidden');
-        const container = el.closest('.MjjYud, .g, .commercial-unit-desktop-top, .commercial-unit-desktop-rhs');
-        if (container) container.classList.add('sbf-hidden');
+        const container = el.closest('.MjjYud, .g, .commercial-unit-desktop-top, .commercial-unit-desktop-rhs') || el;
+        container.classList.add('sbf-hidden');
       });
     }
 
+    // killByHeading: hides the entire MjjYud/g block that contains a matching heading
     const killByHeading = (texts, active) => {
       if (!active) return;
       document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
-        const text = el.innerText.toLowerCase().trim();
-        if (texts.some(t => text === t || text.startsWith(t + ' '))) {
-          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .WwS1pe, .tF2Cxc');
+        if (el.dataset.sbfChecked) return;
+        el.dataset.sbfChecked = '1';
+        const text = (el.innerText || '').toLowerCase().trim();
+        if (texts.some(t => text === t || text.startsWith(t))) {
+          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .WwS1pe, .tF2Cxc, .ULSxyf, .O8VmIc');
           if (container) container.classList.add('sbf-hidden');
         }
       });
@@ -216,18 +181,19 @@
     killByHeading(['images', 'bilder'], googleModules.images);
     killByHeading(['videos', 'short videos', 'kurzvideos', 'reels'], googleModules.videos);
     killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
-    killByHeading(['products', 'produkte', 'shop for', 'kaufen'], googleModules.products);
-    killByHeading(['latest posts', 'discussions', 'neueste beiträge'], googleModules.latest);
-    killByHeading(['related searches', 'verwandte suchanfragen', 'people also search for'], googleModules.search);
+    killByHeading(['products', 'produkte', 'shop for', 'kaufen', 'sponsored'], googleModules.products);
+    killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums'], googleModules.latest);
+    // FIX: "People also search for" and "Related searches" both covered here
+    killByHeading(['related searches', 'verwandte suchanfragen', 'people also search for', 'ähnliche suchanfragen'], googleModules.search);
   }
 
+  // ─── Tab Bar Hiding ────────────────────────────────────────────────────────
   function hideGoogleTabs() {
     const activeKeys = Object.keys(hiddenTabs).filter(k => hiddenTabs[k]);
     
-    // 1. Unpack "More" Menu logic - Stable Static Injection
     const moreBtn = Array.from(document.querySelectorAll('a, div[role="button"], .C6AK7c, .z1asCe, .hdtb-mitem, .znY98, .G9vS3e')).find(el => {
-      const t = el.innerText.toLowerCase().trim();
-      return (t === 'more' || t === 'mehr' || el.getAttribute('aria-label')?.toLowerCase().includes('more') || el.getAttribute('aria-label')?.toLowerCase().includes('mehr'));
+      const t = (el.innerText || '').toLowerCase().trim();
+      return t === 'more' || t === 'mehr' || el.getAttribute('aria-label')?.toLowerCase().includes('more') || el.getAttribute('aria-label')?.toLowerCase().includes('mehr');
     });
 
     if (hiddenTabs['unpack-more']) {
@@ -244,13 +210,11 @@
             a.style.cssText = 'margin-right:16px; display:inline-block; color:#9aa0a6; text-decoration:none; font-size:14px; padding:0 4px;';
             return a;
           };
-
           const items = [
             { l: 'Web', t: '', k: 'web' },
             { l: 'Finance', t: 'fin', k: 'finance' },
             { l: 'Books', t: 'bks', k: 'books' }
           ];
-          
           items.forEach(item => {
             const tab = createTab(item.l, item.t, item.k);
             if (tab) {
@@ -258,7 +222,6 @@
               insertTarget.before(tab);
             }
           });
-
           moreBtn.dataset.sbfUnpackedDone = '1';
           const targetToHide = moreBtn.parentElement.classList.contains('hdtb-mitem') ? moreBtn.parentElement : moreBtn;
           targetToHide.classList.add('sbf-hidden');
@@ -270,7 +233,6 @@
       targetToShow.classList.remove('sbf-hidden');
     }
 
-    // 2. Hide specific tabs
     const tabTextMap = {
       'images': ['images', 'bilder'],
       'videos': ['videos'],
@@ -288,7 +250,7 @@
     };
 
     document.querySelectorAll('#hdtb-msb a, .MUFdbf a, .K9vS3e a, .OIn58 a, .crJ18e a, .Uo8X3b a, .C6AK7c').forEach(el => {
-      const text = el.innerText.toLowerCase().trim();
+      const text = (el.innerText || '').toLowerCase().trim();
       el.classList.remove('sbf-hidden');
       for (const key of activeKeys) {
         if (tabTextMap[key] && tabTextMap[key].some(label => text === label)) {
@@ -301,9 +263,8 @@
       }
     });
 
-    // 3. Hide "Tools" button
     const toolsBtn = Array.from(document.querySelectorAll('a, div[role="button"], #hdtb-tls, .Uo8X3b')).find(el => {
-      const t = el.innerText.toLowerCase().trim();
+      const t = (el.innerText || '').toLowerCase().trim();
       return t === 'tools' || t === 'werkzeuge';
     });
     if (toolsBtn) {
@@ -312,6 +273,7 @@
     }
   }
 
+  // ─── Link Filters ──────────────────────────────────────────────────────────
   function applyFiltersOnLink(link) {
     if (link.dataset.sbfDone) return;
     link.dataset.sbfDone = '1';
@@ -333,17 +295,26 @@
     if (!keywordFilters.length) return;
     document.querySelectorAll('.g, .MjjYud, .tF2Cxc, .hlcw0c').forEach(el => {
       if (el.classList.contains('sbf-hidden')) return;
-      const text = el.innerText.toLowerCase();
+      const text = (el.innerText || '').toLowerCase();
       if (keywordFilters.some(kw => text.includes(kw.toLowerCase()))) el.classList.add('sbf-hidden');
     });
   }
 
+  // ─── Main Scan ─────────────────────────────────────────────────────────────
+  function incrementalScan() {
+    scanGoogleModules();
+    hideGoogleTabs();
+    document.querySelectorAll('a[href]').forEach(link => applyFiltersOnLink(link));
+    hideByKeywords();
+    ensureLoader();
+  }
+
+  // ─── Nav Buttons ──────────────────────────────────────────────────────────
   function updateNavBtns() {
-    const show = window.scrollY > 400;
     ensureNavBtns();
     const container = document.getElementById('sbf-nav-btns');
     if (container) {
-      if (show) container.classList.add('visible');
+      if (window.scrollY > 200) container.classList.add('visible');
       else container.classList.remove('visible');
     }
   }
@@ -353,10 +324,10 @@
     const container = document.createElement('div');
     container.id = 'sbf-nav-btns';
     container.innerHTML = `
-      <div class="sbf-nav-btn" id="sbf-scroll-top" title="Scroll to Top (Left Click)">
+      <div class="sbf-nav-btn" id="sbf-scroll-top" title="Scroll to Top">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
       </div>
-      <div class="sbf-nav-btn" id="sbf-scroll-bottom" title="Scroll to Bottom (Right Click)">
+      <div class="sbf-nav-btn" id="sbf-scroll-bottom" title="Scroll to Bottom">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
       </div>
     `;
@@ -365,27 +336,43 @@
     const topBtn = container.querySelector('#sbf-scroll-top');
     const bottomBtn = container.querySelector('#sbf-scroll-bottom');
 
-    topBtn.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-    bottomBtn.oncontextmenu = (e) => {
+    // FIX: Both buttons now use onclick (left-click)
+    topBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    bottomBtn.addEventListener('click', (e) => {
       e.preventDefault();
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    };
-    // Middle click to go back
-    container.onmousedown = (e) => {
+    });
+    // Middle-click anywhere on nav to go back
+    container.addEventListener('mousedown', (e) => {
       if (e.button === 1) {
         e.preventDefault();
         window.history.back();
       }
-    };
+    });
   }
 
+  // ─── Loader ────────────────────────────────────────────────────────────────
+  function ensureLoader() {
+    if (loader) return;
+    loader = document.createElement('div');
+    loader.id = 'sbf-loader';
+    loader.innerHTML = `<div class="sbf-spinner"></div><span>Loading more results…</span>`;
+    const rso = getResultContainer();
+    if (rso) rso.after(loader);
+    else document.body.appendChild(loader);
+  }
+
+  // ─── Infinite Scroll ───────────────────────────────────────────────────────
   function getResultContainer() {
     if (isImagesTab()) return document.querySelector('#islmp, #islrg, .islrc');
     return document.getElementById('rso') || document.querySelector('.v7W49e');
   }
 
   function getNextLink() {
-    return document.querySelector('#pnnext, a[aria-label*="Next"], a[aria-label*="Weiter"], a[href*="start="]');
+    return document.querySelector('#pnnext, a[aria-label*="Next"], a[aria-label*="Weiter"]');
   }
 
   async function onScroll() {
@@ -398,10 +385,10 @@
 
     if (isFetching) return;
 
-    const threshold = isImagesTab() ? 800 : 1500;
-    const scrollThreshold = document.body.offsetHeight - window.innerHeight - threshold;
+    const threshold = isImagesTab() ? 800 : 1200;
+    const distFromBottom = document.body.offsetHeight - window.innerHeight - window.scrollY;
 
-    if (window.scrollY >= scrollThreshold) {
+    if (distFromBottom < threshold) {
       const nextLink = getNextLink();
       if (nextLink && nextLink.href) {
         isFetching = true;
@@ -418,26 +405,29 @@
 
           if (newRso && targetRso) {
             const fragment = document.createDocumentFragment();
-            Array.from(newRso.children).forEach(child => { 
-              const clone = child.cloneNode(true);
-              // Clean up image specific lazy loading if needed
-              fragment.appendChild(clone);
+            Array.from(newRso.children).forEach(child => {
+              fragment.appendChild(child.cloneNode(true));
             });
             targetRso.appendChild(fragment);
 
-            const newNext = doc.querySelector('#pnnext, a[aria-label*="Next"], a[aria-label*="Weiter"], a[href*="start="]');
+            const newNext = doc.querySelector('#pnnext, a[aria-label*="Next"], a[aria-label*="Weiter"]');
             const oldNext = getNextLink();
             if (oldNext && newNext) oldNext.href = newNext.href;
             else if (oldNext) oldNext.remove();
 
+            // Reset heading scan cache so new content gets processed
+            document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
             incrementalScan();
           }
         } catch (e) {
           console.error('[Search Optimizer] Fetch failed:', e);
         } finally {
           loader.classList.remove('active');
-          setTimeout(() => { isFetching = false; }, 800);
+          setTimeout(() => { isFetching = false; }, 1000);
         }
+      } else {
+        // No next page — hide loader
+        if (loader) loader.classList.remove('active');
       }
     }
   }
@@ -447,15 +437,16 @@
   incrementalScan();
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  // Listen for pause toggle (will be implemented in popup later)
   chrome.runtime.onMessage.addListener(async (request) => {
     if (request.action === 'live_update') {
-      console.log('[Search Optimizer] Live Update');
+      console.log('[Search Optimizer] Live Update triggered');
       await loadConfig();
+      // Clear all previous state
       document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
       document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
       document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
       document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
+      document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
       incrementalScan();
     }
   });
