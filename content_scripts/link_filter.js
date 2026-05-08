@@ -222,7 +222,7 @@
     killByHeading(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
     killByHeading(['images', 'bilder'], googleModules.images);
     killByHeading(['videos', 'short videos', 'kurzvideos', 'reels'], googleModules.videos);
-    killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
+    killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu'], googleModules.ask);
     killByHeading(['products', 'produkte', 'shop for', 'kaufen', 'sponsored'], googleModules.products);
     killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums'], googleModules.latest);
     killByHeading(['related searches', 'verwandte suchanfragen', 'ähnliche suchanfragen'], googleModules.search);
@@ -518,6 +518,7 @@
       // Clear all previous state
       document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
       document.querySelectorAll('.sbf-preferred').forEach(el => el.classList.remove('sbf-preferred'));
+      document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
       document.querySelectorAll('.sbf-unpacked').forEach(el => el.remove());
       document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
       document.querySelectorAll('[data-sbf-checked]').forEach(el => delete el.dataset.sbfChecked);
