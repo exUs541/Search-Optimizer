@@ -140,42 +140,52 @@
     const isAll = !p.get('tbm') && (!p.get('udm') || p.get('udm') === '1');
     if (!isAll) return;
 
-    const killByHeading = (texts, active) => {
+    const bruteForceKill = (texts, active) => {
       if (!active) return;
-      document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
+      // Search in all relevant block elements
+      document.querySelectorAll('h1, h2, h3, h4, [role="heading"], div, span').forEach(el => {
         if (el.dataset.sbfChecked) return;
-        el.dataset.sbfChecked = '1';
         const text = (el.innerText || '').toLowerCase().trim();
         if (texts.some(t => text === t || text.startsWith(t))) {
-          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .WwS1pe, .tF2Cxc, .ULSxyf, .O8VmIc');
-          if (container) container.classList.add('sbf-hidden');
+          // If we found a match, check if it's a real heading or a labels
+          const isHeading = ['H1','H2','H3','H4'].includes(el.tagName) || el.getAttribute('role') === 'heading' || el.classList.contains('G779ef') || el.classList.contains('p64Y7b');
+          if (isHeading || (el.tagName === 'DIV' && text.length < 50)) {
+            el.dataset.sbfChecked = '1';
+            const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .WwS1pe, .tF2Cxc, .ULSxyf, .O8VmIc, .ez8I9c');
+            if (container) {
+              container.classList.add('sbf-hidden');
+              // Recursive upward check
+              if (container.parentElement && container.parentElement.children.length === 1) {
+                container.parentElement.classList.add('sbf-hidden');
+              }
+            }
+          }
         }
       });
     };
 
-    killByHeading(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
-    killByHeading(['images', 'bilder', 'show more images', 'weitere bilder', 'bilderergebnisse'], googleModules.images);
-    killByHeading(['videos', 'short videos', 'kurzvideos', 'reels', 'video'], googleModules.videos);
-    killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu', 'andere suchten auch nach'], googleModules.ask);
-    killByHeading(['discussions and forums', 'diskussionen und foren', 'forums', 'foren'], googleModules.forums);
-    killByHeading(['products', 'produkte', 'shop for', 'kaufen'], googleModules.products);
-    killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums', 'diskussionen'], googleModules.latest);
-    killByHeading(['related searches', 'verwandte suchanfragen', 'ähnliche suchanfragen'], googleModules.search);
-    killByHeading(['people also search for', 'nutzer suchten auch nach', 'similar searches'], googleModules.pasf);
-    killByHeading(['songs', 'titel', 'lieder'], googleModules.songs);
-    killByHeading(['top stories', 'schlagzeilen', 'top-meldungen'], googleModules.topstories);
-    killByHeading(['recipes', 'rezepte'], googleModules.recipes);
-    killByHeading(['events', 'veranstaltungen', 'termine'], googleModules.events);
-    killByHeading(['flights', 'flüge'], googleModules.flights);
-    killByHeading(['hotels', 'unterkünfte'], googleModules.hotels);
-    killByHeading(['twitter', 'x posts', 'posts on x'], googleModules.twitter);
+    bruteForceKill(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
+    bruteForceKill(['images', 'bilder', 'show more images', 'weitere bilder', 'bilderergebnisse'], googleModules.images);
+    bruteForceKill(['videos', 'short videos', 'kurzvideos', 'reels', 'video'], googleModules.videos);
+    bruteForceKill(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu', 'andere suchten auch nach', 'nutzer suchen auch'], googleModules.ask);
+    bruteForceKill(['discussions and forums', 'diskussionen und foren', 'forums', 'foren', 'discussions & forums'], googleModules.forums);
+    bruteForceKill(['products', 'produkte', 'shop for', 'kaufen'], googleModules.products);
+    bruteForceKill(['latest posts', 'discussions', 'neueste beiträge', 'forums', 'diskussionen'], googleModules.latest);
+    bruteForceKill(['related searches', 'verwandte suchanfragen', 'ähnliche suchanfragen'], googleModules.search);
+    bruteForceKill(['people also search for', 'nutzer suchten auch nach', 'similar searches', 'nutzer suchten auch'], googleModules.pasf);
+    bruteForceKill(['songs', 'titel', 'lieder'], googleModules.songs);
+    bruteForceKill(['top stories', 'schlagzeilen', 'top-meldungen'], googleModules.topstories);
+    bruteForceKill(['recipes', 'rezepte'], googleModules.recipes);
+    bruteForceKill(['events', 'veranstaltungen', 'termine'], googleModules.events);
+    bruteForceKill(['flights', 'flüge'], googleModules.flights);
+    bruteForceKill(['hotels', 'unterkünfte'], googleModules.hotels);
+    bruteForceKill(['twitter', 'x posts', 'posts on x'], googleModules.twitter);
 
     // Aggressive PAA/PASF/Forums via data attributes
     if (googleModules.ask) {
       document.querySelectorAll('[data-attrid="wa_paa"], .WwS1pe, .y8958c, .ez8I9c').forEach(el => {
         let container = el.closest('.MjjYud, .g, .ULSxyf, .v7W49e, .WwS1pe, .O8VmIc') || el;
         container.classList.add('sbf-hidden');
-        if (container.parentElement && container.parentElement.children.length === 1) container.parentElement.classList.add('sbf-hidden');
       });
     }
     if (googleModules.forums) {
