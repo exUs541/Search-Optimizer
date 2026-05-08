@@ -56,12 +56,16 @@
       .sbf-hide-videos .MjjYud:has(.mnr-c),
       .sbf-hide-videos .MjjYud:has(.VibNM) { display: none !important; }
 
-      /* People Also Ask (PAA) CSS-level hiding */
+      /* People Also Ask (PAA) CSS-level hiding - MORE AGGRESSIVE */
       .sbf-hide-ask [data-attrid="wa_paa"],
       .sbf-hide-ask .WwS1pe,
       .sbf-hide-ask .y8958c,
+      .sbf-hide-ask .ez8I9c,
+      .sbf-hide-ask .v7W49e:has([data-attrid="wa_paa"]),
       .sbf-hide-ask .MjjYud:has([data-attrid="wa_paa"]),
-      .sbf-hide-ask .MjjYud:has(.WwS1pe) { display: none !important; }
+      .sbf-hide-ask .MjjYud:has(.WwS1pe),
+      .sbf-hide-ask .g:has([data-attrid="wa_paa"]),
+      .sbf-hide-ask .O8VmIc { display: none !important; }
 
       /* People Also Search For (PASF) CSS-level hiding */
       .sbf-hide-pasf [data-attrid="people_also_search_for"],
@@ -69,7 +73,14 @@
       .sbf-hide-pasf .nV_results,
       .sbf-hide-pasf .V99SZd,
       .sbf-hide-pasf .MjjYud:has([data-attrid="people_also_search_for"]),
-      .sbf-hide-pasf .MjjYud:has(.nV_results) { display: none !important; }
+      .sbf-hide-pasf .MjjYud:has(.nV_results),
+      .sbf-hide-pasf .MjjYud:has(.V99SZd) { display: none !important; }
+
+      /* Discussions & Forums CSS-level hiding */
+      .sbf-hide-forums [data-attrid="discussions_and_forums"],
+      .sbf-hide-forums .MjjYud:has([data-attrid="discussions_and_forums"]),
+      .sbf-hide-forums .g:has([data-attrid="discussions_and_forums"]),
+      .sbf-hide-forums .MjjYud:has(.f4S95b) { display: none !important; }
 
       #sbf-loader {
         display: none; text-align: center; padding: 20px; color: #9aa0a6;
@@ -227,14 +238,28 @@
     killByHeading(['images', 'bilder', 'show more images', 'weitere bilder', 'bilderergebnisse'], googleModules.images);
     killByHeading(['videos', 'short videos', 'kurzvideos', 'reels', 'video'], googleModules.videos);
     killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu', 'andere suchten auch nach'], googleModules.ask);
+    killByHeading(['discussions and forums', 'diskussionen und foren', 'forums', 'foren'], googleModules.forums);
     killByHeading(['products', 'produkte', 'shop for', 'kaufen'], googleModules.products);
     killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums', 'diskussionen'], googleModules.latest);
     killByHeading(['related searches', 'verwandte suchanfragen', 'ähnliche suchanfragen'], googleModules.search);
     killByHeading(['people also search for', 'nutzer suchten auch nach', 'similar searches'], googleModules.pasf);
 
-    // Aggressive PAA hiding via data attributes
+    // Aggressive PAA hiding via data attributes and recursive container search
     if (googleModules.ask) {
-      document.querySelectorAll('[data-attrid="wa_paa"], .WwS1pe, .y8958c').forEach(el => {
+      document.querySelectorAll('[data-attrid="wa_paa"], .WwS1pe, .y8958c, .ez8I9c').forEach(el => {
+        // Walk up to find the main container (usually MjjYud or g)
+        let container = el.closest('.MjjYud, .g, .ULSxyf, .v7W49e, .WwS1pe, .O8VmIc') || el;
+        container.classList.add('sbf-hidden');
+        // Hide even higher if it's wrapped in another generic container
+        if (container.parentElement && container.parentElement.children.length === 1) {
+          container.parentElement.classList.add('sbf-hidden');
+        }
+      });
+    }
+
+    // Aggressive Forums hiding
+    if (googleModules.forums) {
+      document.querySelectorAll('[data-attrid="discussions_and_forums"], .f4S95b').forEach(el => {
         const container = el.closest('.MjjYud, .g, .ULSxyf') || el;
         container.classList.add('sbf-hidden');
       });
@@ -587,6 +612,7 @@
       document.body.classList.toggle('sbf-hide-videos', !!googleModules.videos);
       document.body.classList.toggle('sbf-hide-ask', !!googleModules.ask);
       document.body.classList.toggle('sbf-hide-pasf', !!googleModules.pasf);
+      document.body.classList.toggle('sbf-hide-forums', !!googleModules.forums);
       document.body.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
       document.body.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
       document.body.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
