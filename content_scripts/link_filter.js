@@ -46,6 +46,16 @@
       .sbf-hide-images .MjjYud:has(.mloK6),
       .sbf-hide-images .MjjYud:has(.cv2VAd) { display: none !important; }
 
+      /* Videos CSS-level hiding */
+      .sbf-hide-videos .MjjYud:has(.RzdJxc),
+      .sbf-hide-videos .MjjYud:has(.dXiKIc),
+      .sbf-hide-videos .MjjYud:has(.sI5x9c),
+      .sbf-hide-videos .MjjYud:has(.EIaa9b),
+      .sbf-hide-videos .MjjYud:has([data-attrid="VideoResult"]),
+      .sbf-hide-videos .MjjYud:has(video),
+      .sbf-hide-videos .MjjYud:has(.mnr-c),
+      .sbf-hide-videos .MjjYud:has(.VibNM) { display: none !important; }
+
       #sbf-loader {
         display: none; text-align: center; padding: 20px; color: #9aa0a6;
         font-family: Google Sans, Roboto, sans-serif; font-size: 14px;
@@ -109,6 +119,7 @@
       document.body.classList.toggle('sbf-hide-ai', !!googleModules.ai);
       document.body.classList.toggle('sbf-hide-products', !!googleModules.products);
       document.body.classList.toggle('sbf-hide-images', !!googleModules.images);
+      document.body.classList.toggle('sbf-hide-videos', !!googleModules.videos);
       document.body.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
       document.body.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
 
@@ -226,18 +237,59 @@
 
     killByHeading(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
     killByHeading(['images', 'bilder', 'show more images', 'weitere bilder', 'bilderergebnisse'], googleModules.images);
-    killByHeading(['videos', 'short videos', 'kurzvideos', 'reels'], googleModules.videos);
+    killByHeading(['videos', 'short videos', 'kurzvideos', 'reels', 'video'], googleModules.videos);
     killByHeading(['people also ask', 'ähnliche fragen', 'nutzer fragen auch', 'people also asked', 'fragen zu'], googleModules.ask);
-    killByHeading(['products', 'produkte', 'shop for', 'kaufen', 'sponsored'], googleModules.products);
-    killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums'], googleModules.latest);
+    killByHeading(['products', 'produkte', 'shop for', 'kaufen'], googleModules.products);
+    killByHeading(['latest posts', 'discussions', 'neueste beiträge', 'forums', 'diskussionen'], googleModules.latest);
     killByHeading(['related searches', 'verwandte suchanfragen', 'ähnliche suchanfragen'], googleModules.search);
     killByHeading(['people also search for', 'nutzer suchten auch nach'], googleModules.pasf);
+    killByHeading(['songs', 'titel', 'lieder'], googleModules.songs);
+    killByHeading(['top stories', 'schlagzeilen', 'top-meldungen'], googleModules.topstories);
+    killByHeading(['recipes', 'rezepte'], googleModules.recipes);
+    killByHeading(['events', 'veranstaltungen', 'termine'], googleModules.events);
+    killByHeading(['flights', 'flüge'], googleModules.flights);
+    killByHeading(['hotels', 'unterkünfte'], googleModules.hotels);
+    killByHeading(['twitter', 'x posts', 'posts on x'], googleModules.twitter);
+
+    // Aggressive video detection: hide blocks containing YouTube thumbnails
+    if (googleModules.videos) {
+      document.querySelectorAll('.MjjYud, .g, .ULSxyf').forEach(block => {
+        if (block.classList.contains('sbf-hidden')) return;
+        const hasVideoThumb = block.querySelector('.RzdJxc, .dXiKIc, .sI5x9c, .mnr-c, video, [data-attrid="VideoResult"]');
+        const hasYtLink = block.querySelector('a[href*="youtube.com/watch"], a[href*="youtu.be/"]');
+        if (hasVideoThumb || (hasYtLink && block.querySelectorAll('a[href*="youtube.com/watch"], a[href*="youtu.be/"]').length >= 2)) {
+          block.classList.add('sbf-hidden');
+        }
+      });
+    }
 
     // Aggressive PASF hiding via data attributes and classes
     if (googleModules.pasf) {
       document.querySelectorAll('[data-attrid="people_also_search_for"], [data-pasf="true"], .nV_results, .V99SZd').forEach(el => {
         const container = el.closest('.MjjYud, .g, .ULSxyf') || el;
         container.classList.add('sbf-hidden');
+      });
+    }
+
+    // Knowledge Panel (right sidebar)
+    if (googleModules.knowledge) {
+      document.querySelectorAll('.kp-wholepage, .liYKde, .kp-blk, .I6TXqe, .osrp-blk').forEach(el => {
+        el.classList.add('sbf-hidden');
+      });
+    }
+
+    // Top Stories
+    if (googleModules.topstories) {
+      document.querySelectorAll('.MjjYud:has(.IBr9hb), .MjjYud:has(.JJZKK), [data-attrid="top_stories"]').forEach(el => {
+        const container = el.closest('.MjjYud') || el;
+        container.classList.add('sbf-hidden');
+      });
+    }
+
+    // Songs
+    if (googleModules.songs) {
+      document.querySelectorAll('.MjjYud:has([data-attrid*="song"]), .MjjYud:has(.qhMOeb)').forEach(el => {
+        el.classList.add('sbf-hidden');
       });
     }
   }
