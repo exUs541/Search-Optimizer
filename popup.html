@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v2.3.2</span>
+        <span class="badge">v2.3.4</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -165,23 +165,42 @@
             <button class="theme-preset" data-theme="classic" title="Classic" style="--p:#6366f1; --b:#111111;"></button>
           </div>
           
-          <h3 class="section-title" style="margin-top:20px;">Custom Colors</h3>
-          <div class="custom-colors">
-            <div class="color-field">
+          <h3 class="section-title" style="margin-top:20px;">Custom HEX Colors</h3>
+          <div class="custom-colors-grid">
+            <div class="color-control">
               <label>Primary</label>
-              <input type="color" id="color-primary" value="#38bdf8">
+              <div class="color-inputs">
+                <input type="color" id="color-primary" value="#38bdf8">
+                <input type="text" id="hex-primary" class="hex-input" value="#38BDF8" maxlength="7">
+              </div>
             </div>
-            <div class="color-field">
+            <div class="color-control">
               <label>Background</label>
-              <input type="color" id="color-bg" value="#0f172a">
+              <div class="color-inputs">
+                <input type="color" id="color-bg" value="#0f172a">
+                <input type="text" id="hex-bg" class="hex-input" value="#0F172A" maxlength="7">
+              </div>
             </div>
-            <div class="color-field">
-              <label>Accent</label>
-              <input type="color" id="color-secondary" value="#1e293b">
+            <div class="color-control">
+              <label>Accent BG</label>
+              <div class="color-inputs">
+                <input type="color" id="color-secondary" value="#1e293b">
+                <input type="text" id="hex-secondary" class="hex-input" value="#1E293B" maxlength="7">
+              </div>
             </div>
-            <div class="color-field">
-              <label>Nav Buttons</label>
-              <input type="color" id="color-nav" value="#38bdf8">
+            <div class="color-control">
+              <label>Nav Arrows</label>
+              <div class="color-inputs">
+                <input type="color" id="color-nav" value="#38bdf8">
+                <input type="text" id="hex-nav" class="hex-input" value="#38BDF8" maxlength="7">
+              </div>
+            </div>
+            <div class="color-control">
+              <label>Nav BG</label>
+              <div class="color-inputs">
+                <input type="color" id="color-nav-bg" value="#1e293b">
+                <input type="text" id="hex-nav-bg" class="hex-input" value="#1E293B" maxlength="7">
+              </div>
             </div>
           </div>
         </div>

@@ -49,8 +49,15 @@
       
       #sbf-nav-btns { position: fixed; bottom: 24px; left: 24px; z-index: 2147483640; display: none; flex-direction: column; gap: 8px; }
       .sbf-show-nav-btns #sbf-nav-btns.visible { display: flex; }
-      .sbf-nav-btn { width: 44px; height: 44px; border-radius: 50%; background: #1e293b; border: 1px solid #334155; color: var(--sbf-nav-color, #38bdf8) !important; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s; user-select: none; }
-      .sbf-nav-btn:hover { background: #334155; transform: scale(1.05); }
+      .sbf-nav-btn { 
+        width: 44px; height: 44px; border-radius: 50%; 
+        background: var(--sbf-nav-bg, #1e293b) !important; 
+        border: 1px solid rgba(255,255,255,0.1); 
+        color: var(--sbf-nav-color, #38bdf8) !important; 
+        display: flex; align-items: center; justify-content: center; cursor: pointer; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s; user-select: none; 
+      }
+      .sbf-nav-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
       .sbf-nav-btn.disabled { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
       .sbf-nav-btn svg { width: 20px; height: 20px; pointer-events: none; stroke: currentColor !important; }
     `;
@@ -65,6 +72,7 @@
   let highlightEnabled = false;
   let highlightColor = '#38bdf8';
   let navBtnColor = '#38bdf8';
+  let navBtnBgColor = '#1e293b';
   let isFetching = false;
   let loader = null;
   let navBtnsEnabled = true;
@@ -88,6 +96,7 @@
       highlightEnabled = data.highlightEnabled === true;
       highlightColor = data.highlightColor || '#38bdf8';
       navBtnColor = data.navBtnColor || '#38bdf8';
+      navBtnBgColor = data.navBtnBgColor || '#1e293b';
       navBtnsEnabled = data.navBtnsEnabled !== false;
       
       waitForBody(() => {
@@ -104,6 +113,7 @@
         b.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
         
         document.documentElement.style.setProperty('--sbf-nav-color', navBtnColor);
+        document.documentElement.style.setProperty('--sbf-nav-bg', navBtnBgColor);
         updateNavBtns();
         updateHighlighting();
       });
@@ -137,7 +147,6 @@
         }
       });
     };
-
     bruteForceKill(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
     bruteForceKill(['images', 'bilder'], googleModules.images);
     bruteForceKill(['videos', 'video'], googleModules.videos);
