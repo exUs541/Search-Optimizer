@@ -158,11 +158,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Event Handlers
   async function triggerLiveUpdate() {
-    const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
-    for (let tab of tabs) {
-      try { 
-        await chrome.tabs.sendMessage(tab.id, { action: "live_update" });
-      } catch (e) {}
+    try {
+      const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
+      for (let tab of tabs) {
+        chrome.tabs.sendMessage(tab.id, { action: "live_update" }).catch(() => {});
+      }
+      // Also catch root google pages (like home search)
+      const rootTabs = await chrome.tabs.query({ url: "*://*.google.*/" });
+      for (let tab of rootTabs) {
+        chrome.tabs.sendMessage(tab.id, { action: "live_update" }).catch(() => {});
+      }
+    } catch (e) {
+      console.error('[Search Optimizer] Live update broadcast failed:', e);
     }
   }
 

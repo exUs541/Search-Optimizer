@@ -89,7 +89,8 @@
         position: fixed; bottom: 24px; left: 24px; z-index: 2147483640;
         display: none; flex-direction: column; gap: 8px;
       }
-      #sbf-nav-btns.visible { display: flex; }
+      /* Only show if enabled via body class AND visible via scroll logic */
+      .sbf-show-nav-btns #sbf-nav-btns.visible { display: flex; }
       .sbf-nav-btn {
         width: 44px; height: 44px; border-radius: 50%; background: #1e293b;
         border: 1px solid #334155; color: #38bdf8; display: flex; align-items: center;
@@ -553,17 +554,10 @@
   window.addEventListener('scroll', onScroll, { passive: true });
 
   function updateNavBtns() {
-    const container = document.getElementById('sbf-nav-btns');
-    if (!navBtnsEnabled) {
-      console.log('[Search Optimizer] Nav Buttons disabled, removing container');
-      if (container) container.remove();
-      return;
-    }
-    
     ensureNavBtns();
-    const updatedContainer = document.getElementById('sbf-nav-btns');
-    if (updatedContainer) {
-      updatedContainer.classList.add('visible');
+    const container = document.getElementById('sbf-nav-btns');
+    if (container) {
+      container.classList.add('visible');
       const topBtn = document.getElementById('sbf-scroll-top');
       const bottomBtn = document.getElementById('sbf-scroll-bottom');
       const isAtTop = window.scrollY < 50;
@@ -595,6 +589,7 @@
       document.body.classList.toggle('sbf-hide-pasf', !!googleModules.pasf);
       document.body.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
       document.body.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
+      document.body.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
 
       updateHighlighting();
       updateNavBtns();
