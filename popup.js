@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupColl('tabs-toggle', 'tabs-content'); setupColl('modules-toggle', 'modules-content');
   setupColl('block-domains-toggle', 'block-domains-content'); setupColl('keywords-toggle', 'keywords-content');
 
-  // Eye Buttons
+  // Eyes
   const updateEye = (btn, hide) => { btn.innerHTML = hide ? EYE_CLOSED : EYE_OPEN; btn.classList.toggle('hidden', hide); };
   document.querySelectorAll('.eye-btn').forEach(btn => {
     const key = btn.dataset.hide;
@@ -103,24 +103,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     btn.onclick = () => { obj[actualKey] = !obj[actualKey]; updateEye(btn, !!obj[actualKey]); saveAll(); };
   });
 
-  // Design Logic
+  // Design
   document.querySelectorAll('.theme-preset').forEach(btn => {
-    btn.onclick = () => {
-      const c = themes[btn.dataset.theme];
-      applyThemeToUI(c, c.p, c.s);
-      saveAll();
-    };
+    btn.onclick = () => { const c = themes[btn.dataset.theme]; applyThemeToUI(c, c.p, c.s); saveAll(); };
   });
 
   const setupColorPair = (picker, hex) => {
     picker.oninput = () => { syncHex(picker, hex); applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); saveAll(); };
     hex.oninput = () => { if (/^#[0-9A-F]{6}$/i.test(hex.value)) { picker.value = hex.value; applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); saveAll(); } };
   };
-  setupColorPair(colorPrimary, hexPrimary);
-  setupColorPair(colorBg, hexBg);
-  setupColorPair(colorSecondary, hexSecondary);
-  setupColorPair(colorNav, hexNav);
-  setupColorPair(colorNavBg, hexNavBg);
+  setupColorPair(colorPrimary, hexPrimary); setupColorPair(colorBg, hexBg); setupColorPair(colorSecondary, hexSecondary);
+  setupColorPair(colorNav, hexNav); setupColorPair(colorNavBg, hexNavBg);
+
+  // Fun Buttons
+  document.querySelectorAll('.fun-btn').forEach(btn => {
+    btn.onclick = () => {
+      const query = btn.dataset.q;
+      chrome.tabs.create({ url: `https://www.google.com/search?q=${encodeURIComponent(query)}` });
+    };
+  });
 
   // Lists
   const render = (list, elId) => {
@@ -155,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('export-btn').onclick = async () => {
     const d = await chrome.storage.local.get(null);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }));
-    a.download = `search-optimizer-v2.3.4.json`; a.click();
+    a.download = `search-optimizer-v2.3.7.json`; a.click();
   };
   document.getElementById('import-btn').onclick = () => {
     const i = document.createElement('input'); i.type = 'file'; i.accept = '.json';
