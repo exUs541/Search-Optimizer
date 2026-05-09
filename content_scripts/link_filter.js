@@ -1,18 +1,36 @@
 (async function() {
   'use strict';
   
+  // 1. CSS INJECTION
   if (!document.getElementById('sbf-style')) {
     const style = document.createElement('style');
     style.id = 'sbf-style';
     style.textContent = `
       .sbf-hidden { display: none !important; }
-      
       body.sbf-hide-more-btn .sbf-more-wrapper { display: none !important; }
 
-      /* Block Button UI */
-      .sbf-block-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: transparent; border: none; cursor: pointer; color: #94a3b8; margin-left: auto; z-index: 10; transition: all 0.2s; }
-      .sbf-block-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-      .sbf-block-btn svg { width: 14px; height: 14px; pointer-events: none; stroke-width: 2.5; }
+      .sbf-block-btn { 
+        display: inline-flex !important; 
+        align-items: center; 
+        justify-content: center; 
+        width: 22px; 
+        height: 22px; 
+        border-radius: 50%; 
+        background: transparent; 
+        border: none; 
+        cursor: pointer; 
+        color: #ef4444; 
+        margin: 0px 6px !important; /* Abstand links und rechts */
+        margin-left: 20px !important; 
+        padding: 0;
+        transition: background 0.2s;
+        flex-shrink: 0;
+        /* Verhindert das Schweben */
+        position: static !important;
+        transform: none !important;
+      }
+      .sbf-block-btn:hover { background: rgba(239, 68, 68, 0.15); }
+      .sbf-block-btn svg { width: 14px; height: 14px; pointer-events: none; }
 
       #sbf-loader { display: none; text-align: center; padding: 20px; color: #9aa0a6; gap: 10px; align-items: center; justify-content: center; }
       #sbf-loader.active { display: flex; }
@@ -30,14 +48,16 @@
       .sbf-hide-mod-images [data-attrid="images universal"] { display: none !important; }
       .sbf-hide-mod-videos .MjjYud:has(.RzdJxc) { display: none !important; }
       .sbf-hide-mod-ask [data-attrid="wa_paa"], .sbf-hide-mod-ask .WwS1pe { display: none !important; }
-      .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results { display: none !important; }
-      .sbf-hide-mod-forums [data-attrid="discussions_and_forums"], .sbf-hide-mod-forums .f4S95b { display: none !important; }
+      .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results, .sbf-hide-mod-pasf .K877S, .sbf-hide-mod-pasf .W67Drf, .sbf-hide-mod-pasf .WwS1pe { display: none !important; }
+      .sbf-hide-mod-forums [data-attrid="discussions_and_forums"], 
+      .sbf-hide-mod-forums .f4S95b { display: none !important; }
       .sbf-hide-mod-sponsored #tads, .sbf-hide-mod-sponsored #tadsb, .sbf-hide-mod-sponsored #tvcap { display: none !important; }
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .kvH3mc img { visibility: hidden !important; width: 0 !important; margin: 0 !important; }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
 
+  // 2. STATE MANAGER
   let googleModules = {}, hiddenTabs = {}, searchFilters = [];
   let infiniteScrollEnabled = false, isFetching = false, loader = null;
   let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
@@ -68,6 +88,7 @@
     }
   }
 
+  // 3. TAB & MODULE SCANNER
   function scanGoogleModules() {
     const tagMoreButton = () => {
       document.querySelectorAll('div[role="navigation"] span, div[role="navigation"] div, #hdtb span, #hdtb div').forEach(el => {
@@ -136,8 +157,10 @@
     bruteForceKill(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
     bruteForceKill(['discussions and forums'], googleModules.forums);
     bruteForceKill(['products', 'produkte'], googleModules.products);
+    bruteForceKill(['people also search for', 'nutzer suchen auch nach', 'ähnliche suchanfragen','related searches'], googleModules.pasf);
   }
 
+  // 4. NAVIGATION & INFINITE SCROLL
   function ensureNavBtns() {
     if (!document.body || document.getElementById('sbf-nav-btns')) return;
     const c = document.createElement('div'); c.id = 'sbf-nav-btns';
@@ -157,54 +180,73 @@
 
   function incrementalScan() {
     scanGoogleModules();
-    
-    document.querySelectorAll('.g, .tF2Cxc').forEach(container => {
+
+    document.querySelectorAll('.yuRUbf').forEach(container => {
       const link = container.querySelector('a[href]');
-      if (!link) return;
+      //if (container.dataset.sbfBlockInjected) return;
+
+      if (!link || !link.href.startsWith('http')) return; 
 
       try {
-        const urlObj = new URL(link.href);
-        if (urlObj.hostname.includes('google.')) return; 
-        
-        const domain = urlObj.hostname.replace(/^www\./, '');
+        const domain = new URL(link.href).hostname.replace(/^www\./, '');
+        const resultBlock = container.closest('.MjjYud, .g, .tF2Cxc');
+        if (!resultBlock) return;
 
         if (searchFilters.includes(domain)) {
-          container.classList.add('sbf-hidden');
-          return;
+          // const resultBlock = container.closest('.MjjYud, .g, .tF2Cxc');
+          // if (resultBlock) resultBlock.classList.add('sbf-hidden');
+          // return;
+          resultBlock.classList.add('sbf-hidden');
+        } else {
+          resultBlock.classList.remove('sbf-hidden');
         }
 
         if (container.dataset.sbfBlockInjected) return;
-        container.dataset.sbfBlockInjected = '1';
 
-        const headerArea = container.querySelector('.yuRUbf > div') || container.querySelector('.yuRUbf');
-        if (headerArea) {
-          headerArea.style.display = 'flex';
-          headerArea.style.alignItems = 'center';
-          
+        // Wir suchen das SVG aus deinem Pfad und gehen hoch zum Button-Container
+        const dotsSvg = container.querySelector('svg path[d^="M12 8c1.1"]')?.closest('svg');
+        const dotsButton = dotsSvg?.closest('[role="button"], div[aria-haspopup="true"]');
+
+        if (dotsButton && dotsButton.parentElement) {
+          container.dataset.sbfBlockInjected = '1';
+
           const btn = document.createElement('button');
           btn.className = 'sbf-block-btn';
           btn.title = `Block ${domain}`;
-          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
-          
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
+
+          // Wir erzwingen Flex auf dem gemeinsamen Parent der Punkte und des neuen Buttons
+          const parent = dotsButton.parentElement;
+          parent.style.display = 'inline-flex';
+          parent.style.alignItems = 'center';
+          parent.style.flexDirection = 'row';
+
+          // Injektion DIREKT vor den drei Punkten
+          parent.insertBefore(btn, dotsButton);
+
           btn.onclick = async (e) => {
             e.preventDefault();
             e.stopPropagation();
             if (!searchFilters.includes(domain)) {
               searchFilters.push(domain);
               await chrome.storage.local.set({ searchFilters });
-              container.classList.add('sbf-hidden');
+              const resultBlock = container.closest('.MjjYud, .g, .tF2Cxc');
+              if (resultBlock) resultBlock.classList.add('sbf-hidden');
             }
           };
-          
-          headerArea.appendChild(btn);
         }
       } catch(e) {}
     });
 
-    if (!loader && document.body) {
-      loader = document.createElement('div'); loader.id = 'sbf-loader';
-      loader.innerHTML = `<div class="sbf-spinner"></div><span>Loading results…</span>`;
-      const rso = document.getElementById('rso'); if (rso) rso.after(loader);
+    // Zusätzlicher Check für hartnäckige "People search for" Module
+    if (googleModules.pasf) {
+      document.querySelectorAll('[data-pcu], .Cl89te, .EyBRub').forEach(el => {
+        // Wenn das Element Suchvorschläge (Lupen-Icons) enthält
+        if (el.querySelector('svg path[d*="M15.5 14h-.79l-.28-.27"]')) {
+          const container = el.closest('.MjjYud, .g, .hlcw0c');
+          if (container) container.classList.add('sbf-hidden');
+        }
+      });
     }
   }
 
@@ -229,6 +271,7 @@
     }
   }
 
+  // 5. INIT
   chrome.runtime.onMessage.addListener((m) => { if (m.action === "live_update") loadConfig(); });
   chrome.storage.onChanged.addListener(() => loadConfig());
   

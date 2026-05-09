@@ -62,7 +62,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       navBtnsEnabled: document.getElementById('nav-btns-enabled').checked,
       highlightEnabled: document.getElementById('highlight-enabled').checked,
       highlightColor: colorPrimary.value,
-      googleModules, hiddenTabs, searchFilters, blockedKeywords,
+      googleModules, 
+      hiddenTabs, 
+      searchFilters, 
+      blockedKeywords,
       themeColors: { p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value },
       navBtnColor: colorNav.value,
       navBtnBgColor: colorNavBg.value
@@ -70,7 +73,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await triggerLiveUpdate();
   };
 
-  // Init
+  // Init UI from Storage
   applyThemeToUI(store.themeColors || themes.midnight, store.navBtnColor || themes.midnight.p, store.navBtnBgColor || themes.midnight.s);
   document.getElementById('infinite-scroll').checked = !!store.infiniteScroll;
   document.getElementById('advanced-search').checked = store.advancedSearch !== false;
@@ -83,7 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
-      document.getElementById(btn.dataset.tab).classList.add('active');
+      const target = document.getElementById(btn.dataset.tab);
+      if (target) target.classList.add('active');
     };
   });
 
@@ -92,11 +96,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     const h = document.getElementById(hId);
     const c = document.getElementById(cId);
     const a = document.getElementById(aId);
-    if (h && c) h.onclick = () => {
-      const isHidden = c.style.display === 'none';
-      c.style.display = isHidden ? 'block' : 'none';
-      if (a) a.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
-    };
+    if (h && c) {
+        c.style.display = 'none'; // Default hidden
+        h.onclick = () => {
+          const isHidden = c.style.display === 'none';
+          c.style.display = isHidden ? 'block' : 'none';
+          if (a) a.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+        };
+    }
   };
   setupColl('tabs-toggle', 'tabs-content', 'tabs-arrow');
   setupColl('modules-toggle', 'modules-content', 'modules-arrow');
@@ -113,12 +120,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  // Dynamic Eye Buttons (Handles shortvideos implicitly)
-  const updateEye = (btn, hide) => { btn.innerHTML = hide ? EYE_CLOSED : EYE_OPEN; btn.classList.toggle('hidden', hide); };
+  // Dynamic Eye Buttons
+  const updateEye = (btn, hide) => { 
+    btn.innerHTML = hide ? EYE_CLOSED : EYE_OPEN; 
+    btn.classList.toggle('hidden', hide); 
+  };
+  
   document.querySelectorAll('.eye-btn').forEach(btn => {
     const key = btn.dataset.hide;
+    if (!key) return;
     const actualKey = key.replace('mod-', '').replace('tab-', '');
     const obj = key.startsWith('mod-') ? googleModules : hiddenTabs;
+    
     updateEye(btn, !!obj[actualKey]);
     
     btn.onclick = async () => {
@@ -130,12 +143,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Design Logic
   document.querySelectorAll('.theme-preset').forEach(btn => {
-    btn.onclick = async () => { const c = themes[btn.dataset.theme]; applyThemeToUI(c, c.p, c.s); await saveAll(); };
+    btn.onclick = async () => { 
+      const c = themes[btn.dataset.theme]; 
+      applyThemeToUI(c, c.p, c.s); 
+      await saveAll(); 
+    };
   });
 
   const setupColorPair = (picker, hex) => {
-    picker.oninput = async () => { syncHex(picker, hex); applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); await saveAll(); };
-    hex.oninput = async () => { if (/^#[0-9A-F]{6}$/i.test(hex.value)) { picker.value = hex.value; applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); await saveAll(); } };
+    picker.oninput = async () => { 
+      syncHex(picker, hex); 
+      applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); 
+      await saveAll(); 
+    };
+    hex.oninput = async () => { 
+      if (/^#[0-9A-F]{6}$/i.test(hex.value)) { 
+        picker.value = hex.value; 
+        applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); 
+        await saveAll(); 
+      } 
+    };
   };
   setupColorPair(colorPrimary, hexPrimary); 
   setupColorPair(colorBg, hexBg); 
@@ -155,42 +182,101 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Lists Management
   const render = (list, elId) => {
-    const el = document.getElementById(elId); if (!el) return;
+    const el = document.getElementById(elId); 
+    if (!el) return;
     el.innerHTML = '';
-    list.forEach((it, i) => {
-      const li = document.createElement('li'); li.textContent = it;
-      const d = document.createElement('button'); d.textContent = '✕'; d.className = 'delete-btn';
-      d.onclick = async () => { list.splice(i, 1); await saveAll(); render(list, elId); };
-      li.appendChild(d); el.appendChild(li);
+
+    // Wir erstellen eine Kopie der Liste, um sicher zu rendern
+    [...list].forEach((it) => {
+      const li = document.createElement('li'); 
+      li.textContent = it;
+
+      const d = document.createElement('button'); 
+      d.textContent = '✕'; 
+      d.className = 'delete-btn';
+      
+      d.onclick = async (e) => {
+        e.preventDefault();
+        
+        // Direkte Löschung über den Wert (robuster als Index)
+        if (elId === 'site-list') {
+            searchFilters = searchFilters.filter(domain => domain !== it);
+            await saveAll();
+            render(searchFilters, 'site-list');
+        } else if (elId === 'keyword-list') {
+            blockedKeywords = blockedKeywords.filter(kw => kw !== it);
+            await saveAll();
+            render(blockedKeywords, 'keyword-list');
+        }
+      };
+
+      li.appendChild(d); 
+      el.appendChild(li);
     });
   };
+
+  // Initialer Render beim Laden
   render(searchFilters, 'site-list'); 
   render(blockedKeywords, 'keyword-list');
-
+  
   document.getElementById('add-btn').onclick = async () => {
     const i = document.getElementById('site-input');
-    if (i.value && !searchFilters.includes(i.value.toLowerCase())) { searchFilters.push(i.value.toLowerCase()); i.value = ''; await saveAll(); render(searchFilters, 'site-list'); }
+    const val = i.value.trim().toLowerCase();
+    if (val && !searchFilters.includes(val)) { 
+      searchFilters.push(val); 
+      i.value = ''; 
+      await saveAll(); 
+      render(searchFilters, 'site-list'); 
+    }
   };
   
   document.getElementById('add-keyword-btn').onclick = async () => {
     const i = document.getElementById('keyword-input');
-    if (i.value && !blockedKeywords.includes(i.value.toLowerCase())) { blockedKeywords.push(i.value.toLowerCase()); i.value = ''; await saveAll(); render(blockedKeywords, 'keyword-list'); }
+    const val = i.value.trim().toLowerCase();
+    if (val && !blockedKeywords.includes(val)) { 
+      blockedKeywords.push(val); 
+      i.value = ''; 
+      await saveAll(); 
+      render(blockedKeywords, 'keyword-list'); 
+    }
   };
 
-  document.querySelectorAll('.switch input').forEach(s => s.onchange = saveAll);
+  // General Switches
+  document.querySelectorAll('.switch input').forEach(s => {
+    s.onchange = async () => { await saveAll(); };
+  });
 
   // Backup & Restore
   document.getElementById('export-btn').onclick = async () => {
     const d = await chrome.storage.local.get(null);
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }));
-    a.download = `search-optimizer-v2.3.8.json`; a.click();
+    const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); 
+    a.href = url; 
+    a.download = `search-optimizer-export.json`; 
+    a.click();
+    URL.revokeObjectURL(url);
   };
   
   document.getElementById('import-btn').onclick = () => {
-    const i = document.createElement('input'); i.type = 'file'; i.accept = '.json';
+    const i = document.createElement('input'); 
+    i.type = 'file'; 
+    i.accept = '.json';
     i.onchange = e => {
-      const r = new FileReader(); r.onload = async re => { await chrome.storage.local.set(JSON.parse(re.target.result)); window.location.reload(); };
-      r.readAsText(e.target.files[0]);
+      const file = e.target.files[0];
+      if (!file) return;
+      const r = new FileReader(); 
+      r.onload = async re => { 
+        try {
+          const config = JSON.parse(re.target.result);
+          await chrome.storage.local.clear();
+          await chrome.storage.local.set(config); 
+          window.location.reload(); 
+        } catch (err) {
+          alert('Error parsing JSON file.');
+        }
+      };
+      r.readAsText(file);
     };
     i.click();
   };

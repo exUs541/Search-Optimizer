@@ -139,6 +139,62 @@ input:checked + .slider:before { transform: translateX(16px); }
 .hex-input { width: 70px; background: var(--bg-input); border: 1px solid var(--border); color: #fff; font-family: monospace; font-size: 12px; padding: 4px 6px; border-radius: 4px; text-align: center; outline: none; }
 .hex-input:focus { border-color: var(--primary); }
 
+/* Container für die Farbwähler */
+.color-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Zwei Spalten mit gleicher Breite */
+  gap: 10px;                     /* Abstand zwischen den Karten */
+  margin-top: 10px;
+}
+
+/* Die einzelnen Farbwähler-Karten */
+.color-item {
+  background: var(--bg-card);    /* Nutzt deine Variable */
+  padding: 12px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;        /* Label oben, Picker/Hex unten */
+  gap: 8px;
+  border: 1px solid var(--border);
+}
+
+.color-item label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  letter-spacing: 0.05em;
+}
+
+.color-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Den Standard-Input von Chrome etwas hübscher machen */
+input[type="color"] {
+  appearance: none;
+  border: none;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  background: none;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hex-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-family: monospace;
+  font-size: 12px;
+  width: 100%;
+}
+
 /* Fun Tab Styles */
 .fun-grid {
   display: grid;
