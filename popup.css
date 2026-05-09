@@ -128,71 +128,69 @@ input:checked + .slider:before { transform: translateX(16px); }
 }
 .theme-preset.active { border-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
 
-.custom-colors-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.custom-colors-grid { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 10px; 
+  margin-top: 12px; 
+}
+
 .color-control {
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--bg-card); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border);
-}
-.color-control label { font-size: 12px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; }
-.color-inputs { display: flex; align-items: center; gap: 8px; }
-.color-inputs input[type="color"] { width: 28px; height: 28px; border: 1px solid var(--border); background: transparent; border-radius: 4px; cursor: pointer; padding: 0; }
-.hex-input { width: 70px; background: var(--bg-input); border: 1px solid var(--border); color: #fff; font-family: monospace; font-size: 12px; padding: 4px 6px; border-radius: 4px; text-align: center; outline: none; }
-.hex-input:focus { border-color: var(--primary); }
-
-/* Container für die Farbwähler */
-.color-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Zwei Spalten mit gleicher Breite */
-  gap: 10px;                     /* Abstand zwischen den Karten */
-  margin-top: 10px;
-}
-
-/* Die einzelnen Farbwähler-Karten */
-.color-item {
-  background: var(--bg-card);    /* Nutzt deine Variable */
-  padding: 12px;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;        /* Label oben, Picker/Hex unten */
+  display: flex; 
+  flex-direction: column;
   gap: 8px;
+  background: var(--bg-card); 
+  padding: 12px; 
+  border-radius: 8px; 
   border: 1px solid var(--border);
 }
 
-.color-item label {
-  font-size: 10px;
-  text-transform: uppercase;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
+.color-control label { 
+  font-size: 10px; 
+  font-weight: 700; 
+  color: var(--text-dim); 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
 }
 
-.color-controls {
+.color-inputs { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+}
+
+.color-inputs input[type="color"] { 
+  width: 24px; 
+  height: 24px; 
+  border: none; 
+  background: transparent; 
+  cursor: pointer; 
+  padding: 0; 
+}
+
+.color-inputs input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-inputs input[type="color"]::-webkit-color-swatch { border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
+
+.hex-input { 
+  flex: 1;
+  background: var(--bg-input); 
+  border: 1px solid var(--border); 
+  color: #fff; 
+  font-family: monospace; 
+  font-size: 11px; 
+  padding: 4px 6px; 
+  border-radius: 4px; 
+  text-align: center; 
+  outline: none; 
+}
+.hex-input:focus { border-color: var(--primary); }
+
+/* Highlighting Section */
+.switch-row {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-}
-
-/* Den Standard-Input von Chrome etwas hübscher machen */
-input[type="color"] {
-  appearance: none;
-  border: none;
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  background: none;
-}
-
-input[type="color"]::-webkit-color-swatch {
-  border-radius: 4px;
-  border: 1px solid rgba(255,255,255,0.1);
-}
-
-.hex-input {
-  background: transparent;
-  border: none;
-  color: #fff;
-  font-family: monospace;
-  font-size: 12px;
-  width: 100%;
+  margin-top: 10px;
 }
 
 /* Fun Tab Styles */
