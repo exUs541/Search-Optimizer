@@ -1,6 +1,14 @@
 (async function() {
   'use strict';
   
+  // 0. HELPERS
+  const hexToRgba = (hex, alpha) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   // 1. CSS INJECTION
   if (!document.getElementById('sbf-style')) {
     const style = document.createElement('style');
@@ -53,6 +61,15 @@
       .sbf-hide-mod-forums .f4S95b { display: none !important; }
       .sbf-hide-mod-sponsored #tads, .sbf-hide-mod-sponsored #tadsb, .sbf-hide-mod-sponsored #tvcap { display: none !important; }
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .kvH3mc img { visibility: hidden !important; width: 0 !important; margin: 0 !important; }
+      
+      .sbf-highlight { 
+        border: 2px solid var(--sbf-highlight-color, #38bdf8) !important; 
+        background: var(--sbf-highlight-bg, rgba(56, 189, 248, 0.05)) !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
+        margin: 5px -10px !important;
+        box-shadow: 0 4px 15px var(--sbf-highlight-bg) !important;
+      }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -61,6 +78,7 @@
   let googleModules = {}, hiddenTabs = {}, searchFilters = [];
   let infiniteScrollEnabled = false, isFetching = false, loader = null;
   let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
+  let highlightFilters = [], highlightKeywords = [], highlightEnabled = false, highlightColor = '#38bdf8';
 
   async function loadConfig() {
     const data = await chrome.storage.local.get(null);
@@ -71,6 +89,10 @@
     navBtnColor = data.navBtnColor || '#38bdf8';
     navBtnBgColor = data.navBtnBgColor || '#1e293b';
     navBtnsEnabled = data.navBtnsEnabled !== false;
+    highlightFilters = data.highlightFilters || [];
+    highlightKeywords = data.highlightKeywords || [];
+    highlightEnabled = !!data.highlightEnabled;
+    highlightColor = data.highlightColor || '#38bdf8';
     
     if (document.body) {
       const b = document.body;
@@ -81,6 +103,8 @@
 
       document.documentElement.style.setProperty('--sbf-nav-color', navBtnColor);
       document.documentElement.style.setProperty('--sbf-nav-bg', navBtnBgColor);
+      document.documentElement.style.setProperty('--sbf-highlight-color', highlightColor);
+      document.documentElement.style.setProperty('--sbf-highlight-bg', hexToRgba(highlightColor, 0.08));
 
       ensureNavBtns();
       updateNavBtns();
@@ -235,6 +259,18 @@
             }
           };
         }
+
+        // Highlight Logic
+        if (highlightEnabled) {
+          const snippetText = resultBlock.innerText.toLowerCase();
+          const shouldHighlight = highlightFilters.includes(domain) || 
+                                  highlightKeywords.some(kw => snippetText.includes(kw.toLowerCase()));
+          
+          resultBlock.classList.toggle('sbf-highlight', shouldHighlight);
+        } else {
+          resultBlock.classList.remove('sbf-highlight');
+        }
+
       } catch(e) {}
     });
 

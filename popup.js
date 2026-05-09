@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let hiddenTabs = store.hiddenTabs || {};
   let searchFilters = store.searchFilters || [];
   let blockedKeywords = store.blockedKeywords || [];
+  let highlightFilters = store.highlightFilters || [];
+  let highlightKeywords = store.highlightKeywords || [];
 
   // Design Elements
   const colorPrimary = document.getElementById('color-primary');
@@ -33,13 +35,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const syncHex = (picker, hexInput) => { hexInput.value = picker.value.toUpperCase(); };
 
+  const hexToRgba = (hex, alpha) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   const applyThemeToUI = (colors, navColor, navBg) => {
     const r = document.documentElement;
     r.style.setProperty('--primary', colors.p);
+    r.style.setProperty('--primary-hover', hexToRgba(colors.p, 0.8));
     r.style.setProperty('--bg-main', colors.b);
     r.style.setProperty('--bg-card', colors.s);
     r.style.setProperty('--border', colors.s);
     r.style.setProperty('--bg-input', colors.s);
+    r.style.setProperty('--accent-glow', hexToRgba(colors.p, 0.15));
     
     colorPrimary.value = colors.p; syncHex(colorPrimary, hexPrimary);
     colorBg.value = colors.b; syncHex(colorBg, hexBg);
@@ -66,6 +77,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       hiddenTabs, 
       searchFilters, 
       blockedKeywords,
+      highlightFilters,
+      highlightKeywords,
       themeColors: { p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value },
       navBtnColor: colorNav.value,
       navBtnBgColor: colorNavBg.value
@@ -109,6 +122,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupColl('modules-toggle', 'modules-content', 'modules-arrow');
   setupColl('block-domains-toggle', 'block-domains-content', 'block-domains-arrow');
   setupColl('keywords-toggle', 'keywords-content', 'keywords-arrow');
+  setupColl('highlight-domains-toggle', 'highlight-domains-content', 'highlight-domains-arrow');
+  setupColl('highlight-keywords-toggle', 'highlight-keywords-content', 'highlight-keywords-arrow');
 
   // Unpack More Logic
   const unpackMoreSwitch = document.getElementById('tab-unpack-more');
@@ -207,6 +222,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             blockedKeywords = blockedKeywords.filter(kw => kw !== it);
             await saveAll();
             render(blockedKeywords, 'keyword-list');
+        } else if (elId === 'highlight-site-list') {
+            highlightFilters = highlightFilters.filter(domain => domain !== it);
+            await saveAll();
+            render(highlightFilters, 'highlight-site-list');
+        } else if (elId === 'highlight-keyword-list') {
+            highlightKeywords = highlightKeywords.filter(kw => kw !== it);
+            await saveAll();
+            render(highlightKeywords, 'highlight-keyword-list');
         }
       };
 
@@ -218,6 +241,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialer Render beim Laden
   render(searchFilters, 'site-list'); 
   render(blockedKeywords, 'keyword-list');
+  render(highlightFilters, 'highlight-site-list');
+  render(highlightKeywords, 'highlight-keyword-list');
   
   document.getElementById('add-btn').onclick = async () => {
     const i = document.getElementById('site-input');
@@ -229,7 +254,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       render(searchFilters, 'site-list'); 
     }
   };
-  
   document.getElementById('add-keyword-btn').onclick = async () => {
     const i = document.getElementById('keyword-input');
     const val = i.value.trim().toLowerCase();
@@ -238,6 +262,28 @@ document.addEventListener('DOMContentLoaded', async () => {
       i.value = ''; 
       await saveAll(); 
       render(blockedKeywords, 'keyword-list'); 
+    }
+  };
+
+  document.getElementById('add-highlight-btn').onclick = async () => {
+    const i = document.getElementById('highlight-site-input');
+    const val = i.value.trim().toLowerCase();
+    if (val && !highlightFilters.includes(val)) { 
+      highlightFilters.push(val); 
+      i.value = ''; 
+      await saveAll(); 
+      render(highlightFilters, 'highlight-site-list'); 
+    }
+  };
+
+  document.getElementById('add-highlight-keyword-btn').onclick = async () => {
+    const i = document.getElementById('highlight-keyword-input');
+    const val = i.value.trim().toLowerCase();
+    if (val && !highlightKeywords.includes(val)) { 
+      highlightKeywords.push(val); 
+      i.value = ''; 
+      await saveAll(); 
+      render(highlightKeywords, 'highlight-keyword-list'); 
     }
   };
 

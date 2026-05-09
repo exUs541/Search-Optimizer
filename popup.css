@@ -218,13 +218,6 @@ input:checked + .slider:before { transform: translateX(16px); }
 .hex-input:focus { border-color: var(--primary); }
 
 /* Highlighting Section */
-.switch-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
-
 /* Fun Tab Styles */
 .fun-grid {
   display: grid;
@@ -241,40 +234,116 @@ input:checked + .slider:before { transform: translateX(16px); }
   cursor: pointer;
   font-weight: 600;
   font-size: 13px;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 .fun-btn:hover {
-  background: var(--bg-input);
+  background: var(--accent-glow);
   border-color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px var(--accent-glow);
 }
 .fun-btn:active { transform: translateY(0); }
 
 /* Lists & Eye Rows */
 .eye-row { display: flex; justify-content: space-between; align-items: center; background: var(--bg-card); padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 6px; }
-.eye-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; border-radius: 4px; }
+.eye-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; border-radius: 4px; transition: all 0.2s; }
+.eye-btn:hover { color: var(--primary); background: var(--accent-glow); }
 .eye-btn.hidden { color: var(--primary); }
 
 .input-group { display: flex; gap: 8px; margin-top: 10px; }
-.input-group input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none; }
-.add-btn { background: var(--primary); color: #fff; border: none; padding: 0 12px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.input-group input { flex: 1; background: var(--bg-input); border: 1px solid var(--border); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; outline: none; transition: border-color 0.2s; }
+.input-group input:focus { border-color: var(--primary); }
+.add-btn { background: var(--primary); color: #fff; border: none; padding: 0 12px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.add-btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 2px 8px var(--accent-glow); }
+
 .item-list { list-style: none; margin-top: 10px; }
-.item-list li { display: flex; justify-content: space-between; background: var(--bg-card); padding: 6px 12px; border-radius: 4px; margin-bottom: 4px; font-size: 12px; }
-.delete-btn { background: transparent; border: none; color: #f87171; cursor: pointer; }
+.item-list li { display: flex; justify-content: space-between; background: var(--bg-card); padding: 6px 12px; border-radius: 4px; margin-bottom: 4px; font-size: 12px; border: 1px solid transparent; transition: border-color 0.2s; }
+.item-list li:hover { border-color: var(--border); }
+.delete-btn { background: transparent; border: none; color: #f87171; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
+.delete-btn:hover { opacity: 1; }
 
 /* Footer */
 footer { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bg-card); padding: 16px 20px; border-top: 1px solid var(--border); text-align: center; }
-.save-btn { width: 100%; background: var(--primary); color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: 800; font-size: 14px; margin-bottom: 8px; }
 footer p { font-size: 10px; color: var(--text-dim); }
 
-.secondary-btn { background: var(--bg-input); color: #fff; border: 1px solid var(--border); width: 100%; padding: 8px; border-radius: 6px; margin-top: 10px; cursor: pointer; font-size: 12px; }
-.action-btn { background: var(--bg-input); color: #fff; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 4px; }
-.social-btn { display: inline-block; background: var(--bg-input); color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600; margin: 4px; }
+.secondary-btn { background: var(--bg-input); color: #fff; border: 1px solid var(--border); width: 100%; padding: 8px; border-radius: 6px; margin-top: 10px; cursor: pointer; font-size: 12px; transition: all 0.2s; }
+.secondary-btn:hover { background: var(--bg-card); border-color: var(--primary); }
+
+.action-btn { 
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input); 
+  color: #fff; 
+  border: 1px solid var(--border); 
+  padding: 8px 16px; 
+  border-radius: 6px; 
+  cursor: pointer; 
+  font-size: 12px; 
+  margin: 4px; 
+  transition: all 0.2s; 
+}
+.action-btn:hover { border-color: var(--primary); background: var(--accent-glow); box-shadow: 0 2px 8px var(--accent-glow); }
+.action-btn svg { width: 14px; height: 14px; }
+
+.backup-btns { display: flex; gap: 10px; margin-top: 10px; justify-content: center; }
+
+/* Social Grid */
+.social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 20px;
+}
+
+.social-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px 10px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #fff;
+}
+
+.social-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.social-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: var(--bg-input);
+  transition: all 0.3s;
+}
+
+.social-card span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Brand Colors */
+.social-card.linkedin:hover .social-icon { background: #0077b5; color: #fff; }
+.social-card.website:hover .social-icon { background: var(--primary); color: #fff; }
+.social-card.youtube:hover .social-icon { background: #ff0000; color: #fff; }
+.social-card.patreon:hover .social-icon { background: #f96854; color: #fff; }
+
+.social-icon svg { width: 24px; height: 24px; }
 
 /* --- 2-Column Grid Layout FIX --- */
 /* Fängt das von JS gesetzte "display: block" ab und erzwingt das Grid */
