@@ -95,7 +95,7 @@ header p { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
 
 .section-title svg { width: 16px; height: 16px; }
 
-.arrow { font-size: 10px; color: var(--text-dim); transition: transform 0.2s; }
+.arrow { font-size: 10px; color: var(--text-dim); transition: transform 0.3s ease; display: inline-block; }
 
 .switch-row {
   display: flex;
@@ -189,3 +189,31 @@ footer p { font-size: 10px; color: var(--text-dim); }
 .secondary-btn { background: var(--bg-input); color: #fff; border: 1px solid var(--border); width: 100%; padding: 8px; border-radius: 6px; margin-top: 10px; cursor: pointer; font-size: 12px; }
 .action-btn { background: var(--bg-input); color: #fff; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; margin: 4px; }
 .social-btn { display: inline-block; background: var(--bg-input); color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600; margin: 4px; }
+
+/* --- 2-Column Grid Layout FIX --- */
+/* Fängt das von JS gesetzte "display: block" ab und erzwingt das Grid */
+.module-toggles[style*="block"] {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.module-toggles .switch-row,
+.module-toggles .secondary-btn {
+  grid-column: 1 / -1; /* Diese Elemente nehmen die volle Breite ein */
+}
+
+.module-toggles .eye-row {
+  margin-bottom: 0 !important;
+  padding: 6px 8px !important;
+  display: flex !important;
+}
+
+.module-toggles .eye-row span {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 4px;
+}

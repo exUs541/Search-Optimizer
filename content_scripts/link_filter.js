@@ -1,26 +1,18 @@
 (async function() {
   'use strict';
   
-  // ─── Styles ───────────────────────────────────────────────────────────────
   if (!document.getElementById('sbf-style')) {
     const style = document.createElement('style');
     style.id = 'sbf-style';
     style.textContent = `
       .sbf-hidden { display: none !important; }
-      .sbf-preferred { border-left: 4px solid #22c55e !important; padding-left: 12px !important; background-color: rgba(34, 197, 94, 0.05) !important; }
       
-      /* Aggressive CSS hiding */
-      .sbf-hide-ai [data-component-type="22"], .sbf-hide-ai .SGE_container, .sbf-hide-ai #super_results, .sbf-hide-ai [data-sge-container] { display: none !important; }
-      .sbf-hide-more .znY98, .sbf-hide-more .G9vS3e, .sbf-hide-more [aria-label*="More"], .sbf-hide-more [aria-label*="Mehr"] { display: none !important; }
-      
-      .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .H6McF, .sbf-hide-favicons .CA96S, .sbf-hide-favicons .kvH3mc img { visibility: hidden !important; width: 0 !important; margin: 0 !important; }
+      body.sbf-hide-more-btn .sbf-more-wrapper { display: none !important; }
 
-      .sbf-hide-products .wOPJ9c, .sbf-hide-products .pla-unit, .sbf-hide-products #tvcap { display: none !important; }
-      .sbf-hide-images [data-attrid="images universal"] { display: none !important; }
-      .sbf-hide-videos .MjjYud:has(.RzdJxc), .sbf-hide-videos .MjjYud:has([data-attrid="VideoResult"]) { display: none !important; }
-      .sbf-hide-ask [data-attrid="wa_paa"], .sbf-hide-ask .WwS1pe, .sbf-hide-ask .ez8I9c { display: none !important; }
-      .sbf-hide-pasf [data-attrid="people_also_search_for"], .sbf-hide-pasf .nV_results { display: none !important; }
-      .sbf-hide-forums [data-attrid="discussions_and_forums"], .sbf-hide-forums .f4S95b { display: none !important; }
+      /* Block Button UI */
+      .sbf-block-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: transparent; border: none; cursor: pointer; color: #94a3b8; margin-left: auto; z-index: 10; transition: all 0.2s; }
+      .sbf-block-btn:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+      .sbf-block-btn svg { width: 14px; height: 14px; pointer-events: none; stroke-width: 2.5; }
 
       #sbf-loader { display: none; text-align: center; padding: 20px; color: #9aa0a6; gap: 10px; align-items: center; justify-content: center; }
       #sbf-loader.active { display: flex; }
@@ -28,102 +20,112 @@
       @keyframes sbf-spin { to { transform: rotate(360deg); } }
       
       #sbf-nav-btns { position: fixed; bottom: 24px; left: 24px; z-index: 2147483640; display: none; flex-direction: column; gap: 8px; }
-      .sbf-show-nav-btns #sbf-nav-btns.visible { display: flex; }
-      .sbf-nav-btn { 
-        width: 44px; height: 44px; border-radius: 50%; 
-        background: var(--sbf-nav-bg, #1e293b) !important; 
-        color: var(--sbf-nav-color, #38bdf8) !important; 
-        display: flex; align-items: center; justify-content: center; cursor: pointer; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s; user-select: none; 
-        border: 1px solid rgba(255,255,255,0.1) !important;
-      }
-      .sbf-nav-btn:hover { transform: scale(1.05); filter: brightness(1.2); }
-      .sbf-nav-btn.disabled { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
+      .sbf-show-nav-btns #sbf-nav-btns { display: flex !important; }
+      .sbf-nav-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--sbf-nav-bg, #1e293b) !important; color: var(--sbf-nav-color, #38bdf8) !important; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.2s; user-select: none; border: 1px solid rgba(255,255,255,0.1) !important; }
+      .sbf-nav-btn.disabled { opacity: 0.15; pointer-events: none; filter: grayscale(1); } 
       .sbf-nav-btn svg { width: 22px; height: 22px; pointer-events: none; stroke: currentColor !important; }
+
+      .sbf-hide-mod-ai [data-component-type="22"], .sbf-hide-mod-ai .SGE_container, .sbf-hide-mod-ai #super_results { display: none !important; }
+      .sbf-hide-mod-products .wOPJ9c, .sbf-hide-mod-products .pla-unit, .sbf-hide-mod-products #tvcap { display: none !important; }
+      .sbf-hide-mod-images [data-attrid="images universal"] { display: none !important; }
+      .sbf-hide-mod-videos .MjjYud:has(.RzdJxc) { display: none !important; }
+      .sbf-hide-mod-ask [data-attrid="wa_paa"], .sbf-hide-mod-ask .WwS1pe { display: none !important; }
+      .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results { display: none !important; }
+      .sbf-hide-mod-forums [data-attrid="discussions_and_forums"], .sbf-hide-mod-forums .f4S95b { display: none !important; }
+      .sbf-hide-mod-sponsored #tads, .sbf-hide-mod-sponsored #tadsb, .sbf-hide-mod-sponsored #tvcap { display: none !important; }
+      .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .kvH3mc img { visibility: hidden !important; width: 0 !important; margin: 0 !important; }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
 
-  // ─── Config State ─────────────────────────────────────────────────────────
-  let searchFilters = [];
-  let googleModules = {};
-  let infiniteScrollEnabled = false;
-  let hiddenTabs = {};
-  let highlightEnabled = false;
-  let highlightColor = '#38bdf8';
-  let navBtnColor = '#38bdf8';
-  let navBtnBgColor = '#1e293b';
-  let isFetching = false;
-  let loader = null;
-  let navBtnsEnabled = true;
-
-  // ─── Core Logic ────────────────────────────────────────────────────────────
-  function waitForBody(callback) {
-    if (document.body) return callback();
-    const observer = new MutationObserver((_, obs) => {
-      if (document.body) { obs.disconnect(); callback(); }
-    });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
-  }
+  let googleModules = {}, hiddenTabs = {}, searchFilters = [];
+  let infiniteScrollEnabled = false, isFetching = false, loader = null;
+  let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
 
   async function loadConfig() {
-    try {
-      const data = await chrome.storage.local.get(null);
-      searchFilters = data.searchFilters || [];
-      googleModules = data.googleModules || {};
-      infiniteScrollEnabled = data.infiniteScroll === true;
-      hiddenTabs = data.hiddenTabs || {};
-      highlightEnabled = data.highlightEnabled === true;
-      highlightColor = data.highlightColor || '#38bdf8';
-      navBtnColor = data.navBtnColor || '#38bdf8';
-      navBtnBgColor = data.navBtnBgColor || '#1e293b';
-      navBtnsEnabled = data.navBtnsEnabled !== false;
-      
-      waitForBody(() => {
-        const b = document.body;
-        b.classList.toggle('sbf-hide-ai', !!googleModules.ai);
-        b.classList.toggle('sbf-hide-products', !!googleModules.products);
-        b.classList.toggle('sbf-hide-images', !!googleModules.images);
-        b.classList.toggle('sbf-hide-videos', !!googleModules.videos);
-        b.classList.toggle('sbf-hide-ask', !!googleModules.ask);
-        b.classList.toggle('sbf-hide-pasf', !!googleModules.pasf);
-        b.classList.toggle('sbf-hide-forums', !!googleModules.forums);
-        b.classList.toggle('sbf-hide-more', !!(hiddenTabs['more'] || hiddenTabs['unpack-more']));
-        b.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
-        b.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
-        
-        document.documentElement.style.setProperty('--sbf-nav-color', navBtnColor);
-        document.documentElement.style.setProperty('--sbf-nav-bg', navBtnBgColor);
-        
-        updateNavBtns();
-        updateHighlighting();
-      });
-    } catch (e) { console.error('[Search Optimizer] Error loading config:', e); }
-  }
+    const data = await chrome.storage.local.get(null);
+    googleModules = data.googleModules || {};
+    hiddenTabs = data.hiddenTabs || {};
+    searchFilters = data.searchFilters || [];
+    infiniteScrollEnabled = data.infiniteScroll === true;
+    navBtnColor = data.navBtnColor || '#38bdf8';
+    navBtnBgColor = data.navBtnBgColor || '#1e293b';
+    navBtnsEnabled = data.navBtnsEnabled !== false;
+    
+    if (document.body) {
+      const b = document.body;
+      b.classList.toggle('sbf-hide-more-btn', !!hiddenTabs.more);
+      b.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
+      Object.keys(googleModules).forEach(key => b.classList.toggle(`sbf-hide-mod-${key}`, !!googleModules[key]));
+      b.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
 
-  function updateHighlighting() {
-    let style = document.getElementById('sbf-highlight-style');
-    if (highlightEnabled) {
-      if (!style) {
-        style = document.createElement('style'); style.id = 'sbf-highlight-style';
-        (document.head || document.documentElement).appendChild(style);
-      }
-      style.textContent = `.g em, .g b, .MjjYud em, .MjjYud b { background-color: ${highlightColor}33 !important; color: ${highlightColor} !important; padding: 0 2px; border-radius: 2px; }`;
-    } else if (style) style.remove();
+      document.documentElement.style.setProperty('--sbf-nav-color', navBtnColor);
+      document.documentElement.style.setProperty('--sbf-nav-bg', navBtnBgColor);
+
+      ensureNavBtns();
+      updateNavBtns();
+      incrementalScan(); 
+    }
   }
 
   function scanGoogleModules() {
+    const tagMoreButton = () => {
+      document.querySelectorAll('div[role="navigation"] span, div[role="navigation"] div, #hdtb span, #hdtb div').forEach(el => {
+        if (el.children.length > 1) return;
+        const text = (el.textContent || '').toLowerCase().trim();
+        if (text === 'more' || text === 'mehr') {
+          const wrapper = el.closest('.crJ18e') || el.closest('div[role="button"]') || el;
+          if (!wrapper.closest('g-popup') && !wrapper.closest('[role="menu"]')) {
+            wrapper.classList.add('sbf-more-wrapper');
+          }
+        }
+      });
+      const ariaMore = document.querySelector('div[role="navigation"] [aria-haspopup="true"]:not([role="menuitem"]), #hdtb [aria-haspopup="true"]:not([role="menuitem"])');
+      if (ariaMore && !ariaMore.closest('g-popup') && !ariaMore.closest('[role="menu"]')) {
+          const wrapper = ariaMore.closest('.crJ18e') || ariaMore;
+          wrapper.classList.add('sbf-more-wrapper');
+      }
+    };
+    tagMoreButton();
+
+    const killTabs = (texts, active, exactOnly = false) => {
+      const allNativeTabs = document.querySelectorAll('div[role="navigation"] a, #hdtb a, #hdtb-tls, .t2051c, g-menu-item, div[role="button"]');
+      allNativeTabs.forEach(el => {
+        const text = (el.innerText || '').toLowerCase().trim();
+        if (!text || text === 'more' || text === 'mehr' || el.classList.contains('sbf-more-wrapper')) return; 
+        
+        const isMatch = texts.some(t => exactOnly ? text === t : (text === t || text.includes(t)));
+        if (isMatch) {
+          let target = el.closest('g-menu-item') || el;
+          if (target === el && el.parentElement && el.parentElement.children.length === 1 && !el.parentElement.classList.contains('MUFPAc')) {
+            target = el.parentElement;
+          }
+          if (active) target.style.setProperty('display', 'none', 'important');
+          else target.style.removeProperty('display');
+        }
+      });
+    };
+    
+    killTabs(['tools', 'suchfilter'], hiddenTabs.tools, false);
+    killTabs(['videos', 'video'], hiddenTabs.videos, true);
+    killTabs(['short videos', 'kurzvideos'], hiddenTabs.shortvideos, false);
+    killTabs(['news', 'nachrichten'], hiddenTabs.news, false);
+    killTabs(['finance', 'finanzen'], hiddenTabs.finance, false);
+    killTabs(['web'], hiddenTabs.web, true); 
+    killTabs(['forums', 'foren'], hiddenTabs.forums, false);
+    killTabs(['images', 'bilder'], hiddenTabs.images, false);
+    killTabs(['shopping'], hiddenTabs.shopping, false);
+    killTabs(['books', 'bücher'], hiddenTabs.books, false);
+    killTabs(['maps', 'karten'], hiddenTabs.maps, false);
+
     const bruteForceKill = (texts, active) => {
-      if (!active) return;
-      document.querySelectorAll('h1, h2, h3, h4, [role="heading"], div, span').forEach(el => {
-        if (el.dataset.sbfChecked) return;
+      document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
         const text = (el.innerText || '').toLowerCase().trim();
         if (texts.some(t => text === t || text.startsWith(t))) {
-          const isHeading = ['H1','H2','H3','H4'].includes(el.tagName) || el.getAttribute('role') === 'heading';
-          if (isHeading || (el.tagName === 'DIV' && text.length < 50)) {
-            el.dataset.sbfChecked = '1';
-            const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c');
-            if (container) container.classList.add('sbf-hidden');
+          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf');
+          if (container) {
+            if (active) container.classList.add('sbf-hidden');
+            else container.classList.remove('sbf-hidden');
           }
         }
       });
@@ -131,53 +133,79 @@
     bruteForceKill(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
     bruteForceKill(['images', 'bilder'], googleModules.images);
     bruteForceKill(['videos', 'video'], googleModules.videos);
-    bruteForceKill(['people also ask', 'ähnliche fragen'], googleModules.ask);
-    bruteForceKill(['discussions and forums', 'diskussionen und foren'], googleModules.forums);
+    bruteForceKill(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
+    bruteForceKill(['discussions and forums'], googleModules.forums);
     bruteForceKill(['products', 'produkte'], googleModules.products);
-    if (googleModules.sponsored) document.querySelectorAll('#tads, #tadsb, #tvcap, .uEierd, .ads-ad').forEach(el => el.classList.add('sbf-hidden'));
-  }
-
-  function incrementalScan() {
-    scanGoogleModules();
-    document.querySelectorAll('a[href]').forEach(link => {
-      if (link.dataset.sbfDone) return; link.dataset.sbfDone = '1';
-      try {
-        const domain = new URL(link.href).hostname.replace(/^www\./, '');
-        if (searchFilters.includes(domain)) { const container = link.closest('.g, .MjjYud, .tF2Cxc'); if (container) container.classList.add('sbf-hidden'); }
-      } catch(e) {}
-    });
-    ensureLoader();
-  }
-
-  function updateNavBtns() {
-    ensureNavBtns();
-    const container = document.getElementById('sbf-nav-btns');
-    if (container) {
-      container.classList.add('visible');
-      const isAtTop = window.scrollY < 50;
-      const isAtBottom = (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 50);
-      document.getElementById('sbf-scroll-top')?.classList.toggle('disabled', isAtTop);
-      document.getElementById('sbf-scroll-bottom')?.classList.toggle('disabled', isAtBottom);
-    }
   }
 
   function ensureNavBtns() {
     if (!document.body || document.getElementById('sbf-nav-btns')) return;
-    const container = document.createElement('div'); container.id = 'sbf-nav-btns';
-    container.innerHTML = `
-      <div class="sbf-nav-btn" id="sbf-scroll-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg></div>
-      <div class="sbf-nav-btn" id="sbf-scroll-bottom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
-    `;
-    document.body.appendChild(container);
-    container.querySelector('#sbf-scroll-top').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-    container.querySelector('#sbf-scroll-bottom').onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    const c = document.createElement('div'); c.id = 'sbf-nav-btns';
+    c.innerHTML = `<div class="sbf-nav-btn" id="sbf-scroll-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="18 15 12 9 6 15"></polyline></svg></div><div class="sbf-nav-btn" id="sbf-scroll-bottom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></div>`;
+    document.body.appendChild(c);
+    c.querySelector('#sbf-scroll-top').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    c.querySelector('#sbf-scroll-bottom').onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
   }
 
-  function ensureLoader() {
-    if (loader || !document.body) return;
-    loader = document.createElement('div'); loader.id = 'sbf-loader';
-    loader.innerHTML = `<div class="sbf-spinner"></div><span>Loading results…</span>`;
-    const rso = document.getElementById('rso'); if (rso) rso.after(loader);
+  function updateNavBtns() {
+    const c = document.getElementById('sbf-nav-btns');
+    if (c) {
+      document.getElementById('sbf-scroll-top')?.classList.toggle('disabled', window.scrollY < 50);
+      document.getElementById('sbf-scroll-bottom')?.classList.toggle('disabled', (window.innerHeight + window.scrollY) >= (document.body.scrollHeight - 50));
+    }
+  }
+
+  function incrementalScan() {
+    scanGoogleModules();
+    
+    document.querySelectorAll('.g, .tF2Cxc').forEach(container => {
+      const link = container.querySelector('a[href]');
+      if (!link) return;
+
+      try {
+        const urlObj = new URL(link.href);
+        if (urlObj.hostname.includes('google.')) return; 
+        
+        const domain = urlObj.hostname.replace(/^www\./, '');
+
+        if (searchFilters.includes(domain)) {
+          container.classList.add('sbf-hidden');
+          return;
+        }
+
+        if (container.dataset.sbfBlockInjected) return;
+        container.dataset.sbfBlockInjected = '1';
+
+        const headerArea = container.querySelector('.yuRUbf > div') || container.querySelector('.yuRUbf');
+        if (headerArea) {
+          headerArea.style.display = 'flex';
+          headerArea.style.alignItems = 'center';
+          
+          const btn = document.createElement('button');
+          btn.className = 'sbf-block-btn';
+          btn.title = `Block ${domain}`;
+          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
+          
+          btn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!searchFilters.includes(domain)) {
+              searchFilters.push(domain);
+              await chrome.storage.local.set({ searchFilters });
+              container.classList.add('sbf-hidden');
+            }
+          };
+          
+          headerArea.appendChild(btn);
+        }
+      } catch(e) {}
+    });
+
+    if (!loader && document.body) {
+      loader = document.createElement('div'); loader.id = 'sbf-loader';
+      loader.innerHTML = `<div class="sbf-spinner"></div><span>Loading results…</span>`;
+      const rso = document.getElementById('rso'); if (rso) rso.after(loader);
+    }
   }
 
   async function onScroll() {
@@ -203,12 +231,9 @@
 
   chrome.runtime.onMessage.addListener((m) => { if (m.action === "live_update") loadConfig(); });
   chrome.storage.onChanged.addListener(() => loadConfig());
-
-  await loadConfig();
-  waitForBody(() => {
-    incrementalScan();
-    const obs = new MutationObserver(() => incrementalScan());
-    obs.observe(document.body, { childList: true, subtree: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
-  });
+  
+  loadConfig();
+  const obs = new MutationObserver(() => incrementalScan());
+  obs.observe(document.body, { childList: true, subtree: true });
+  window.addEventListener('scroll', onScroll, { passive: true });
 })();

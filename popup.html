@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v2.3.4</span>
+        <span class="badge">v2.3.8</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -25,7 +25,6 @@
       <button class="tab-btn" data-tab="tab-socials">Socials</button>
     </div>
 
-    <!-- TAB 1: GENERAL -->
     <div id="tab-general" class="tab-content active">
       <div class="config-section">
         <div class="switch-row">
@@ -63,7 +62,6 @@
       </div>
     </div>
 
-    <!-- TAB 2: GOOGLE UI -->
     <div id="tab-google" class="tab-content">
       <div class="config-section">
         <div class="section-header" id="tabs-toggle">
@@ -74,13 +72,17 @@
           <span class="arrow" id="tabs-arrow">&#9654;</span>
         </div>
         <div class="module-toggles" id="tabs-content" style="display:none">
-          <div class="switch-row" style="margin-bottom: 8px;">
-            <span>Unpack "More" Menu</span>
+          <!--<div class="switch-row" style="margin-bottom: 12px; padding: 4px 8px; background: var(--bg-input); border-radius: 6px;">
+             <div class="setting-label">
+              <span style="font-size: 12px;">Unpack "More" Menu</span>
+            </div>
             <label class="switch">
               <input type="checkbox" id="tab-unpack-more">
               <span class="slider"></span>
             </label>
-          </div>
+            
+          </div>-->
+          
           <div class="eye-row"><span>More Button</span><button class="eye-btn" data-hide="tab-more"></button></div>
           <div class="eye-row"><span>Tools Button</span><button class="eye-btn" data-hide="tab-tools"></button></div>
           <div class="eye-row"><span>Books</span><button class="eye-btn" data-hide="tab-books"></button></div>
@@ -91,8 +93,9 @@
           <div class="eye-row"><span>News</span><button class="eye-btn" data-hide="tab-news"></button></div>
           <div class="eye-row"><span>Products</span><button class="eye-btn" data-hide="tab-products"></button></div>
           <div class="eye-row"><span>Shopping</span><button class="eye-btn" data-hide="tab-shopping"></button></div>
+          <div class="eye-row"><span>Short Videos</span><button class="eye-btn" data-hide="tab-shortvideos"></button></div>
           <div class="eye-row"><span>Videos</span><button class="eye-btn" data-hide="tab-videos"></button></div>
-          <button id="tabs-select-all" class="secondary-btn">Select All</button>
+          <div class="eye-row"><span>Web</span><button class="eye-btn" data-hide="tab-web"></button></div>
         </div>
       </div>
 
@@ -115,12 +118,10 @@
           <div class="eye-row"><span>Latest Posts</span><button class="eye-btn" data-hide="mod-latest"></button></div>
           <div class="eye-row"><span>Products</span><button class="eye-btn" data-hide="mod-products"></button></div>
           <div class="eye-row"><span>Knowledge Panel</span><button class="eye-btn" data-hide="mod-knowledge"></button></div>
-          <button id="mod-select-all" class="secondary-btn">Select All</button>
         </div>
       </div>
     </div>
 
-    <!-- TAB 3: FILTERS -->
     <div id="tab-filters" class="tab-content">
       <div class="config-section">
         <div class="section-header" id="block-domains-toggle">
@@ -151,7 +152,6 @@
       </div>
     </div>
 
-    <!-- TAB 4: DESIGN -->
     <div id="tab-design" class="tab-content">
       <div class="config-section">
         <h3 class="section-title">Theme Presets</h3>
@@ -218,7 +218,6 @@
       </div>
     </div>
 
-    <!-- TAB 5: FUN -->
     <div id="tab-fun" class="tab-content">
       <div class="fun-section">
         <div class="fun-grid">
@@ -226,11 +225,16 @@
           <button class="fun-btn" data-q="askew">Askew</button>
           <button class="fun-btn" data-q="google snake">Snake</button>
           <button class="fun-btn" data-q="pacman">Pacman</button>
+          <button class="fun-btn" data-q="sonic the hedgehog">Sonic</button>
+          <button class="fun-btn" data-q="super mario bros">Super Mario</button>
+          <button class="fun-btn" data-q="atari breakout">Atari Breakout</button>
+          <button class="fun-btn" data-q="blink html">Blink HTML</button>
+          <button class="fun-btn" data-q="gravity" data-ext="https://mrdoob.com/projects/chromeexperiments/google-gravity/">Gravity</button>
+          <button class="fun-btn" data-q="underwater" data-ext="https://elgoog.im/underwater/">Underwater</button>
         </div>
       </div>
     </div>
 
-    <!-- TAB 6: SOCIALS -->
     <div id="tab-socials" class="tab-content">
       <div class="config-section social-links">
         <a href="https://www.linkedin.com/company/exus541/" target="_blank" class="social-btn">LinkedIn</a>
@@ -243,7 +247,6 @@
     </div>
 
     <footer>
-      <button class="save-btn">Save Settings</button>
       <p>Search Optimizer • Premium Build</p>
     </footer>
   </div>

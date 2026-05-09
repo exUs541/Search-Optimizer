@@ -50,7 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const triggerLiveUpdate = async () => {
     const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
-    for (let t of tabs) chrome.tabs.sendMessage(t.id, { action: "live_update" }).catch(() => {});
+    for (let t of tabs) {
+      chrome.tabs.sendMessage(t.id, { action: "live_update" }).catch(() => {});
+    }
   };
 
   const saveAll = async () => {
@@ -65,7 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       navBtnColor: colorNav.value,
       navBtnBgColor: colorNavBg.value
     });
-    triggerLiveUpdate();
+    await triggerLiveUpdate();
   };
 
   // Init
@@ -86,78 +88,104 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Collapsibles
-  const setupColl = (hId, cId) => {
-    const h = document.getElementById(hId); const c = document.getElementById(cId);
-    if (h && c) h.onclick = () => { c.style.display = c.style.display === 'none' ? 'block' : 'none'; };
+  const setupColl = (hId, cId, aId) => {
+    const h = document.getElementById(hId);
+    const c = document.getElementById(cId);
+    const a = document.getElementById(aId);
+    if (h && c) h.onclick = () => {
+      const isHidden = c.style.display === 'none';
+      c.style.display = isHidden ? 'block' : 'none';
+      if (a) a.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+    };
   };
-  setupColl('tabs-toggle', 'tabs-content'); setupColl('modules-toggle', 'modules-content');
-  setupColl('block-domains-toggle', 'block-domains-content'); setupColl('keywords-toggle', 'keywords-content');
+  setupColl('tabs-toggle', 'tabs-content', 'tabs-arrow');
+  setupColl('modules-toggle', 'modules-content', 'modules-arrow');
+  setupColl('block-domains-toggle', 'block-domains-content', 'block-domains-arrow');
+  setupColl('keywords-toggle', 'keywords-content', 'keywords-arrow');
 
-  // Eyes
+  // Unpack More Logic
+  const unpackMoreSwitch = document.getElementById('tab-unpack-more');
+  if (unpackMoreSwitch) {
+    unpackMoreSwitch.checked = !!hiddenTabs['unpack-more'];
+    unpackMoreSwitch.onchange = async () => {
+      hiddenTabs['unpack-more'] = unpackMoreSwitch.checked;
+      await saveAll();
+    };
+  }
+
+  // Dynamic Eye Buttons (Handles shortvideos implicitly)
   const updateEye = (btn, hide) => { btn.innerHTML = hide ? EYE_CLOSED : EYE_OPEN; btn.classList.toggle('hidden', hide); };
   document.querySelectorAll('.eye-btn').forEach(btn => {
     const key = btn.dataset.hide;
     const actualKey = key.replace('mod-', '').replace('tab-', '');
     const obj = key.startsWith('mod-') ? googleModules : hiddenTabs;
     updateEye(btn, !!obj[actualKey]);
-    btn.onclick = () => { obj[actualKey] = !obj[actualKey]; updateEye(btn, !!obj[actualKey]); saveAll(); };
+    
+    btn.onclick = async () => {
+      obj[actualKey] = !obj[actualKey];
+      updateEye(btn, !!obj[actualKey]);
+      await saveAll();
+    };
   });
 
-  // Design
+  // Design Logic
   document.querySelectorAll('.theme-preset').forEach(btn => {
-    btn.onclick = () => { const c = themes[btn.dataset.theme]; applyThemeToUI(c, c.p, c.s); saveAll(); };
+    btn.onclick = async () => { const c = themes[btn.dataset.theme]; applyThemeToUI(c, c.p, c.s); await saveAll(); };
   });
 
   const setupColorPair = (picker, hex) => {
-    picker.oninput = () => { syncHex(picker, hex); applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); saveAll(); };
-    hex.oninput = () => { if (/^#[0-9A-F]{6}$/i.test(hex.value)) { picker.value = hex.value; applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); saveAll(); } };
+    picker.oninput = async () => { syncHex(picker, hex); applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); await saveAll(); };
+    hex.oninput = async () => { if (/^#[0-9A-F]{6}$/i.test(hex.value)) { picker.value = hex.value; applyThemeToUI({ p: colorPrimary.value, b: colorBg.value, s: colorSecondary.value }, colorNav.value, colorNavBg.value); await saveAll(); } };
   };
-  setupColorPair(colorPrimary, hexPrimary); setupColorPair(colorBg, hexBg); setupColorPair(colorSecondary, hexSecondary);
-  setupColorPair(colorNav, hexNav); setupColorPair(colorNavBg, hexNavBg);
+  setupColorPair(colorPrimary, hexPrimary); 
+  setupColorPair(colorBg, hexBg); 
+  setupColorPair(colorSecondary, hexSecondary);
+  setupColorPair(colorNav, hexNav); 
+  setupColorPair(colorNavBg, hexNavBg);
 
   // Fun Buttons
   document.querySelectorAll('.fun-btn').forEach(btn => {
     btn.onclick = () => {
+      const ext = btn.dataset.ext;
       const query = btn.dataset.q;
-      chrome.tabs.create({ url: `https://www.google.com/search?q=${encodeURIComponent(query)}` });
+      const url = ext ? ext : `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+      chrome.tabs.create({ url });
     };
   });
 
-  // Lists
+  // Lists Management
   const render = (list, elId) => {
     const el = document.getElementById(elId); if (!el) return;
     el.innerHTML = '';
     list.forEach((it, i) => {
       const li = document.createElement('li'); li.textContent = it;
       const d = document.createElement('button'); d.textContent = '✕'; d.className = 'delete-btn';
-      d.onclick = () => { list.splice(i, 1); saveAll(); render(list, elId); };
+      d.onclick = async () => { list.splice(i, 1); await saveAll(); render(list, elId); };
       li.appendChild(d); el.appendChild(li);
     });
   };
-  render(searchFilters, 'site-list'); render(blockedKeywords, 'keyword-list');
+  render(searchFilters, 'site-list'); 
+  render(blockedKeywords, 'keyword-list');
 
-  document.getElementById('add-btn').onclick = () => {
+  document.getElementById('add-btn').onclick = async () => {
     const i = document.getElementById('site-input');
-    if (i.value && !searchFilters.includes(i.value.toLowerCase())) { searchFilters.push(i.value.toLowerCase()); i.value = ''; saveAll(); render(searchFilters, 'site-list'); }
+    if (i.value && !searchFilters.includes(i.value.toLowerCase())) { searchFilters.push(i.value.toLowerCase()); i.value = ''; await saveAll(); render(searchFilters, 'site-list'); }
   };
-  document.getElementById('add-keyword-btn').onclick = () => {
+  
+  document.getElementById('add-keyword-btn').onclick = async () => {
     const i = document.getElementById('keyword-input');
-    if (i.value && !blockedKeywords.includes(i.value.toLowerCase())) { blockedKeywords.push(i.value.toLowerCase()); i.value = ''; saveAll(); render(blockedKeywords, 'keyword-list'); }
+    if (i.value && !blockedKeywords.includes(i.value.toLowerCase())) { blockedKeywords.push(i.value.toLowerCase()); i.value = ''; await saveAll(); render(blockedKeywords, 'keyword-list'); }
   };
 
   document.querySelectorAll('.switch input').forEach(s => s.onchange = saveAll);
-  document.querySelector('.save-btn').onclick = () => {
-    const b = document.querySelector('.save-btn');
-    saveAll(); b.textContent = '✓ Saved'; b.style.background = '#10b981';
-    setTimeout(() => { b.textContent = 'Save Settings'; b.style.background = 'var(--primary)'; }, 2000);
-  };
 
-  // Backup
+  // Backup & Restore
   document.getElementById('export-btn').onclick = async () => {
     const d = await chrome.storage.local.get(null);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' }));
-    a.download = `search-optimizer-v2.3.7.json`; a.click();
+    a.download = `search-optimizer-v2.3.8.json`; a.click();
   };
+  
   document.getElementById('import-btn').onclick = () => {
     const i = document.createElement('input'); i.type = 'file'; i.accept = '.json';
     i.onchange = e => {
