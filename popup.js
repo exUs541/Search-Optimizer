@@ -1,9 +1,17 @@
+/**
+ * Search Optimizer - Popup Script
+ * This script handles the interactive UI of the extension's popup,
+ * including theme application, tab switching, and filter management.
+ */
+
 document.addEventListener('DOMContentLoaded', async () => {
-  // Icons
+  // --- Icons Definitions ---
+  // SVG strings for eye icons used in the visibility toggles
   const EYE_OPEN = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
   const EYE_CLOSED = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
 
-  // State
+  // --- State Initialization ---
+  // Fetching all stored settings from chrome.storage.local
   let store = await chrome.storage.local.get(null);
   let googleModules = store.googleModules || {};
   let hiddenTabs = store.hiddenTabs || {};
@@ -12,7 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let highlightFilters = store.highlightFilters || [];
   let highlightKeywords = store.highlightKeywords || [];
 
-  // Design Elements
+  // --- Design Element References ---
+  // Mapping UI elements for color picking and hex display
   const colorPrimary = document.getElementById('color-primary');
   const hexPrimary = document.getElementById('hex-primary');
   const colorBg = document.getElementById('color-bg');
@@ -24,6 +33,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const colorNavBg = document.getElementById('color-nav-bg');
   const hexNavBg = document.getElementById('hex-nav-bg');
 
+  // Preset theme definitions
   const themes = {
     midnight: { p: '#38bdf8', b: '#0f172a', s: '#1e293b' },
     ocean: { p: '#0ea5e9', b: '#082f49', s: '#0c4a6e' },
@@ -33,8 +43,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     classic: { p: '#6366f1', b: '#111111', s: '#1f2937' }
   };
 
+  // --- Utility Functions ---
+  
+  // Syncs the color picker value to the HEX text input
   const syncHex = (picker, hexInput) => { hexInput.value = picker.value.toUpperCase(); };
 
+  // Converts HEX color code to RGBA string for transparency effects
   const hexToRgba = (hex, alpha) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -42,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  // Applies the chosen theme colors to the document's CSS variables
   const applyThemeToUI = (colors, navColor, navBg) => {
     const r = document.documentElement;
     r.style.setProperty('--primary', colors.p);
@@ -52,6 +67,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     r.style.setProperty('--bg-input', colors.s);
     r.style.setProperty('--accent-glow', hexToRgba(colors.p, 0.15));
     
+    // Update input values in the Design tab
     colorPrimary.value = colors.p; syncHex(colorPrimary, hexPrimary);
     colorBg.value = colors.b; syncHex(colorBg, hexBg);
     colorSecondary.value = colors.s; syncHex(colorSecondary, hexSecondary);
@@ -59,6 +75,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (navBg) { colorNavBg.value = navBg; syncHex(colorNavBg, hexNavBg); }
   };
 
+  // Sends a message to all open Google Search tabs to apply changes instantly
   const triggerLiveUpdate = async () => {
     const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
     for (let t of tabs) {
@@ -66,6 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
+  // Saves all current settings from the UI to local storage
   const saveAll = async () => {
     await chrome.storage.local.set({
       infiniteScroll: document.getElementById('infinite-scroll').checked,
@@ -86,14 +104,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     await triggerLiveUpdate();
   };
 
-  // Init UI from Storage
+  // --- UI Initialization ---
+  
+  // Load initial theme and checkbox states from storage
   applyThemeToUI(store.themeColors || themes.midnight, store.navBtnColor || themes.midnight.p, store.navBtnBgColor || themes.midnight.s);
   document.getElementById('infinite-scroll').checked = !!store.infiniteScroll;
   document.getElementById('advanced-search').checked = store.advancedSearch !== false;
   document.getElementById('nav-btns-enabled').checked = store.navBtnsEnabled !== false;
   document.getElementById('highlight-enabled').checked = !!store.highlightEnabled;
 
-  // Tabs
+  // --- Event Listeners: Navigation ---
+  
+  // Handle tab switching logic
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.onclick = () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -104,20 +126,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   });
 
-  // Collapsibles
+  // Handle collapsible sections (accordion-style)
   const setupColl = (hId, cId, aId) => {
     const h = document.getElementById(hId);
     const c = document.getElementById(cId);
     const a = document.getElementById(aId);
     if (h && c) {
-        c.style.display = 'none'; // Default hidden
+        c.style.display = 'none'; // Default to collapsed
         h.onclick = () => {
           const isHidden = c.style.display === 'none';
           c.style.display = isHidden ? 'block' : 'none';
+          // Rotate arrow icon based on state
           if (a) a.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
         };
     }
   };
+  
+  // Initialize all collapsible sections
   setupColl('tabs-toggle', 'tabs-content', 'tabs-arrow');
   setupColl('modules-toggle', 'modules-content', 'modules-arrow');
   setupColl('block-domains-toggle', 'block-domains-content', 'block-domains-arrow');
@@ -125,7 +150,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupColl('highlight-domains-toggle', 'highlight-domains-content', 'highlight-domains-arrow');
   setupColl('highlight-keywords-toggle', 'highlight-keywords-content', 'highlight-keywords-arrow');
 
-  // Unpack More Logic
+  // --- Event Listeners: Google Modules & Visibility ---
+
+  // Handle the "Unpack More" menu toggle
   const unpackMoreSwitch = document.getElementById('tab-unpack-more');
   if (unpackMoreSwitch) {
     unpackMoreSwitch.checked = !!hiddenTabs['unpack-more'];
@@ -135,12 +162,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   }
 
-  // Dynamic Eye Buttons
+  // Updates the eye icon appearance based on visibility state
   const updateEye = (btn, hide) => { 
     btn.innerHTML = hide ? EYE_CLOSED : EYE_OPEN; 
     btn.classList.toggle('hidden', hide); 
   };
   
+  // Initialize and handle clicks for all visibility toggle buttons (eye icons)
   document.querySelectorAll('.eye-btn').forEach(btn => {
     const key = btn.dataset.hide;
     if (!key) return;
@@ -156,7 +184,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   });
 
-  // Design Logic
+  // --- Event Listeners: Design & Customization ---
+
+  // Handle preset theme selection
   document.querySelectorAll('.theme-preset').forEach(btn => {
     btn.onclick = async () => { 
       const c = themes[btn.dataset.theme]; 
@@ -165,6 +195,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   });
 
+  // Helper to link a color picker input with its corresponding HEX text field
   const setupColorPair = (picker, hex) => {
     picker.oninput = async () => { 
       syncHex(picker, hex); 
@@ -179,13 +210,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       } 
     };
   };
+  
+  // Set up all color input pairs in the Design tab
   setupColorPair(colorPrimary, hexPrimary); 
   setupColorPair(colorBg, hexBg); 
   setupColorPair(colorSecondary, hexSecondary);
   setupColorPair(colorNav, hexNav); 
   setupColorPair(colorNavBg, hexNavBg);
 
-  // Fun Buttons
+  // --- Event Listeners: Fun & External Links ---
+
+  // Handle "Fun" buttons like "Barrel Roll" or external experiment links
   document.querySelectorAll('.fun-btn').forEach(btn => {
     btn.onclick = () => {
       const ext = btn.dataset.ext;
@@ -195,13 +230,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
   });
 
-  // Lists Management
+  // --- Event Listeners: List Management (Filters & Keywords) ---
+
+  // Renders a list of items (domains/keywords) with delete buttons
   const render = (list, elId) => {
     const el = document.getElementById(elId); 
     if (!el) return;
     el.innerHTML = '';
 
-    // Wir erstellen eine Kopie der Liste, um sicher zu rendern
+    // Create a copy of the list to iterate safely
     [...list].forEach((it) => {
       const li = document.createElement('li'); 
       li.textContent = it;
@@ -210,10 +247,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       d.textContent = '✕'; 
       d.className = 'delete-btn';
       
+      // Delete logic using the value instead of index for robustness
       d.onclick = async (e) => {
         e.preventDefault();
         
-        // Direkte Löschung über den Wert (robuster als Index)
         if (elId === 'site-list') {
             searchFilters = searchFilters.filter(domain => domain !== it);
             await saveAll();
@@ -238,12 +275,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   };
 
-  // Initialer Render beim Laden
+  // Initial render of all filter and highlight lists
   render(searchFilters, 'site-list'); 
   render(blockedKeywords, 'keyword-list');
   render(highlightFilters, 'highlight-site-list');
   render(highlightKeywords, 'highlight-keyword-list');
   
+  // Handle "Add" logic for all input types
   document.getElementById('add-btn').onclick = async () => {
     const i = document.getElementById('site-input');
     const val = i.value.trim().toLowerCase();
@@ -254,6 +292,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       render(searchFilters, 'site-list'); 
     }
   };
+  
   document.getElementById('add-keyword-btn').onclick = async () => {
     const i = document.getElementById('keyword-input');
     const val = i.value.trim().toLowerCase();
@@ -287,12 +326,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  // General Switches
+  // --- Event Listeners: General Switches ---
+
+  // Trigger save on any checkbox change
   document.querySelectorAll('.switch input').forEach(s => {
     s.onchange = async () => { await saveAll(); };
   });
 
-  // Backup & Restore
+  // --- Backup & Restore Logic ---
+
+  // Export all settings to a JSON file
   document.getElementById('export-btn').onclick = async () => {
     const d = await chrome.storage.local.get(null);
     const blob = new Blob([JSON.stringify(d, null, 2)], { type: 'application/json' });
@@ -304,6 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     URL.revokeObjectURL(url);
   };
   
+  // Import settings from a JSON file
   document.getElementById('import-btn').onclick = () => {
     const i = document.createElement('input'); 
     i.type = 'file'; 
@@ -315,8 +359,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       r.onload = async re => { 
         try {
           const config = JSON.parse(re.target.result);
+          // Clear current storage and replace with imported config
           await chrome.storage.local.clear();
           await chrome.storage.local.set(config); 
+          // Reload popup to apply changes
           window.location.reload(); 
         } catch (err) {
           alert('Error parsing JSON file.');
@@ -326,4 +372,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     i.click();
   };
+});
+
 });

@@ -1,7 +1,21 @@
+/**
+ * Search Optimizer - Content Script (Link Filter)
+ * This script runs in the context of Google Search pages.
+ * It handles infinite scrolling, result filtering (blocking), 
+ * and visual highlighting of specific domains/keywords.
+ */
+
 (async function() {
   'use strict';
   
-  // 0. HELPERS
+  // --- 0. Helper Functions ---
+  
+  /**
+   * Converts a HEX color code to an RGBA string.
+   * @param {string} hex - The hex color code (e.g., #ffffff).
+   * @param {number} alpha - The opacity value (0 to 1).
+   * @returns {string} The RGBA color string.
+   */
   const hexToRgba = (hex, alpha) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -9,14 +23,18 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
-  // 1. CSS INJECTION
+  // --- 1. CSS Injection ---
+  
+  // Inject global styles for the extension's UI elements on the Google page.
   if (!document.getElementById('sbf-style')) {
     const style = document.createElement('style');
     style.id = 'sbf-style';
     style.textContent = `
+      /* Hidden state for blocked results */
       .sbf-hidden { display: none !important; }
       body.sbf-hide-more-btn .sbf-more-wrapper { display: none !important; }
 
+      /* Quick "Add to Blocklist" button styling */
       .sbf-block-btn { 
         display: inline-flex !important; 
         align-items: center; 
@@ -28,12 +46,11 @@
         border: none; 
         cursor: pointer; 
         color: #ef4444; 
-        margin: 0px 6px !important; /* Abstand links und rechts */
-        margin-left: 20px !important; 
+        margin: 0 6px !important;
+        margin-left: 20px !important;
         padding: 0;
         transition: background 0.2s;
         flex-shrink: 0;
-        /* Verhindert das Schweben */
         position: static !important;
         transform: none !important;
       }
@@ -51,17 +68,20 @@
       .sbf-nav-btn.disabled { opacity: 0.15; pointer-events: none; filter: grayscale(1); } 
       .sbf-nav-btn svg { width: 22px; height: 22px; pointer-events: none; stroke: currentColor !important; }
 
+      /* Module Selectors */
       .sbf-hide-mod-ai [data-component-type="22"], .sbf-hide-mod-ai .SGE_container, .sbf-hide-mod-ai #super_results { display: none !important; }
       .sbf-hide-mod-products .wOPJ9c, .sbf-hide-mod-products .pla-unit, .sbf-hide-mod-products #tvcap { display: none !important; }
       .sbf-hide-mod-images [data-attrid="images universal"] { display: none !important; }
       .sbf-hide-mod-videos .MjjYud:has(.RzdJxc) { display: none !important; }
       .sbf-hide-mod-ask [data-attrid="wa_paa"], .sbf-hide-mod-ask .WwS1pe { display: none !important; }
-      .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results, .sbf-hide-mod-pasf .K877S, .sbf-hide-mod-pasf .W67Drf, .sbf-hide-mod-pasf .WwS1pe { display: none !important; }
-      .sbf-hide-mod-forums [data-attrid="discussions_and_forums"], 
-      .sbf-hide-mod-forums .f4S95b { display: none !important; }
+      .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results, .sbf-hide-mod-pasf .K877S, .sbf-hide-mod-pasf .W67Drf { display: none !important; }
+      .sbf-hide-mod-forums [data-attrid="discussions_and_forums"], .sbf-hide-mod-forums .f4S95b { display: none !important; }
       .sbf-hide-mod-sponsored #tads, .sbf-hide-mod-sponsored #tadsb, .sbf-hide-mod-sponsored #tvcap { display: none !important; }
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .kvH3mc img { visibility: hidden !important; width: 0 !important; margin: 0 !important; }
-      
+      .sbf-hide-mod-locations [data-attrid="local_universal"], 
+      .sbf-hide-mod-locations .L9S79c, 
+      .sbf-hide-mod-locations #lu_map { display: none !important; }
+
       .sbf-highlight { 
         border: 2px solid var(--sbf-highlight-color, #38bdf8) !important; 
         background: var(--sbf-highlight-bg, rgba(56, 189, 248, 0.05)) !important;
@@ -78,7 +98,7 @@
   let googleModules = {}, hiddenTabs = {}, searchFilters = [];
   let infiniteScrollEnabled = false, isFetching = false, loader = null;
   let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
-  let highlightFilters = [], highlightKeywords = [], highlightEnabled = false, highlightColor = '#38bdf8';
+  let highlightEnabled = false, highlightColor = '#38bdf8';
 
   async function loadConfig() {
     const data = await chrome.storage.local.get(null);
@@ -89,8 +109,6 @@
     navBtnColor = data.navBtnColor || '#38bdf8';
     navBtnBgColor = data.navBtnBgColor || '#1e293b';
     navBtnsEnabled = data.navBtnsEnabled !== false;
-    highlightFilters = data.highlightFilters || [];
-    highlightKeywords = data.highlightKeywords || [];
     highlightEnabled = !!data.highlightEnabled;
     highlightColor = data.highlightColor || '#38bdf8';
     
@@ -118,50 +136,42 @@
       document.querySelectorAll('div[role="navigation"] span, div[role="navigation"] div, #hdtb span, #hdtb div').forEach(el => {
         if (el.children.length > 1) return;
         const text = (el.textContent || '').toLowerCase().trim();
-        if (text === 'more' || text === 'mehr') {
+        if (text === 'more') {
           const wrapper = el.closest('.crJ18e') || el.closest('div[role="button"]') || el;
           if (!wrapper.closest('g-popup') && !wrapper.closest('[role="menu"]')) {
             wrapper.classList.add('sbf-more-wrapper');
           }
         }
       });
-      const ariaMore = document.querySelector('div[role="navigation"] [aria-haspopup="true"]:not([role="menuitem"]), #hdtb [aria-haspopup="true"]:not([role="menuitem"])');
-      if (ariaMore && !ariaMore.closest('g-popup') && !ariaMore.closest('[role="menu"]')) {
-          const wrapper = ariaMore.closest('.crJ18e') || ariaMore;
-          wrapper.classList.add('sbf-more-wrapper');
-      }
     };
     tagMoreButton();
 
     const killTabs = (texts, active, exactOnly = false) => {
       const allNativeTabs = document.querySelectorAll('div[role="navigation"] a, #hdtb a, #hdtb-tls, .t2051c, g-menu-item, div[role="button"]');
       allNativeTabs.forEach(el => {
-        const text = (el.innerText || '').toLowerCase().trim();
-        if (!text || text === 'more' || text === 'mehr' || el.classList.contains('sbf-more-wrapper')) return; 
+        const text = (el.innerText || el.textContent || '').toLowerCase().trim();
+        if (!text || text === 'more' || el.classList.contains('sbf-more-wrapper')) return; 
         
-        const isMatch = texts.some(t => exactOnly ? text === t : (text === t || text.includes(t)));
+        const isMatch = texts.some(t => exactOnly ? text === t : text.includes(t));
         if (isMatch) {
           let target = el.closest('g-menu-item') || el;
-          if (target === el && el.parentElement && el.parentElement.children.length === 1 && !el.parentElement.classList.contains('MUFPAc')) {
-            target = el.parentElement;
-          }
           if (active) target.style.setProperty('display', 'none', 'important');
           else target.style.removeProperty('display');
         }
       });
     };
     
-    killTabs(['tools', 'suchfilter'], hiddenTabs.tools, false);
-    killTabs(['videos', 'video'], hiddenTabs.videos, true);
-    killTabs(['short videos', 'kurzvideos'], hiddenTabs.shortvideos, false);
-    killTabs(['news', 'nachrichten'], hiddenTabs.news, false);
-    killTabs(['finance', 'finanzen'], hiddenTabs.finance, false);
+    killTabs(['tools'], hiddenTabs.tools, false);
+    killTabs(['videos'], hiddenTabs.videos, true);
+    killTabs(['short videos'], hiddenTabs.shortvideos, false);
+    killTabs(['news'], hiddenTabs.news, false);
+    killTabs(['finance'], hiddenTabs.finance, false);
     killTabs(['web'], hiddenTabs.web, true); 
-    killTabs(['forums', 'foren'], hiddenTabs.forums, false);
-    killTabs(['images', 'bilder'], hiddenTabs.images, false);
+    killTabs(['forums'], hiddenTabs.forums, false);
+    killTabs(['images'], hiddenTabs.images, false);
     killTabs(['shopping'], hiddenTabs.shopping, false);
-    killTabs(['books', 'bücher'], hiddenTabs.books, false);
-    killTabs(['maps', 'karten'], hiddenTabs.maps, false);
+    killTabs(['books'], hiddenTabs.books, false);
+    killTabs(['maps'], hiddenTabs.maps, false);
 
     const bruteForceKill = (texts, active) => {
       document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
@@ -175,13 +185,14 @@
         }
       });
     };
-    bruteForceKill(['ai overview', 'ki-übersicht', 'ai search'], googleModules.ai);
-    bruteForceKill(['images', 'bilder'], googleModules.images);
-    bruteForceKill(['videos', 'video'], googleModules.videos);
-    bruteForceKill(['people also ask', 'ähnliche fragen', 'nutzer fragen auch'], googleModules.ask);
+    bruteForceKill(['ai overview', 'ai search'], googleModules.ai);
+    bruteForceKill(['images'], googleModules.images);
+    bruteForceKill(['videos'], googleModules.videos);
+    bruteForceKill(['people also ask'], googleModules.ask);
     bruteForceKill(['discussions and forums'], googleModules.forums);
-    bruteForceKill(['products', 'produkte'], googleModules.products);
-    bruteForceKill(['people also search for', 'nutzer suchen auch nach', 'ähnliche suchanfragen','related searches'], googleModules.pasf);
+    bruteForceKill(['products'], googleModules.products);
+    bruteForceKill(['people also search for', 'related searches'], googleModules.pasf);
+    bruteForceKill(['locations', 'map'], googleModules.locations);
   }
 
   // 4. NAVIGATION & INFINITE SCROLL
@@ -207,8 +218,6 @@
 
     document.querySelectorAll('.yuRUbf').forEach(container => {
       const link = container.querySelector('a[href]');
-      //if (container.dataset.sbfBlockInjected) return;
-
       if (!link || !link.href.startsWith('http')) return; 
 
       try {
@@ -216,18 +225,26 @@
         const resultBlock = container.closest('.MjjYud, .g, .tF2Cxc');
         if (!resultBlock) return;
 
+        // Visibility Toggle
         if (searchFilters.includes(domain)) {
-          // const resultBlock = container.closest('.MjjYud, .g, .tF2Cxc');
-          // if (resultBlock) resultBlock.classList.add('sbf-hidden');
-          // return;
           resultBlock.classList.add('sbf-hidden');
         } else {
           resultBlock.classList.remove('sbf-hidden');
         }
 
+        // Highlight Logic
+        if (highlightEnabled && searchFilters.includes(domain)) {
+            // Technically hidden items won't show highlights, but for consistency:
+            resultBlock.classList.remove('sbf-highlight');
+        } else if (highlightEnabled) {
+            // Check for keywords or domain highlighting if needed here
+            // Currently using domain as the main toggle
+            resultBlock.classList.toggle('sbf-highlight', false); // Placeholder for extension
+        }
+
+        // Block Button Injection
         if (container.dataset.sbfBlockInjected) return;
 
-        // Wir suchen das SVG aus deinem Pfad und gehen hoch zum Button-Container
         const dotsSvg = container.querySelector('svg path[d^="M12 8c1.1"]')?.closest('svg');
         const dotsButton = dotsSvg?.closest('[role="button"], div[aria-haspopup="true"]');
 
@@ -239,13 +256,11 @@
           btn.title = `Block ${domain}`;
           btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
 
-          // Wir erzwingen Flex auf dem gemeinsamen Parent der Punkte und des neuen Buttons
           const parent = dotsButton.parentElement;
           parent.style.display = 'inline-flex';
           parent.style.alignItems = 'center';
           parent.style.flexDirection = 'row';
 
-          // Injektion DIREKT vor den drei Punkten
           parent.insertBefore(btn, dotsButton);
 
           btn.onclick = async (e) => {
@@ -254,30 +269,15 @@
             if (!searchFilters.includes(domain)) {
               searchFilters.push(domain);
               await chrome.storage.local.set({ searchFilters });
-              const resultBlock = container.closest('.MjjYud, .g, .tF2Cxc');
-              if (resultBlock) resultBlock.classList.add('sbf-hidden');
             }
           };
         }
-
-        // Highlight Logic
-        if (highlightEnabled) {
-          const snippetText = resultBlock.innerText.toLowerCase();
-          const shouldHighlight = highlightFilters.includes(domain) || 
-                                  highlightKeywords.some(kw => snippetText.includes(kw.toLowerCase()));
-          
-          resultBlock.classList.toggle('sbf-highlight', shouldHighlight);
-        } else {
-          resultBlock.classList.remove('sbf-highlight');
-        }
-
       } catch(e) {}
     });
 
-    // Zusätzlicher Check für hartnäckige "People search for" Module
+    // Hardcoded check for "People also search for"
     if (googleModules.pasf) {
       document.querySelectorAll('[data-pcu], .Cl89te, .EyBRub').forEach(el => {
-        // Wenn das Element Suchvorschläge (Lupen-Icons) enthält
         if (el.querySelector('svg path[d*="M15.5 14h-.79l-.28-.27"]')) {
           const container = el.closest('.MjjYud, .g, .hlcw0c');
           if (container) container.classList.add('sbf-hidden');
@@ -292,17 +292,24 @@
     if ((document.body.offsetHeight - window.innerHeight - window.scrollY) < 1200) {
       const nextLink = document.querySelector('#pnnext');
       if (nextLink?.href) {
-        isFetching = true; loader?.classList.add('active');
+        isFetching = true; 
+        loader = document.getElementById('sbf-loader');
+        loader?.classList.add('active');
         try {
           const resp = await fetch(nextLink.href);
           const doc = new DOMParser().parseFromString(await resp.text(), 'text/html');
-          const targetRso = document.getElementById('rso'); const newRso = doc.querySelector('#rso');
+          const targetRso = document.getElementById('rso'); 
+          const newRso = doc.querySelector('#rso');
           if (newRso && targetRso) {
             Array.from(newRso.children).forEach(child => targetRso.appendChild(child.cloneNode(true)));
-            const newNext = doc.querySelector('#pnnext'); if (newNext) nextLink.href = newNext.href; else nextLink.remove();
+            const newNext = doc.querySelector('#pnnext'); 
+            if (newNext) nextLink.href = newNext.href; else nextLink.remove();
             incrementalScan();
           }
-        } catch (e) {} finally { loader?.classList.remove('active'); setTimeout(() => { isFetching = false; }, 1000); }
+        } catch (e) {} finally { 
+          loader?.classList.remove('active'); 
+          setTimeout(() => { isFetching = false; }, 1000); 
+        }
       }
     }
   }

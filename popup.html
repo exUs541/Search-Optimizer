@@ -3,19 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <title>Search Optimizer</title>
+  <!-- Main Styling -->
   <link rel="stylesheet" href="popup.css">
+  <!-- Google Fonts: Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
+    <!-- Header: Logo, Version Badge and Slogan -->
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v2.5.0</span>
+        <span class="badge">v2.5.1</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
 
+    <!-- Tab Navigation Bar -->
     <div class="tabs-nav">
       <button class="tab-btn active" data-tab="tab-general">General</button>
       <button class="tab-btn" data-tab="tab-google">Google UI</button>
@@ -25,8 +29,10 @@
       <button class="tab-btn" data-tab="tab-socials">Socials</button>
     </div>
 
+    <!-- Tab: General (Main Switches and Backup) -->
     <div id="tab-general" class="tab-content active">
       <div class="config-section">
+        <!-- Infinite Scroll Toggle -->
         <div class="switch-row">
           <div class="setting-label">
             <span>Infinite Scroll</span>
@@ -38,6 +44,7 @@
           </label>
         </div>
 
+        <!-- Advanced Search Icon Toggle -->
         <div class="switch-row">
           <div class="setting-label">
             <span>Advanced Search</span>
@@ -49,6 +56,7 @@
           </label>
         </div>
 
+        <!-- Scroll-to-Top/Bottom Buttons Toggle -->
         <div class="switch-row">
           <div class="setting-label">
             <span>Navigation Buttons</span>
@@ -61,6 +69,7 @@
         </div>
       </div>
 
+      <!-- Backup and Restore Section -->
       <div class="config-section backup-section">
         <h3 class="section-title">Configuration</h3>
         <div class="backup-btns">
@@ -76,7 +85,9 @@
       </div>
     </div>
 
+    <!-- Tab: Google UI (Visibility Controls for native elements) -->
     <div id="tab-google" class="tab-content">
+      <!-- Search Tabs Toggles -->
       <div class="config-section">
         <div class="section-header" id="tabs-toggle">
           <h3 class="section-title">
@@ -86,17 +97,6 @@
           <span class="arrow" id="tabs-arrow">&#9654;</span>
         </div>
         <div class="module-toggles" id="tabs-content" style="display:none">
-          <!--<div class="switch-row" style="margin-bottom: 12px; padding: 4px 8px; background: var(--bg-input); border-radius: 6px;">
-             <div class="setting-label">
-              <span style="font-size: 12px;">Unpack "More" Menu</span>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="tab-unpack-more">
-              <span class="slider"></span>
-            </label>
-            
-          </div>-->
-          
           <div class="eye-row"><span>More Button</span><button class="eye-btn" data-hide="tab-more"></button></div>
           <div class="eye-row"><span>Tools Button</span><button class="eye-btn" data-hide="tab-tools"></button></div>
           <div class="eye-row"><span>Books</span><button class="eye-btn" data-hide="tab-books"></button></div>
@@ -113,6 +113,7 @@
         </div>
       </div>
 
+      <!-- Modules (Sidebar/Widgets) Toggles -->
       <div class="config-section">
         <div class="section-header" id="modules-toggle">
           <h3 class="section-title">
@@ -124,19 +125,22 @@
         <div class="module-toggles" id="modules-content" style="display:none">
           <div class="eye-row"><span>AI Overviews</span><button class="eye-btn" data-hide="mod-ai"></button></div>
           <div class="eye-row"><span>Discussions & Forums</span><button class="eye-btn" data-hide="mod-forums"></button></div>
-          <div class="eye-row"><span>Images Block</span><button class="eye-btn" data-hide="mod-images"></button></div>
-          <div class="eye-row"><span>Videos Block</span><button class="eye-btn" data-hide="mod-videos"></button></div>
+          <div class="eye-row"><span>Images</span><button class="eye-btn" data-hide="mod-images"></button></div>
+          <div class="eye-row"><span>Knowledge Panel</span><button class="eye-btn" data-hide="mod-knowledge"></button></div>
+          <div class="eye-row"><span>Latest Posts</span><button class="eye-btn" data-hide="mod-latest"></button></div>
+          <div class="eye-row"><span>Locations (Maps)</span><button class="eye-btn" data-hide="mod-locations"></button></div>
           <div class="eye-row"><span>People also ask</span><button class="eye-btn" data-hide="mod-ask"></button></div>
           <div class="eye-row"><span>People also search for</span><button class="eye-btn" data-hide="mod-pasf"></button></div>
-          <div class="eye-row"><span>Sponsored (Ads)</span><button class="eye-btn" data-hide="mod-sponsored"></button></div>
-          <div class="eye-row"><span>Latest Posts</span><button class="eye-btn" data-hide="mod-latest"></button></div>
           <div class="eye-row"><span>Products</span><button class="eye-btn" data-hide="mod-products"></button></div>
-          <div class="eye-row"><span>Knowledge Panel</span><button class="eye-btn" data-hide="mod-knowledge"></button></div>
+          <div class="eye-row"><span>Sponsored (Ads)</span><button class="eye-btn" data-hide="mod-sponsored"></button></div>
+          <div class="eye-row"><span>Videos</span><button class="eye-btn" data-hide="mod-videos"></button></div>
         </div>
       </div>
     </div>
 
+    <!-- Tab: Filters (Block and Highlight Lists) -->
     <div id="tab-filters" class="tab-content">
+      <!-- Block Domains Section -->
       <div class="config-section">
         <div class="section-header" id="block-domains-toggle">
           <h3 class="section-title">Block Domains</h3>
@@ -151,6 +155,7 @@
         </div>
       </div>
 
+      <!-- Block Keywords Section -->
       <div class="config-section">
         <div class="section-header" id="keywords-toggle">
           <h3 class="section-title">Block Keywords</h3>
@@ -165,6 +170,7 @@
         </div>
       </div>
 
+      <!-- Highlight Domains Section -->
       <div class="config-section">
         <div class="section-header" id="highlight-domains-toggle">
           <h3 class="section-title">Highlight Domains</h3>
@@ -179,6 +185,7 @@
         </div>
       </div>
 
+      <!-- Highlight Keywords Section -->
       <div class="config-section">
         <div class="section-header" id="highlight-keywords-toggle">
           <h3 class="section-title">Highlight Keywords</h3>
@@ -194,82 +201,82 @@
       </div>
     </div>
 
+    <!-- Tab: Design (Theme and Customization) -->
     <div id="tab-design" class="tab-content">
-  <div class="config-section">
-    <h3 class="section-title">Theme Presets</h3>
-    <div class="theme-container">
-      <div class="theme-presets">
-        <button class="theme-preset" data-theme="midnight" title="Midnight" style="--p:#38bdf8; --b:#0f172a;"></button>
-        <button class="theme-preset" data-theme="ocean" title="Ocean" style="--p:#0ea5e9; --b:#082f49;"></button>
-        <button class="theme-preset" data-theme="forest" title="Forest" style="--p:#10b981; --b:#064e3b;"></button>
-        <button class="theme-preset" data-theme="sunset" title="Sunset" style="--p:#f43f5e; --b:#450a0a;"></button>
-        <button class="theme-preset" data-theme="cyber" title="Cyber" style="--p:#d946ef; --b:#2e1065;"></button>
-        <button class="theme-preset" data-theme="classic" title="Classic" style="--p:#6366f1; --b:#111111;"></button>
+      <div class="config-section">
+        <h3 class="section-title">Theme Presets</h3>
+        <div class="theme-container">
+          <!-- Preset Buttons -->
+          <div class="theme-presets">
+            <button class="theme-preset" data-theme="midnight" title="Midnight" style="--p:#38bdf8; --b:#0f172a;"></button>
+            <button class="theme-preset" data-theme="ocean" title="Ocean" style="--p:#0ea5e9; --b:#082f49;"></button>
+            <button class="theme-preset" data-theme="forest" title="Forest" style="--p:#10b981; --b:#064e3b;"></button>
+            <button class="theme-preset" data-theme="sunset" title="Sunset" style="--p:#f43f5e; --b:#450a0a;"></button>
+            <button class="theme-preset" data-theme="cyber" title="Cyber" style="--p:#d946ef; --b:#2e1065;"></button>
+            <button class="theme-preset" data-theme="classic" title="Classic" style="--p:#6366f1; --b:#111111;"></button>
+          </div>
+          
+          <h3 class="section-title" style="margin-top:20px;">Custom HEX Colors</h3>
+          
+          <!-- Custom Color Pickers Grid -->
+          <div class="custom-colors-grid">
+            <div class="color-control">
+              <label>Primary</label>
+              <div class="color-inputs">
+                <input type="color" id="color-primary" value="#38bdf8">
+                <input type="text" id="hex-primary" class="hex-input" value="#38BDF8" maxlength="7">
+              </div>
+            </div>
+
+            <div class="color-control">
+              <label>Background</label>
+              <div class="color-inputs">
+                <input type="color" id="color-bg" value="#0f172a">
+                <input type="text" id="hex-bg" class="hex-input" value="#0F172A" maxlength="7">
+              </div>
+            </div>
+
+            <div class="color-control">
+              <label>Accent BG</label>
+              <div class="color-inputs">
+                <input type="color" id="color-secondary" value="#1e293b">
+                <input type="text" id="hex-secondary" class="hex-input" value="#1E293B" maxlength="7">
+              </div>
+            </div>
+
+            <div class="color-control">
+              <label>Nav Arrows</label>
+              <div class="color-inputs">
+                <input type="color" id="color-nav" value="#38bdf8">
+                <input type="text" id="hex-nav" class="hex-input" value="#38BDF8" maxlength="7">
+              </div>
+            </div>
+
+            <div class="color-control">
+              <label>Nav BG</label>
+              <div class="color-inputs">
+                <input type="color" id="color-nav-bg" value="#1e293b">
+                <input type="text" id="hex-nav-bg" class="hex-input" value="#1E293B" maxlength="7">
+              </div>
+            </div>
+          </div> 
+        </div>
       </div>
-      
-      <h3 class="section-title" style="margin-top:20px;">Custom HEX Colors</h3>
-      
-      <!-- Der Container für das 2-Spalten-Grid -->
-      <div class="custom-colors-grid">
-        
-        <div class="color-control">
-          <label>Primary</label>
-          <div class="color-inputs">
-            <input type="color" id="color-primary" value="#38bdf8">
-            <input type="text" id="hex-primary" class="hex-input" value="#38BDF8" maxlength="7">
-          </div>
+
+      <!-- Result Highlighting Switch -->
+      <div class="config-section">
+        <h3 class="section-title">Highlighting</h3>
+        <div class="switch-row">
+          <span>Enable Highlighting</span>
+          <label class="switch">
+            <input type="checkbox" id="highlight-enabled">
+            <span class="slider"></span>
+          </label>
         </div>
-
-        <div class="color-control">
-          <label>Background</label>
-          <div class="color-inputs">
-            <input type="color" id="color-bg" value="#0f172a">
-            <input type="text" id="hex-bg" class="hex-input" value="#0F172A" maxlength="7">
-          </div>
-        </div>
-
-        <div class="color-control">
-          <label>Accent BG</label>
-          <div class="color-inputs">
-            <input type="color" id="color-secondary" value="#1e293b">
-            <input type="text" id="hex-secondary" class="hex-input" value="#1E293B" maxlength="7">
-          </div>
-        </div>
-
-        <div class="color-control">
-          <label>Nav Arrows</label>
-          <div class="color-inputs">
-            <input type="color" id="color-nav" value="#38bdf8">
-            <input type="text" id="hex-nav" class="hex-input" value="#38BDF8" maxlength="7">
-          </div>
-        </div>
-
-        <div class="color-control">
-          <label>Nav BG</label>
-          <div class="color-inputs">
-            <input type="color" id="color-nav-bg" value="#1e293b">
-            <input type="text" id="hex-nav-bg" class="hex-input" value="#1E293B" maxlength="7">
-          </div>
-        </div>
-
-      </div> 
-      <!-- Ende des Grids -->
-
+      </div>
     </div>
-  </div>
 
-  <div class="config-section">
-    <h3 class="section-title">Highlighting</h3>
-    <div class="switch-row">
-      <span>Enable Highlighting</span>
-      <label class="switch">
-        <input type="checkbox" id="highlight-enabled">
-        <span class="slider"></span>
-      </label>
-    </div>
-  </div>
-</div>
-
+    <!-- Tab: Fun (Google Easter Eggs and Links) -->
     <div id="tab-fun" class="tab-content">
       <div class="fun-section">
         <div class="fun-grid">
@@ -287,8 +294,10 @@
       </div>
     </div>
 
+    <!-- Tab: Socials (Brand Cards with hover effects) -->
     <div id="tab-socials" class="tab-content">
       <div class="social-grid">
+        <!-- LinkedIn Card -->
         <a href="https://www.linkedin.com/company/exus541/" target="_blank" class="social-card linkedin">
           <div class="social-icon">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
@@ -296,6 +305,7 @@
           <span>LinkedIn</span>
         </a>
 
+        <!-- YouTube Card -->
         <a href="https://www.youtube.com/@eXus541" target="_blank" class="social-card youtube">
           <div class="social-icon">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
@@ -303,13 +313,15 @@
           <span>YouTube</span>
         </a>
         
-        <a href="https://exus541.com" target="_blank" class="social-card website">
+        <!-- Portfolio Website Card -->
+        <a href="https://exus541.github.io/portfolio/" target="_blank" class="social-card website">
           <div class="social-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
           </div>
           <span>Website</span>
         </a>
 
+        <!-- Patreon Card -->
         <a href="https://www.patreon.com/exus541" target="_blank" class="social-card patreon">
           <div class="social-icon">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 .48v23.04h4.22V.48H0zm15.385 0c-4.764 0-8.641 3.88-8.641 8.65 0 4.755 3.877 8.63 8.641 8.63 4.756 0 8.615-3.875 8.615-8.63 0-4.77-3.859-8.65-8.615-8.65z"/></svg>
@@ -319,10 +331,12 @@
       </div>
     </div>
 
+    <!-- Page Footer -->
     <footer>
       <p>Search Optimizer • Premium Build</p>
     </footer>
   </div>
+  <!-- Application Logic -->
   <script src="popup.js"></script>
 </body>
 </html>
