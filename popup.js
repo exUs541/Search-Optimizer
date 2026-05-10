@@ -373,5 +373,3 @@ document.addEventListener('DOMContentLoaded', async () => {
     i.click();
   };
 });
-
-});
