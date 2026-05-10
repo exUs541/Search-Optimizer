@@ -45,7 +45,7 @@
         cursor: pointer; 
         color: #ef4444; 
         margin: 0 6px !important;
-        margin-left: 20px !important;
+        margin-left: -5px !important;
         padding: 0;
         transition: background 0.2s;
         flex-shrink: 0;
@@ -54,7 +54,31 @@
       }
       .sbf-block-btn:hover { background: rgba(239, 68, 68, 0.15); }
       .sbf-block-btn svg { width: 14px; height: 14px; pointer-events: none; }
-
+      
+      /* Favorite Button UI */
+      .sbf-fav-btn { 
+        display: inline-flex !important; 
+        align-items: center; 
+        justify-content: center; 
+        width: 22px; 
+        height: 22px; 
+        border-radius: 50%; 
+        background: transparent; 
+        border: none; 
+        cursor: pointer; 
+        color: #eab308; /* Gold/Yellow */
+        margin: 0 6px !important;
+        margin-left: 20px !important;
+        padding: 0;
+        transition: background 0.2s, transform 0.1s;
+        flex-shrink: 0;
+        position: static !important;
+        transform: none !important;
+      }
+      .sbf-fav-btn:hover { background: rgba(234, 179, 8, 0.15); transform: scale(1.1) !important; }
+      .sbf-fav-btn svg { width: 14px; height: 14px; pointer-events: none; fill: none; stroke: currentColor; transition: fill 0.2s; }
+      .sbf-fav-btn.is-fav svg { fill: currentColor; } /* Ausgefüllter Stern, wenn markiert */
+      
       /* Infinite Scroll Loader UI */
       #sbf-loader { display: none; text-align: center; padding: 20px; color: #9aa0a6; gap: 10px; align-items: center; justify-content: center; }
       #sbf-loader.active { display: flex; }
@@ -298,28 +322,73 @@
         }
 
         // 3. Inject Block Button (Avoid duplicate injections)
-        if (container.dataset.sbfBlockInjected) return;
+        if (container.dataset.sbfBtnsInjected) return;
 
         // Locate the reliable anchor point (the 3 vertical dots icon wrapper)
         const dotsSvg = container.querySelector('svg path[d^="M12 8c1.1"]')?.closest('svg');
         const dotsButton = dotsSvg?.closest('[role="button"], div[aria-haspopup="true"]');
 
         if (dotsButton && dotsButton.parentElement) {
-          container.dataset.sbfBlockInjected = '1';
+          container.dataset.sbfBtnsInjected = '1';
 
-          const btn = document.createElement('button');
-          btn.className = 'sbf-block-btn';
-          btn.title = `Block ${domain}`;
-          btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
+          // --- BLOCK BUTTON ---
+          const blockBtn = document.createElement('button');
+          blockBtn.className = 'sbf-block-btn';
+          blockBtn.title = `Block ${domain}`;
+          blockBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
+          
+          blockBtn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!searchFilters.includes(domain)) {
+              searchFilters.push(domain);
+              await chrome.storage.local.set({ searchFilters });
+            }
+          };
+          
+          // --- FAVORITE BUTTON ---
+          const favBtn = document.createElement('button');
+          favBtn.className = 'sbf-fav-btn';
+          if (highlightFilters.includes(domain)) favBtn.classList.add('is-fav');
+          favBtn.title = `Highlight ${domain}`;
+          favBtn.innerHTML = `<svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
 
-          // Force flex alignment to prevent the button from floating out of bounds
+          favBtn.onclick = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const index = highlightFilters.indexOf(domain);
+            
+            // Toggle Logic
+            if (index > -1) {
+              highlightFilters.splice(index, 1);
+              favBtn.classList.remove('is-fav');
+            } else {
+              highlightFilters.push(domain);
+              favBtn.classList.add('is-fav');
+            }
+            
+            // Force highlighting logic to re-evaluate instantly visually without waiting for reload
+            if (highlightEnabled && highlightFilters.includes(domain)) {
+                resultBlock.classList.add('sbf-highlight');
+            } else if (highlightEnabled && !highlightKeywords.some(kw => resultBlock.innerText.toLowerCase().includes(kw.toLowerCase()))) {
+                resultBlock.classList.remove('sbf-highlight');
+            }
+
+            await chrome.storage.local.set({ highlightFilters });
+          };
+
+          // --- INJECTION ---
           const parent = dotsButton.parentElement;
           parent.style.display = 'inline-flex';
           parent.style.alignItems = 'center';
           parent.style.flexDirection = 'row';
 
+          // Insert Fav first, then Block, then the Dots
+          parent.insertBefore(favBtn, dotsButton);
+          parent.insertBefore(blockBtn, dotsButton);
+
           // Insert immediately preceding the native Google options button
-          parent.insertBefore(btn, dotsButton);
+          // parent.insertBefore(btn, dotsButton);
 
           // Handle click: Add to filter array and push to Chrome Storage
           btn.onclick = async (e) => {
