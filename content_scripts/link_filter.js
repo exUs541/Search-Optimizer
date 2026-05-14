@@ -1,10 +1,10 @@
-(async function() {
+(async function () {
   'use strict';
-  
+
   // ==========================================================================
   // 0. HELPERS
   // ==========================================================================
-  
+
   /**
    * Converts a HEX color string to an RGBA string for transparency support.
    * @param {string} hex - The hex color code (e.g., "#38bdf8").
@@ -23,7 +23,7 @@
   // ==========================================================================
   // Dynamically injects core structural and aesthetic CSS rules into the document head.
   // Uses !important to forcefully override Google's highly specific dynamic classes.
-  
+
   if (!document.getElementById('sbf-style')) {
     const style = document.createElement('style');
     style.id = 'sbf-style';
@@ -31,6 +31,27 @@
       /* Core Hiding Classes */
       .sbf-hidden { display: none !important; }
       body.sbf-hide-more-btn .sbf-more-wrapper { display: none !important; }
+
+      /* Favorite Button UI */
+      .sbf-fav-btn { 
+        display: inline-flex !important; 
+        align-items: center; 
+        justify-content: center; 
+        width: 22px; 
+        height: 22px; 
+        border-radius: 50%; 
+        background: transparent; 
+        border: none; 
+        cursor: pointer; 
+        color: #eab308; /* Gold/Yellow */
+        margin: 0 0px !important;
+        margin-left: 30px !important;
+        padding: 0;
+        transition: background 0.2s, transform 0.1s;
+        flex-shrink: 0;
+        position: static !important;
+        transform: none !important;
+      }
 
       /* Block Button UI */
       .sbf-block-btn { 
@@ -44,10 +65,10 @@
         border: none; 
         cursor: pointer; 
         color: #ef4444; 
-        margin: 0 6px !important;
-        margin-left: -5px !important;
+        margin: 0 0px !important;
+        margin-left: 5px !important;
         padding: 0;
-        transition: background 0.2s;
+        transition: background 0.2s, transform 0.1s;
         flex-shrink: 0;
         position: static !important;
         transform: none !important;
@@ -55,26 +76,6 @@
       .sbf-block-btn:hover { background: rgba(239, 68, 68, 0.15); }
       .sbf-block-btn svg { width: 14px; height: 14px; pointer-events: none; }
       
-      /* Favorite Button UI */
-      .sbf-fav-btn { 
-        display: inline-flex !important; 
-        align-items: center; 
-        justify-content: center; 
-        width: 22px; 
-        height: 22px; 
-        border-radius: 50%; 
-        background: transparent; 
-        border: none; 
-        cursor: pointer; 
-        color: #eab308; /* Gold/Yellow */
-        margin: 0 6px !important;
-        margin-left: 20px !important;
-        padding: 0;
-        transition: background 0.2s, transform 0.1s;
-        flex-shrink: 0;
-        position: static !important;
-        transform: none !important;
-      }
       .sbf-fav-btn:hover { background: rgba(234, 179, 8, 0.15); transform: scale(1.1) !important; }
       .sbf-fav-btn svg { width: 14px; height: 14px; pointer-events: none; fill: none; stroke: currentColor; transition: fill 0.2s; }
       .sbf-fav-btn.is-fav svg { fill: currentColor; } /* Ausgefüllter Stern, wenn markiert */
@@ -93,6 +94,10 @@
       .sbf-nav-btn svg { width: 22px; height: 22px; pointer-events: none; stroke: currentColor !important; }
 
       /* Google Module Selectors (Hardcoded overrides for structural DOM elements) */
+      body.sbf-infinite-active #botstuff div[role="navigation"],
+      body.sbf-infinite-active table.AaVjTc,
+      body.sbf-infinite-active .SJajHc { display: none !important; }
+
       .sbf-hide-mod-ai [data-component-type="22"], .sbf-hide-mod-ai .SGE_container, .sbf-hide-mod-ai #super_results { display: none !important; }
       .sbf-hide-mod-products .wOPJ9c, .sbf-hide-mod-products .pla-unit, .sbf-hide-mod-products #tvcap { display: none !important; }
       .sbf-hide-mod-images [data-attrid="images universal"] { display: none !important; }
@@ -122,7 +127,7 @@
   // ==========================================================================
   // Maintains local copies of Chrome storage to prevent asynchronous latency 
   // during rapid DOM mutation events.
-  
+
   let googleModules = {}, hiddenTabs = {}, searchFilters = [];
   let highlightFilters = [], highlightKeywords = [];
   let infiniteScrollEnabled = false, isFetching = false, loader = null;
@@ -145,14 +150,20 @@
     navBtnsEnabled = data.navBtnsEnabled !== false;
     highlightEnabled = !!data.highlightEnabled;
     highlightColor = data.highlightColor || '#38bdf8';
-    
+
     if (document.body) {
       const b = document.body;
-      
+
       // Toggle body classes to trigger CSS hiding rules
+      const isImageTab = window.location.href.includes('tbm=isch') || window.location.href.includes('udm=2');
       b.classList.toggle('sbf-hide-more-btn', !!hiddenTabs.more);
       b.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
-      Object.keys(googleModules).forEach(key => b.classList.toggle(`sbf-hide-mod-${key}`, !!googleModules[key]));
+      b.classList.toggle('sbf-infinite-active', infiniteScrollEnabled);
+      Object.keys(googleModules).forEach(key => {
+        let shouldHide = !!googleModules[key];
+        if ((key === 'images' || key === 'pasf') && isImageTab) shouldHide = false;
+        b.classList.toggle(`sbf-hide-mod-${key}`, shouldHide);
+      });
       b.classList.toggle('sbf-hide-favicons', !!googleModules.favicons);
 
       // Inject dynamically selected hex colors as CSS variables
@@ -163,7 +174,7 @@
 
       ensureNavBtns();
       updateNavBtns();
-      incrementalScan(); 
+      incrementalScan();
     }
   }
 
@@ -171,9 +182,9 @@
   // 3. TAB & MODULE SCANNER
   // ==========================================================================
   // Scans the DOM for specific Google UI components and applies visual logic.
-  
+
   function scanGoogleModules() {
-    
+
     // Tag the "More" button in the navigation bar to allow targeted CSS hiding.
     const tagMoreButton = () => {
       document.querySelectorAll('div[role="navigation"] span, div[role="navigation"] div, #hdtb span, #hdtb div').forEach(el => {
@@ -200,8 +211,8 @@
       const allNativeTabs = document.querySelectorAll('div[role="navigation"] a, #hdtb a, #hdtb-tls, .t2051c, g-menu-item, div[role="button"]');
       allNativeTabs.forEach(el => {
         const text = (el.innerText || el.textContent || '').toLowerCase().trim();
-        if (!text || text === 'more' || el.classList.contains('sbf-more-wrapper')) return; 
-        
+        if (!text || text === 'more' || el.classList.contains('sbf-more-wrapper')) return;
+
         const isMatch = texts.some(t => exactOnly ? text === t : text.includes(t));
         if (isMatch) {
           let target = el.closest('g-menu-item') || el;
@@ -210,7 +221,7 @@
         }
       });
     };
-    
+
     // Execution list for Tabs
     killTabs(['books'], hiddenTabs.books, false);
     killTabs(['finance'], hiddenTabs.finance, false);
@@ -220,12 +231,12 @@
     killTabs(['news'], hiddenTabs.news, false);
     killTabs(['places'], hiddenTabs.places, false);
     killTabs(['products'], hiddenTabs.products, false);
-    killTabs(['product sites','productsites'], hiddenTabs.productsites, false);
+    killTabs(['product sites', 'productsites'], hiddenTabs.productsites, false);
     killTabs(['shopping'], hiddenTabs.shopping, false);
     killTabs(['short videos'], hiddenTabs.shortvideos, false);
     killTabs(['tools'], hiddenTabs.tools, false);
     killTabs(['videos'], hiddenTabs.videos, true);
-    killTabs(['web'], hiddenTabs.web, true); 
+    killTabs(['web'], hiddenTabs.web, true);
 
     /**
      * Scans headers to find and hide larger module blocks (e.g. "People also ask").
@@ -244,22 +255,29 @@
         }
       });
     };
-    
+
     // Execution list for Modules
+    const isImageTab = window.location.href.includes('tbm=isch') || window.location.href.includes('udm=2');
+
+    // In case of single-page navigation, update the body class here as well
+    if (document.body) {
+      document.body.classList.toggle('sbf-hide-mod-images', isImageTab ? false : !!googleModules.images);
+    }
+
     bruteForceKill(['ai overview', 'ai search'], googleModules.ai);
-    bruteForceKill(['images'], googleModules.images);
+    bruteForceKill(['images'], isImageTab ? false : googleModules.images);
     bruteForceKill(['videos'], googleModules.videos);
     bruteForceKill(['people also ask'], googleModules.ask);
     bruteForceKill(['discussions and forums'], googleModules.forums);
     bruteForceKill(['products'], googleModules.products);
-    bruteForceKill(['people also search for', 'related searches'], googleModules.pasf);
+    bruteForceKill(['people also search for', 'related searches'], isImageTab ? false : googleModules.pasf);
     bruteForceKill(['locations', 'map'], googleModules.locations);
   }
 
   // ==========================================================================
   // 4. NAVIGATION, HIGHLIGHTING & INFINITE SCROLL
   // ==========================================================================
-  
+
   /**
    * Injects the DOM elements for the Scroll-to-Top and Scroll-to-Bottom buttons.
    */
@@ -268,7 +286,7 @@
     const c = document.createElement('div'); c.id = 'sbf-nav-btns';
     c.innerHTML = `<div class="sbf-nav-btn" id="sbf-scroll-top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="18 15 12 9 6 15"></polyline></svg></div><div class="sbf-nav-btn" id="sbf-scroll-bottom"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="6 9 12 15 18 9"></polyline></svg></div>`;
     document.body.appendChild(c);
-    
+
     // Attach click events to control scroll position
     c.querySelector('#sbf-scroll-top').onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
     c.querySelector('#sbf-scroll-bottom').onclick = () => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
@@ -292,14 +310,37 @@
   function incrementalScan() {
     scanGoogleModules();
 
-    document.querySelectorAll('.yuRUbf').forEach(container => {
-      const link = container.querySelector('a[href]');
-      if (!link || !link.href.startsWith('http')) return; 
+    // We use the 3-dots menu button as the universal anchor to find search result blocks.
+    // This reliably captures all organic results, video results, and carousel items.
+    document.querySelectorAll('svg path[d^="M12 8c1.1"]').forEach(path => {
+      const dotsSvg = path.closest('svg');
+      const dotsButton = dotsSvg?.closest('[role="button"], div[aria-haspopup="true"]');
+      if (!dotsButton) return;
+
+      let resultBlock = dotsButton.closest('.g, .tF2Cxc, .Z26q7c, .Ww4FFb');
+      const outerBlock = dotsButton.closest('.MjjYud');
+
+      if (outerBlock) {
+        // Count how many 3-dots menus are in this outer block
+        const dotsCount = outerBlock.querySelectorAll('svg path[d^="M12 8c1.1"]').length;
+        // If there is only one, the entire block (including sitelinks) belongs to this result.
+        if (dotsCount === 1) {
+          resultBlock = outerBlock;
+        }
+      }
+
+      if (!resultBlock) resultBlock = outerBlock || dotsButton.closest('div');
+      if (!resultBlock) return;
+
+      // Find the primary external link for this result block
+      const links = Array.from(resultBlock.querySelectorAll('a[href^="http"]'));
+      const link = links.find(l => {
+        try { return !new URL(l.href).hostname.includes('google.com'); } catch (e) { return false; }
+      });
+      if (!link) return;
 
       try {
         const domain = new URL(link.href).hostname.replace(/^www\./, '');
-        const resultBlock = container.closest('.MjjYud, .g, .tF2Cxc');
-        if (!resultBlock) return;
 
         // 1. Evaluate Visibility (Blocking logic)
         const isBlocked = searchFilters.includes(domain);
@@ -310,33 +351,33 @@
         }
 
         // 2. Evaluate Highlighting
-        // If highlighting is enabled and the domain is NOT blocked, evaluate against keywords/filters.
-        if (highlightEnabled && !isBlocked) {
-            const snippetText = resultBlock.innerText.toLowerCase();
-            const matchesKeyword = highlightKeywords.some(kw => snippetText.includes(kw.toLowerCase()));
-            const matchesDomain = highlightFilters.includes(domain);
-            
-            resultBlock.classList.toggle('sbf-highlight', matchesKeyword || matchesDomain);
-        } else {
+        if (!isBlocked) {
+          const snippetText = resultBlock.innerText.toLowerCase();
+          const matchesKeyword = highlightKeywords.some(kw => snippetText.includes(kw.toLowerCase()));
+          const matchesDomain = highlightFilters.includes(domain);
+
+          // Allow highlighting if either global setting is ON or if it's explicitly favorited
+          if ((highlightEnabled && matchesKeyword) || matchesDomain) {
+            resultBlock.classList.add('sbf-highlight');
+          } else {
             resultBlock.classList.remove('sbf-highlight');
+          }
+        } else {
+          resultBlock.classList.remove('sbf-highlight');
         }
 
         // 3. Inject Block Button (Avoid duplicate injections)
-        if (container.dataset.sbfBtnsInjected) return;
+        if (resultBlock.dataset.sbfBtnsInjected) return;
 
-        // Locate the reliable anchor point (the 3 vertical dots icon wrapper)
-        const dotsSvg = container.querySelector('svg path[d^="M12 8c1.1"]')?.closest('svg');
-        const dotsButton = dotsSvg?.closest('[role="button"], div[aria-haspopup="true"]');
-
-        if (dotsButton && dotsButton.parentElement) {
-          container.dataset.sbfBtnsInjected = '1';
+        if (dotsButton.parentElement) {
+          resultBlock.dataset.sbfBtnsInjected = '1';
 
           // --- BLOCK BUTTON ---
           const blockBtn = document.createElement('button');
           blockBtn.className = 'sbf-block-btn';
           blockBtn.title = `Block ${domain}`;
           blockBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
-          
+
           blockBtn.onclick = async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -345,7 +386,7 @@
               await chrome.storage.local.set({ searchFilters });
             }
           };
-          
+
           // --- FAVORITE BUTTON ---
           const favBtn = document.createElement('button');
           favBtn.className = 'sbf-fav-btn';
@@ -357,8 +398,7 @@
             e.preventDefault();
             e.stopPropagation();
             const index = highlightFilters.indexOf(domain);
-            
-            // Toggle Logic
+
             if (index > -1) {
               highlightFilters.splice(index, 1);
               favBtn.classList.remove('is-fav');
@@ -366,53 +406,50 @@
               highlightFilters.push(domain);
               favBtn.classList.add('is-fav');
             }
-            
-            // Force highlighting logic to re-evaluate instantly visually without waiting for reload
-            if (highlightEnabled && highlightFilters.includes(domain)) {
-                resultBlock.classList.add('sbf-highlight');
-            } else if (highlightEnabled && !highlightKeywords.some(kw => resultBlock.innerText.toLowerCase().includes(kw.toLowerCase()))) {
-                resultBlock.classList.remove('sbf-highlight');
+
+            if (highlightFilters.includes(domain) || highlightKeywords.some(kw => resultBlock.innerText.toLowerCase().includes(kw.toLowerCase()))) {
+              resultBlock.classList.add('sbf-highlight');
+            } else {
+              resultBlock.classList.remove('sbf-highlight');
             }
 
             await chrome.storage.local.set({ highlightFilters });
           };
 
           // --- INJECTION ---
-          const parent = dotsButton.parentElement;
-          parent.style.display = 'inline-flex';
-          parent.style.alignItems = 'center';
-          parent.style.flexDirection = 'row';
+          // Create an isolated wrapper so we don't modify the native parent's CSS.
+          // Modifying the native parent (e.g. to display: inline-flex) breaks Google's absolute positioning for the 3-dots popup.
+          const btnGroup = document.createElement('div');
+          btnGroup.className = 'sbf-btn-group';
+          btnGroup.style.cssText = 'display: inline-flex; align-items: center; margin-right: 8px; vertical-align: middle; z-index: 10; position: relative; pointer-events: none;';
+          favBtn.style.pointerEvents = 'auto';
+          blockBtn.style.pointerEvents = 'auto';
 
-          // Insert Fav first, then Block, then the Dots
-          parent.insertBefore(favBtn, dotsButton);
-          parent.insertBefore(blockBtn, dotsButton);
+          btnGroup.appendChild(favBtn);
+          btnGroup.appendChild(blockBtn);
 
-          // Insert immediately preceding the native Google options button
-          // parent.insertBefore(btn, dotsButton);
-
-          // Handle click: Add to filter array and push to Chrome Storage
-          btn.onclick = async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            if (!searchFilters.includes(domain)) {
-              searchFilters.push(domain);
-              await chrome.storage.local.set({ searchFilters });
-            }
-          };
+          // Insert our isolated group right before the 3-dots button
+          dotsButton.parentNode.insertBefore(btnGroup, dotsButton);
         }
-      } catch(e) {
-        // Fail silently to prevent interrupting the loop on malformed results
-      }
+      } catch (e) { }
     });
 
     // Hardcoded fallback logic for edge-case DOM structures ("People also search for")
-    if (googleModules.pasf) {
+    const isImageTabForFallback = window.location.href.includes('tbm=isch') || window.location.href.includes('udm=2');
+    if (googleModules.pasf && !isImageTabForFallback) {
       document.querySelectorAll('[data-pcu], .Cl89te, .EyBRub').forEach(el => {
         if (el.querySelector('svg path[d*="M15.5 14h-.79l-.28-.27"]')) {
           const container = el.closest('.MjjYud, .g, .hlcw0c');
           if (container) container.classList.add('sbf-hidden');
         }
       });
+    }
+
+    // Auto-trigger infinite scroll if the page becomes too short to scroll
+    // (e.g. because we blocked 90% of the results on the first page)
+    if (infiniteScrollEnabled && !isFetching) {
+      clearTimeout(window.sbfScrollCheckTimeout);
+      window.sbfScrollCheckTimeout = setTimeout(onScroll, 500);
     }
   }
 
@@ -423,37 +460,40 @@
   async function onScroll() {
     updateNavBtns();
     if (!infiniteScrollEnabled || isFetching) return;
-    
+
     // Trigger zone: 1200 pixels from the bottom of the document
     if ((document.body.offsetHeight - window.innerHeight - window.scrollY) < 1200) {
       const nextLink = document.querySelector('#pnnext');
       if (nextLink?.href) {
-        isFetching = true; 
+        isFetching = true;
         loader = document.getElementById('sbf-loader');
         loader?.classList.add('active');
-        
+
         try {
           const resp = await fetch(nextLink.href);
           const doc = new DOMParser().parseFromString(await resp.text(), 'text/html');
-          const targetRso = document.getElementById('rso'); 
+          const targetRso = document.getElementById('rso');
           const newRso = doc.querySelector('#rso');
-          
+
           if (newRso && targetRso) {
             // Append incoming child nodes to the existing search results container
             Array.from(newRso.children).forEach(child => targetRso.appendChild(child.cloneNode(true)));
-            
+
             // Re-map the native pagination link to the next incoming page
-            const newNext = doc.querySelector('#pnnext'); 
+            const newNext = doc.querySelector('#pnnext');
             if (newNext) nextLink.href = newNext.href; else nextLink.remove();
-            
+
             incrementalScan();
           }
         } catch (e) {
-            console.error("Infinite scroll failed", e);
-        } finally { 
-          loader?.classList.remove('active'); 
+          console.error("Infinite scroll failed", e);
+        } finally {
+          loader?.classList.remove('active');
           // Minimum artificial delay to prevent rapid-fire fetching
-          setTimeout(() => { isFetching = false; }, 1000); 
+          setTimeout(() => {
+            isFetching = false;
+            onScroll(); // Re-check in case the newly fetched page was ALSO mostly blocked!
+          }, 800);
         }
       }
     }
@@ -462,18 +502,18 @@
   // ==========================================================================
   // 5. INIT
   // ==========================================================================
-  
+
   // Listen for broadcasted configuration updates from popup.js
   chrome.runtime.onMessage.addListener((m) => { if (m.action === "live_update") loadConfig(); });
   chrome.storage.onChanged.addListener(() => loadConfig());
-  
+
   // Primary bootstrapping
   loadConfig();
-  
+
   // Attach MutationObserver to dynamically process single page app (SPA) DOM changes
   const obs = new MutationObserver(() => incrementalScan());
   obs.observe(document.body, { childList: true, subtree: true });
-  
+
   // Attach passive scroll listener for high-performance scroll handling
   window.addEventListener('scroll', onScroll, { passive: true });
 })();
