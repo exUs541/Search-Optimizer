@@ -335,7 +335,11 @@
       // Find the primary external link for this result block
       const links = Array.from(resultBlock.querySelectorAll('a[href^="http"]'));
       const link = links.find(l => {
-        try { return !new URL(l.href).hostname.includes('google.com'); } catch (e) { return false; }
+        try { 
+            const hostname = new URL(l.href).hostname;
+            // Only skip internal Google Search links, allow subdomains like support.google.com
+            return hostname !== 'www.google.com' && hostname !== 'google.com'; 
+        } catch (e) { return false; }
       });
       if (!link) return;
 
