@@ -82,12 +82,11 @@
       /* Button Group Wrapper */
       .sbf-btn-group {
         display: inline-flex !important;
-        align-items: center;
-        position: absolute !important;
-        right: 28px !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        z-index: 100 !important;
+        align-items: center !important;
+        margin-right: 8px !important;
+        vertical-align: middle !important;
+        z-index: 10 !important;
+        position: relative !important;
         pointer-events: none;
       }
 
@@ -378,9 +377,24 @@
      */
     const bruteForceKill = (texts, active) => {
       document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"], a, g-section-title').forEach(el => {
+        // Skip elements in navigation bar or header to prevent hiding top tabs or navigation controls
+        if (el.closest('div[role="navigation"], #hdtb, #searchform, #header')) return;
+
         const text = (el.textContent || el.innerText || '').toLowerCase().trim();
         if (texts.some(t => text === t || text.startsWith(t) || (t.length > 3 && text.includes(t)))) {
-          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf, [data-attrid="images universal"], [data-attrid="people_also_search_for"], .nV_results, .K877S, .W67Drf, .Cl89te, .EyBRub');
+          let container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf, [data-attrid="images universal"], [data-attrid="people_also_search_for"], .nV_results, .K877S, .W67Drf, .Cl89te, .EyBRub');
+          if (!container) {
+            // Traverse up to find the top-level block under #rso, #botstuff, or #center_col
+            let parent = el.parentElement;
+            while (parent && parent !== document.body) {
+              const pParent = parent.parentElement;
+              if (pParent && (pParent.id === 'rso' || pParent.id === 'botstuff' || pParent.id === 'center_col' || pParent.classList.contains('v7W49e'))) {
+                container = parent;
+                break;
+              }
+              parent = parent.parentElement;
+            }
+          }
           if (container) {
             if (active) container.classList.add('sbf-hidden');
             else container.classList.remove('sbf-hidden');
@@ -583,13 +597,8 @@
           btnGroup.appendChild(favBtn);
           btnGroup.appendChild(blockBtn);
 
-          // Ensure parent is relative so absolute positioning of child works
           if (dotsButton.parentNode) {
-            const parentStyle = window.getComputedStyle(dotsButton.parentNode);
-            if (parentStyle.position === 'static') {
-              dotsButton.parentNode.style.setProperty('position', 'relative', 'important');
-            }
-            // Insert our absolute-positioned group right before the 3-dots button
+            // Insert our group right before the 3-dots button
             dotsButton.parentNode.insertBefore(btnGroup, dotsButton);
           }
         }
