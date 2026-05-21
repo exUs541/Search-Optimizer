@@ -11,7 +11,7 @@
     <header>
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v2.5.1</span>
+        <span class="badge">v2.5.3</span>
       </div>
       <p>Master your Google Search experience</p>
     </header>
@@ -58,6 +58,43 @@
             <input type="checkbox" id="nav-btns-enabled">
             <span class="slider"></span>
           </label>
+        </div>
+      </div>
+
+      <!-- No AI Blocker Section -->
+      <div class="config-section">
+        <h3 class="section-title">No AI Blocker</h3>
+        
+        <div class="noai-container">
+          <div class="noai-slider-wrapper">
+            <input type="range" id="noai-mode-slider" min="0" max="2" value="0" step="1">
+            <div class="noai-labels">
+              <span class="noai-label active" data-val="0">OFF</span>
+              <span class="noai-label" data-val="1">HIDDEN</span>
+              <span class="noai-label" data-val="2">BLOCKED</span>
+            </div>
+          </div>
+          
+          <div class="noai-description" id="noai-mode-desc">
+            Blocker is disabled. Standard search behavior.
+          </div>
+          
+          <div class="noai-stats-row">
+            <div class="stat-box">
+              <span class="stat-number" id="noai-blocked-count">0</span>
+              <span class="stat-label">AI Overviews Blocked</span>
+            </div>
+            <div class="sync-control">
+              <div class="setting-label">
+                <span>Cloud Sync</span>
+                <small id="sync-status">Local only</small>
+              </div>
+              <label class="switch small">
+                <input type="checkbox" id="noai-sync-enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 

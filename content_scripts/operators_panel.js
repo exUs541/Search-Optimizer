@@ -2,11 +2,42 @@
   'use strict';
   
   let observer = null;
+  let isAdvancedSearchEnabled = true;
+
+  function isAllTab() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tbm = urlParams.get('tbm');
+    const udm = urlParams.get('udm');
+    return !tbm && !udm;
+  }
 
   async function syncConfig() {
     const data = await chrome.storage.local.get(['advancedSearch']);
-    const isEnabled = data.advancedSearch !== false;
-    document.documentElement.classList.toggle('sop-adv-enabled', isEnabled);
+    isAdvancedSearchEnabled = data.advancedSearch !== false;
+    updateUIState();
+  }
+
+  function removeUI() {
+    const gear = document.getElementById('sop-btn-search');
+    if (gear) gear.remove();
+    const overlay = document.getElementById('sop-overlay');
+    if (overlay) overlay.remove();
+    const panel = document.getElementById('sop-panel');
+    if (panel) panel.remove();
+    document.documentElement.classList.remove('sop-adv-enabled');
+  }
+
+  function updateUIState() {
+    if (!isAllTab()) {
+      removeUI();
+      return;
+    }
+    document.documentElement.classList.toggle('sop-adv-enabled', isAdvancedSearchEnabled);
+    if (isAdvancedSearchEnabled) {
+      mountUI();
+    } else {
+      removeUI();
+    }
   }
 
   function mountUI() {
@@ -168,6 +199,17 @@
   }
 
   function injectGearIcon() {
+    if (!isAllTab()) {
+      const gear = document.getElementById('sop-btn-search');
+      if (gear) gear.remove();
+      const overlay = document.getElementById('sop-overlay');
+      if (overlay) overlay.remove();
+      const panel = document.getElementById('sop-panel');
+      if (panel) panel.remove();
+      document.documentElement.classList.remove('sop-adv-enabled');
+      return;
+    }
+
     if (document.getElementById('sop-btn-search')) return;
 
     const anchor = document.querySelector('div[aria-label="Search by voice"], div[aria-label="Sprachsuche"], .XNo29b, .M2vUub, button[type="submit"], .Tg7LZd');
@@ -193,11 +235,11 @@
 
   function startObserver() {
     if (observer) return;
-    observer = new MutationObserver(() => injectGearIcon());
+    observer = new MutationObserver(() => updateUIState());
     observer.observe(document.documentElement, { childList: true, subtree: true });
   }
 
-  mountUI();
+  updateUIState();
   syncConfig();
 
   chrome.storage.onChanged.addListener(() => syncConfig());

@@ -44,8 +44,7 @@
         border: none; 
         cursor: pointer; 
         color: #eab308; /* Gold/Yellow */
-        margin: 0 0px !important;
-        margin-left: 30px !important;
+        margin: 0 !important;
         padding: 0;
         transition: background 0.2s, transform 0.1s;
         flex-shrink: 0;
@@ -65,8 +64,8 @@
         border: none; 
         cursor: pointer; 
         color: #ef4444; 
-        margin: 0 0px !important;
-        margin-left: 5px !important;
+        margin: 0 !important;
+        margin-left: 4px !important;
         padding: 0;
         transition: background 0.2s, transform 0.1s;
         flex-shrink: 0;
@@ -80,6 +79,18 @@
       .sbf-fav-btn svg { width: 14px; height: 14px; pointer-events: none; fill: none; stroke: currentColor; transition: fill 0.2s; }
       .sbf-fav-btn.is-fav svg { fill: currentColor; } /* Ausgefüllter Stern, wenn markiert */
       
+      /* Button Group Wrapper */
+      .sbf-btn-group {
+        display: inline-flex !important;
+        align-items: center;
+        position: absolute !important;
+        right: 28px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        z-index: 100 !important;
+        pointer-events: none;
+      }
+
       /* Infinite Scroll Loader UI */
       #sbf-loader { display: none; text-align: center; padding: 20px; color: #9aa0a6; gap: 10px; align-items: center; justify-content: center; }
       #sbf-loader.active { display: flex; }
@@ -100,13 +111,14 @@
 
       .sbf-hide-mod-ai [data-component-type="22"], .sbf-hide-mod-ai .SGE_container, .sbf-hide-mod-ai #super_results { display: none !important; }
       .sbf-hide-mod-products .wOPJ9c, .sbf-hide-mod-products .pla-unit, .sbf-hide-mod-products #tvcap { display: none !important; }
-      .sbf-hide-mod-images [data-attrid="images universal"] { display: none !important; }
+      .sbf-hide-mod-images [data-attrid="images universal"], .sbf-hide-mod-images [data-rich-metadata-type="images"], .sbf-hide-mod-images .FAZ4jd, .sbf-hide-mod-images .YLwVgc { display: none !important; }
       .sbf-hide-mod-videos .MjjYud:has(.RzdJxc) { display: none !important; }
       .sbf-hide-mod-ask [data-attrid="wa_paa"], .sbf-hide-mod-ask .WwS1pe { display: none !important; }
-      .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results, .sbf-hide-mod-pasf .K877S, .sbf-hide-mod-pasf .W67Drf { display: none !important; }
+      .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results, .sbf-hide-mod-pasf .K877S, .sbf-hide-mod-pasf .W67Drf, .sbf-hide-mod-pasf [jscontroller*="related_searches"] { display: none !important; }
       .sbf-hide-mod-forums [data-attrid="discussions_and_forums"], .sbf-hide-mod-forums .f4S95b { display: none !important; }
       .sbf-hide-mod-sponsored #tads, .sbf-hide-mod-sponsored #tadsb, .sbf-hide-mod-sponsored #tvcap { display: none !important; }
       .sbf-hide-mod-locations [data-attrid="local_universal"], .sbf-hide-mod-locations .L9S79c, .sbf-hide-mod-locations #lu_map { display: none !important; }
+      .sbf-hide-mod-knowledge #rhs, .sbf-hide-mod-knowledge [data-attrid^="kc:/"] { display: none !important; }
       .sbf-hide-favicons .XNo29b, .sbf-hide-favicons .kvH3mc img { visibility: hidden !important; width: 0 !important; margin: 0 !important; }
       
       /* Highlighting UI */
@@ -128,11 +140,122 @@
   // Maintains local copies of Chrome storage to prevent asynchronous latency 
   // during rapid DOM mutation events.
 
-  let googleModules = {}, hiddenTabs = {}, searchFilters = [];
+  let googleModules = {}, hiddenTabs = {}, searchFilters = [], noAiMode = 'off';
   let highlightFilters = [], highlightKeywords = [];
   let infiniteScrollEnabled = false, isFetching = false, loader = null;
   let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
   let highlightEnabled = false, highlightColor = '#38bdf8';
+  let noaiCountedOnPage = false;
+  let lastQuery = '';
+
+  function isAllTab() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const tbm = urlParams.get('tbm');
+    const udm = urlParams.get('udm');
+    return !tbm && !udm;
+  }
+
+  function cleanUpAllTabModifications() {
+    const b = document.body;
+    if (!b) return;
+    b.classList.remove('sbf-hide-more-btn');
+    b.classList.remove('sbf-show-nav-btns');
+    b.classList.remove('sbf-infinite-active');
+    b.classList.remove('sbf-hide-favicons');
+    if (googleModules) {
+      Object.keys(googleModules).forEach(key => {
+        b.classList.remove(`sbf-hide-mod-${key}`);
+      });
+    }
+    const navBtns = document.getElementById('sbf-nav-btns');
+    if (navBtns) navBtns.remove();
+    document.querySelectorAll('.sbf-hidden').forEach(el => el.classList.remove('sbf-hidden'));
+    document.querySelectorAll('.sbf-highlight').forEach(el => el.classList.remove('sbf-highlight'));
+    document.querySelectorAll('.sbf-btn-group').forEach(el => el.remove());
+    document.querySelectorAll('[data-sbf-btns-injected]').forEach(el => delete el.dataset.sbfBtnsInjected);
+  }
+
+  function detectAndHideAIOverview() {
+    let found = false;
+    const selectors = [
+      '[data-component-type="22"]', 
+      '.SGE_container', 
+      '#super_results',
+      '.O99rdb', 
+      '.iv23Mc',
+      '.c2xzZc'
+    ];
+    selectors.forEach(sel => {
+      document.querySelectorAll(sel).forEach(el => {
+        if (!el.classList.contains('noai-hidden-card')) {
+          el.classList.add('noai-hidden-card');
+          el.style.setProperty('display', 'none', 'important');
+          found = true;
+        }
+      });
+    });
+
+    document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
+      const text = (el.innerText || el.textContent || '').toLowerCase().trim();
+      if (
+        text === 'ai overview' || 
+        text.startsWith('ai overview') || 
+        text === 'ai-übersicht' || 
+        text.startsWith('ai-übersicht')
+      ) {
+        const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf');
+        if (container && !container.classList.contains('noai-hidden-card')) {
+          container.classList.add('noai-hidden-card');
+          container.style.setProperty('display', 'none', 'important');
+          found = true;
+        }
+      }
+    });
+
+    return found;
+  }
+
+  function handleNoAiBlocker() {
+    if (noAiMode === 'off') return;
+    const found = detectAndHideAIOverview();
+    if (noAiMode === 'hidden' && found && !noaiCountedOnPage) {
+      noaiCountedOnPage = true;
+      chrome.runtime.sendMessage({ action: 'increment_noai_count' });
+    }
+  }
+
+  function checkAndRedirectBlockedMode() {
+    if (noAiMode !== 'blocked') return;
+    const url = new URL(window.location.href);
+    const q = url.searchParams.get('q');
+    if (q && !q.toLowerCase().includes('-noai')) {
+      url.searchParams.set('q', q + ' -noai');
+      window.location.replace(url.toString());
+    }
+  }
+
+  function cleanUIFromNoAiSuffix() {
+    if (noAiMode !== 'blocked') return;
+    try {
+      const url = new URL(window.location.href);
+      let q = url.searchParams.get('q');
+      if (q && q.toLowerCase().includes('-noai')) {
+        const cleanedQ = q.replace(/\s*-noai/i, '');
+        url.searchParams.set('q', cleanedQ);
+        window.history.replaceState(null, '', url.pathname + url.search);
+      }
+    } catch (e) {}
+
+    document.querySelectorAll('input[name="q"], textarea[name="q"]').forEach(input => {
+      if (input.value && input.value.toLowerCase().includes('-noai')) {
+        input.value = input.value.replace(/\s*-noai/i, '');
+      }
+    });
+
+    if (document.title.toLowerCase().includes('-noai')) {
+      document.title = document.title.replace(/\s*-noai/i, '');
+    }
+  }
 
   /**
    * Fetches latest configuration from Chrome Storage and applies global CSS variables/classes.
@@ -150,8 +273,18 @@
     navBtnsEnabled = data.navBtnsEnabled !== false;
     highlightEnabled = !!data.highlightEnabled;
     highlightColor = data.highlightColor || '#38bdf8';
+    noAiMode = data.noAiMode || 'off';
 
     if (document.body) {
+      if (!isAllTab()) {
+        cleanUpAllTabModifications();
+        return;
+      }
+
+      checkAndRedirectBlockedMode();
+      cleanUIFromNoAiSuffix();
+      handleNoAiBlocker();
+
       const b = document.body;
 
       // Toggle body classes to trigger CSS hiding rules
@@ -244,10 +377,10 @@
      * @param {boolean} active - If true, appends the hidden class to the parent container.
      */
     const bruteForceKill = (texts, active) => {
-      document.querySelectorAll('h1, h2, h3, h4, [role="heading"]').forEach(el => {
-        const text = (el.innerText || '').toLowerCase().trim();
-        if (texts.some(t => text === t || text.startsWith(t))) {
-          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf');
+      document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"], a, g-section-title').forEach(el => {
+        const text = (el.textContent || el.innerText || '').toLowerCase().trim();
+        if (texts.some(t => text === t || text.startsWith(t) || (t.length > 3 && text.includes(t)))) {
+          const container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf, [data-attrid="images universal"], [data-attrid="people_also_search_for"], .nV_results, .K877S, .W67Drf, .Cl89te, .EyBRub');
           if (container) {
             if (active) container.classList.add('sbf-hidden');
             else container.classList.remove('sbf-hidden');
@@ -264,14 +397,14 @@
       document.body.classList.toggle('sbf-hide-mod-images', isImageTab ? false : !!googleModules.images);
     }
 
-    bruteForceKill(['ai overview', 'ai search'], googleModules.ai);
-    bruteForceKill(['images'], isImageTab ? false : googleModules.images);
+    bruteForceKill(['ai overview', 'ai-übersicht', 'ai search'], googleModules.ai);
+    bruteForceKill(['images', 'bilder', 'bilderergebnisse', 'bilder für'], isImageTab ? false : googleModules.images);
     bruteForceKill(['videos'], googleModules.videos);
-    bruteForceKill(['people also ask'], googleModules.ask);
-    bruteForceKill(['discussions and forums'], googleModules.forums);
-    bruteForceKill(['products'], googleModules.products);
-    bruteForceKill(['people also search for', 'related searches'], isImageTab ? false : googleModules.pasf);
-    bruteForceKill(['locations', 'map'], googleModules.locations);
+    bruteForceKill(['people also ask', 'nutzer fragen auch', 'ähnliche fragen', 'weitere fragen'], googleModules.ask);
+    bruteForceKill(['discussions and forums', 'discussions & forums', 'foren', 'diskussionen', 'diskussionen und foren', 'foren und diskussionen'], googleModules.forums);
+    bruteForceKill(['products', 'produkte'], googleModules.products);
+    bruteForceKill(['people also search for', 'related searches', 'nutzer suchen auch nach', 'ähnliche suchanfragen', 'weitere suchanfragen'], isImageTab ? false : googleModules.pasf);
+    bruteForceKill(['locations', 'map', 'karten', 'orte', 'standorte'], googleModules.locations);
   }
 
   // ==========================================================================
@@ -308,6 +441,21 @@
    * highlighting, and UI injection (Block button).
    */
   function incrementalScan() {
+    if (!isAllTab()) {
+      cleanUpAllTabModifications();
+      return;
+    }
+
+    const currentQuery = new URLSearchParams(window.location.search).get('q') || '';
+    if (currentQuery !== lastQuery) {
+      lastQuery = currentQuery;
+      noaiCountedOnPage = false;
+    }
+
+    checkAndRedirectBlockedMode();
+    cleanUIFromNoAiSuffix();
+    handleNoAiBlocker();
+
     scanGoogleModules();
 
     // We use the 3-dots menu button as the universal anchor to find search result blocks.
@@ -371,7 +519,13 @@
         }
 
         // 3. Inject Block Button (Avoid duplicate injections)
-        if (resultBlock.dataset.sbfBtnsInjected) return;
+        if (resultBlock.dataset.sbfBtnsInjected) {
+          const existingFavBtn = resultBlock.querySelector('.sbf-fav-btn');
+          if (existingFavBtn) {
+            existingFavBtn.classList.toggle('is-fav', highlightFilters.includes(domain));
+          }
+          return;
+        }
 
         if (dotsButton.parentElement) {
           resultBlock.dataset.sbfBtnsInjected = '1';
@@ -421,19 +575,23 @@
           };
 
           // --- INJECTION ---
-          // Create an isolated wrapper so we don't modify the native parent's CSS.
-          // Modifying the native parent (e.g. to display: inline-flex) breaks Google's absolute positioning for the 3-dots popup.
           const btnGroup = document.createElement('div');
           btnGroup.className = 'sbf-btn-group';
-          btnGroup.style.cssText = 'display: inline-flex; align-items: center; margin-right: 8px; vertical-align: middle; z-index: 10; position: relative; pointer-events: none;';
           favBtn.style.pointerEvents = 'auto';
           blockBtn.style.pointerEvents = 'auto';
 
           btnGroup.appendChild(favBtn);
           btnGroup.appendChild(blockBtn);
 
-          // Insert our isolated group right before the 3-dots button
-          dotsButton.parentNode.insertBefore(btnGroup, dotsButton);
+          // Ensure parent is relative so absolute positioning of child works
+          if (dotsButton.parentNode) {
+            const parentStyle = window.getComputedStyle(dotsButton.parentNode);
+            if (parentStyle.position === 'static') {
+              dotsButton.parentNode.style.setProperty('position', 'relative', 'important');
+            }
+            // Insert our absolute-positioned group right before the 3-dots button
+            dotsButton.parentNode.insertBefore(btnGroup, dotsButton);
+          }
         }
       } catch (e) { }
     });
@@ -520,4 +678,16 @@
 
   // Attach passive scroll listener for high-performance scroll handling
   window.addEventListener('scroll', onScroll, { passive: true });
+
+  // Intercept form submissions to append -noai in Blocked mode
+  document.addEventListener('submit', (e) => {
+    if (noAiMode !== 'blocked') return;
+    const form = e.target.closest('form');
+    if (form && form.action && form.action.includes('/search')) {
+      const input = form.querySelector('input[name="q"], textarea[name="q"]');
+      if (input && input.value && !input.value.toLowerCase().includes('-noai')) {
+        input.value = input.value.trim() + ' -noai';
+      }
+    }
+  });
 })();

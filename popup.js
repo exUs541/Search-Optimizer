@@ -113,16 +113,106 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('nav-btns-enabled').checked = store.navBtnsEnabled !== false;
   document.getElementById('highlight-enabled').checked = !!store.highlightEnabled;
 
+  // Restore last active tab
+  if (store.lastActiveTab) {
+    const activeBtn = document.querySelector(`.tab-btn[data-tab="${store.lastActiveTab}"]`);
+    if (activeBtn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      activeBtn.classList.add('active');
+      const target = document.getElementById(store.lastActiveTab);
+      if (target) target.classList.add('active');
+    }
+  }
+
+  // --- No AI Blocker Initialization ---
+  const noAiSlider = document.getElementById('noai-mode-slider');
+  const noAiLabels = document.querySelectorAll('.noai-label');
+  const noAiDesc = document.getElementById('noai-mode-desc');
+  const noAiCount = document.getElementById('noai-blocked-count');
+  const noAiSyncSwitch = document.getElementById('noai-sync-enabled');
+  const syncStatusLabel = document.getElementById('sync-status');
+
+  const noAiModes = ['off', 'hidden', 'blocked'];
+  const noAiDescs = {
+    'off': 'Blocker is disabled. Standard search behavior.',
+    'hidden': 'AI Overview is hidden from the search results DOM. (Sends query).',
+    'blocked': 'Appends -noai to queries, blocking LLM generation at source. (Saves tokens!).'
+  };
+
+  let noAiMode = store.noAiMode || 'off';
+  let noAiSyncEnabled = !!store.noAiSyncEnabled;
+  let noAiBlockedCountLocal = store.noAiBlockedCountLocal || 0;
+
+  const updateNoAiStatsUI = async () => {
+    if (noAiSyncEnabled) {
+      try {
+        const syncStore = await chrome.storage.sync.get(['noAiBlockedCountSync']);
+        const syncCount = syncStore.noAiBlockedCountSync || 0;
+        if (syncCount > noAiBlockedCountLocal) {
+          noAiBlockedCountLocal = syncCount;
+          await chrome.storage.local.set({ noAiBlockedCountLocal });
+        }
+      } catch (e) {
+        console.error('Error fetching sync storage:', e);
+      }
+      syncStatusLabel.textContent = 'Synced with Cloud';
+    } else {
+      syncStatusLabel.textContent = 'Local only';
+    }
+    noAiCount.textContent = noAiBlockedCountLocal;
+  };
+
+  const setNoAiModeUI = (mode) => {
+    noAiMode = mode;
+    const valIndex = noAiModes.indexOf(mode);
+    noAiSlider.value = valIndex;
+    noAiDesc.textContent = noAiDescs[mode];
+    
+    noAiLabels.forEach(label => {
+      label.classList.toggle('active', parseInt(label.dataset.val) === valIndex);
+    });
+  };
+
+  noAiSlider.oninput = async () => {
+    const val = parseInt(noAiSlider.value);
+    const mode = noAiModes[val];
+    setNoAiModeUI(mode);
+    await chrome.storage.local.set({ noAiMode: mode });
+    await triggerLiveUpdate();
+  };
+
+  noAiLabels.forEach(label => {
+    label.onclick = async () => {
+      const val = parseInt(label.dataset.val);
+      const mode = noAiModes[val];
+      setNoAiModeUI(mode);
+      await chrome.storage.local.set({ noAiMode: mode });
+      await triggerLiveUpdate();
+    };
+  });
+
+  noAiSyncSwitch.checked = noAiSyncEnabled;
+  noAiSyncSwitch.onchange = async () => {
+    noAiSyncEnabled = noAiSyncSwitch.checked;
+    await chrome.storage.local.set({ noAiSyncEnabled });
+    await updateNoAiStatsUI();
+  };
+
+  setNoAiModeUI(noAiMode);
+  await updateNoAiStatsUI();
+
   // --- Event Listeners: Navigation ---
   
   // Handle tab switching logic
   document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.onclick = () => {
+    btn.onclick = async () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       btn.classList.add('active');
       const target = document.getElementById(btn.dataset.tab);
       if (target) target.classList.add('active');
+      await chrome.storage.local.set({ lastActiveTab: btn.dataset.tab });
     };
   });
 
@@ -329,7 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Event Listeners: General Switches ---
 
   // Trigger save on any checkbox change
-  document.querySelectorAll('.switch input').forEach(s => {
+  document.querySelectorAll('.switch input:not(#noai-sync-enabled)').forEach(s => {
     s.onchange = async () => { await saveAll(); };
   });
 
@@ -372,4 +462,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     i.click();
   };
+
+  // Sync state with storage when changes occur externally (e.g. direct webpage clicks)
+  chrome.storage.onChanged.addListener(async (changes, areaName) => {
+    if (areaName === 'local') {
+      const latestStore = await chrome.storage.local.get(null);
+      
+      // Update lists and counts (we do not sync googleModules or hiddenTabs as they are only modified in popup)
+      if (changes.searchFilters) {
+        searchFilters = latestStore.searchFilters || [];
+        render(searchFilters, 'site-list'); 
+      }
+      if (changes.blockedKeywords) {
+        blockedKeywords = latestStore.blockedKeywords || [];
+        render(blockedKeywords, 'keyword-list');
+      }
+      if (changes.highlightFilters) {
+        highlightFilters = latestStore.highlightFilters || [];
+        render(highlightFilters, 'highlight-site-list');
+      }
+      if (changes.highlightKeywords) {
+        highlightKeywords = latestStore.highlightKeywords || [];
+        render(highlightKeywords, 'highlight-keyword-list');
+      }
+      
+      // Update No AI stats/slider UI if changed externally
+      if (changes.noAiMode) {
+        setNoAiModeUI(latestStore.noAiMode || 'off');
+      }
+      if (changes.noAiBlockedCountLocal || changes.noAiSyncEnabled) {
+        noAiBlockedCountLocal = latestStore.noAiBlockedCountLocal || 0;
+        noAiSyncEnabled = !!latestStore.noAiSyncEnabled;
+        noAiSyncSwitch.checked = noAiSyncEnabled;
+        await updateNoAiStatsUI();
+      }
+    }
+  });
 });
