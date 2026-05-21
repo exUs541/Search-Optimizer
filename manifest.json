@@ -7,8 +7,7 @@
     "storage",
     "tabs",
     "downloads",
-    "webNavigation",
-    "alarms"
+    "webNavigation"
   ],
   "background": {
     "service_worker": "background.js"

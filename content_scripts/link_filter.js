@@ -45,11 +45,13 @@
         cursor: pointer; 
         color: #eab308; /* Gold/Yellow */
         margin: 0 !important;
+        margin-left: 25px !important;
         padding: 0;
         transition: background 0.2s, transform 0.1s;
         flex-shrink: 0;
         position: static !important;
         transform: none !important;
+        user-select: none !important;
       }
 
       /* Block Button UI */
@@ -71,6 +73,7 @@
         flex-shrink: 0;
         position: static !important;
         transform: none !important;
+        user-select: none !important;
       }
       .sbf-block-btn:hover { background: rgba(239, 68, 68, 0.15); }
       .sbf-block-btn svg { width: 14px; height: 14px; pointer-events: none; }
@@ -110,14 +113,20 @@
 
       .sbf-hide-mod-ai [data-component-type="22"], .sbf-hide-mod-ai .SGE_container, .sbf-hide-mod-ai #super_results { display: none !important; }
       .sbf-hide-mod-products .wOPJ9c, .sbf-hide-mod-products .pla-unit, .sbf-hide-mod-products #tvcap { display: none !important; }
-      .sbf-hide-mod-images [data-attrid="images universal"],
+      .sbf-hide-mod-images [data-attrid^="images"],
       .sbf-hide-mod-images [data-rich-metadata-type="images"],
       .sbf-hide-mod-images .FAZ4jd,
       .sbf-hide-mod-images .YLwVgc,
       .sbf-hide-mod-images .nbl55b,
       .sbf-hide-mod-images .s61xbe,
       .sbf-hide-mod-images [data-lpage],
-      .sbf-hide-mod-images [jscontroller*="images"] { display: none !important; }
+      .sbf-hide-mod-images [jscontroller*="images"],
+      .sbf-hide-mod-images .MjjYud:has(a[href*="tbm=isch"]),
+      .sbf-hide-mod-images .MjjYud:has(a[href*="udm=2"]),
+      .sbf-hide-mod-images .g:has(a[href*="tbm=isch"]),
+      .sbf-hide-mod-images .g:has(a[href*="udm=2"]),
+      .sbf-hide-mod-images .ULSxyf:has(a[href*="tbm=isch"]),
+      .sbf-hide-mod-images .ULSxyf:has(a[href*="udm=2"]) { display: none !important; }
       .sbf-hide-mod-videos .MjjYud:has(.RzdJxc) { display: none !important; }
       .sbf-hide-mod-ask [data-attrid="wa_paa"], .sbf-hide-mod-ask .WwS1pe { display: none !important; }
       .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results, .sbf-hide-mod-pasf .K877S, .sbf-hide-mod-pasf .W67Drf, .sbf-hide-mod-pasf [jscontroller*="related_searches"] { display: none !important; }
@@ -136,6 +145,7 @@
         margin: 5px -10px !important;
         box-shadow: 0 4px 15px var(--sbf-highlight-bg) !important;
       }
+
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -146,25 +156,23 @@
   // Maintains local copies of Chrome storage to prevent asynchronous latency 
   // during rapid DOM mutation events.
 
-  let googleModules = {}, hiddenTabs = {}, searchFilters = [], noAiMode = 'off';
+  let googleModules = {}, hiddenTabs = {}, searchFilters = [];
   let highlightFilters = [], highlightKeywords = [];
   let infiniteScrollEnabled = false, isFetching = false, loader = null;
   let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
   let highlightEnabled = false, highlightColor = '#38bdf8';
-  let noaiCountedOnPage = false;
   let lastQuery = '';
 
   function isAllTab() {
     const urlParams = new URLSearchParams(window.location.search);
     const tbm = urlParams.get('tbm');
     const udm = urlParams.get('udm');
-    return !tbm && !udm;
+    return !tbm && (!udm || udm === '14');
   }
 
-  function cleanUpAllTabModifications() {
+  function cleanUpAllResultModifications() {
     const b = document.body;
     if (!b) return;
-    b.classList.remove('sbf-hide-more-btn');
     b.classList.remove('sbf-show-nav-btns');
     b.classList.remove('sbf-infinite-active');
     b.classList.remove('sbf-hide-favicons');
@@ -222,16 +230,12 @@
   }
 
   function handleNoAiBlocker() {
-    if (noAiMode === 'off') return;
-    const found = detectAndHideAIOverview();
-    if (noAiMode === 'hidden' && found && !noaiCountedOnPage) {
-      noaiCountedOnPage = true;
-      chrome.runtime.sendMessage({ action: 'increment_noai_count' });
-    }
+    if (!googleModules.ai) return;
+    detectAndHideAIOverview();
   }
 
   function checkAndRedirectBlockedMode() {
-    if (noAiMode !== 'blocked') return;
+    if (!googleModules.ai) return;
     const url = new URL(window.location.href);
     const q = url.searchParams.get('q');
     if (q && !q.toLowerCase().includes('-noai')) {
@@ -241,16 +245,7 @@
   }
 
   function cleanUIFromNoAiSuffix() {
-    if (noAiMode !== 'blocked') return;
-    try {
-      const url = new URL(window.location.href);
-      let q = url.searchParams.get('q');
-      if (q && q.toLowerCase().includes('-noai')) {
-        const cleanedQ = q.replace(/\s*-noai/i, '');
-        url.searchParams.set('q', cleanedQ);
-        window.history.replaceState(null, '', url.pathname + url.search);
-      }
-    } catch (e) {}
+    if (!googleModules.ai) return;
 
     document.querySelectorAll('input[name="q"], textarea[name="q"]').forEach(input => {
       if (input.value && input.value.toLowerCase().includes('-noai')) {
@@ -279,11 +274,15 @@
     navBtnsEnabled = data.navBtnsEnabled !== false;
     highlightEnabled = !!data.highlightEnabled;
     highlightColor = data.highlightColor || '#38bdf8';
-    noAiMode = data.noAiMode || 'off';
-
     if (document.body) {
+      const b = document.body;
+
+      // Apply global styles and tab modifications (runs on ALL tabs)
+      b.classList.toggle('sbf-hide-more-btn', !!hiddenTabs.more);
+      scanGoogleTabsOnly();
+
       if (!isAllTab()) {
-        cleanUpAllTabModifications();
+        cleanUpAllResultModifications();
         return;
       }
 
@@ -291,11 +290,8 @@
       cleanUIFromNoAiSuffix();
       handleNoAiBlocker();
 
-      const b = document.body;
-
-      // Toggle body classes to trigger CSS hiding rules
+      // Toggle body classes to trigger CSS hiding rules for search results
       const isImageTab = window.location.href.includes('tbm=isch') || window.location.href.includes('udm=2');
-      b.classList.toggle('sbf-hide-more-btn', !!hiddenTabs.more);
       b.classList.toggle('sbf-show-nav-btns', navBtnsEnabled);
       b.classList.toggle('sbf-infinite-active', infiniteScrollEnabled);
       Object.keys(googleModules).forEach(key => {
@@ -322,16 +318,94 @@
   // ==========================================================================
   // Scans the DOM for specific Google UI components and applies visual logic.
 
-  function scanGoogleModules() {
+  function scanGoogleTabsOnly() {
+    const MORE_TRANSLATIONS = [
+      'more', 'mehr', 'plus', 'más', 'altro', 'meer', 'mais', 'diğer', 'więcej', 'ещё', 'больше', 
+      'повеche', 'mai mult', 'více', 'flere', 'mer', 'lisää', 'daugiau', 'vairāk', 'rohkem',
+      'още', 'детальніше', 'több', 'več', 'viac', 'još', 'më shumë', 'daha', 'もっと見る', 
+      '更多', '보기'
+    ];
+
+    const TOOLS_TRANSLATIONS = [
+      'tools', 'suchfilter', 'optionen', 'instrumente', 'outils', 'outils de recherche', 
+      'herramientas', 'strumenti', 'hulpmiddelen', 'ferramentas', 'araçlar', 'narzędzia', 
+      'инструменты', 'nástroje', 'verktyg', 'verktøy', 'værktøjer', 'työkalut', 'ツール', 
+      '工具', '도구'
+    ];
+
+    const tabMatchRules = {
+      books: {
+        params: { tbm: ['bks', 'pts'], udm: ['36'] },
+        keywords: ['books', 'bücher', 'livres', 'libros', 'libri', 'boeken', 'livros', 'książki', 'kitaplar', 'knihy', 'böcker', 'bøker', 'bøger', 'kirjat']
+      },
+      finance: {
+        params: { tbm: ['fin'], udm: ['15'] },
+        domains: ['finance.google', 'google.com/finance', '/finance'],
+        keywords: ['finance', 'finanzen', 'finanzas', 'finances', 'finanza', 'financiën', 'finanças', 'finanse', 'finans']
+      },
+      flights: {
+        params: { tbm: ['flt'], udm: ['16'] },
+        domains: ['google.com/flights', 'google.com/travel/flights', 'flights.google', '/flights'],
+        keywords: ['flights', 'flüge', 'vols', 'vuelos', 'voli', 'vluchten', 'voos', 'loty', 'uçuşlar', 'flyg', 'flyreiser', 'flyrejser', 'lennot']
+      },
+      forums: {
+        params: { tbm: ['dsc'], udm: ['18'] },
+        keywords: ['forums', 'foren', 'discussions', 'diskussionen', 'forum', 'débats', 'foros', 'discussioni', 'discussies', 'discussões', 'dyskusje', 'tartışmalar']
+      },
+      images: {
+        params: { tbm: ['isch'], udm: ['2'] },
+        keywords: ['images', 'bilder', 'imágenes', 'immagini', 'afbeeldingen', 'imagens', 'grafika', 'görseller', 'obrázky', 'kuvat']
+      },
+      maps: {
+        params: { udm: ['1'] },
+        domains: ['maps.google', 'google.com/maps', '/maps'],
+        keywords: ['maps', 'karten', 'cartes', 'mapas', 'mappe', 'kaarten', 'haritalar', 'mapy', 'kart', 'kartor', 'kort', 'kartat']
+      },
+      news: {
+        params: { tbm: ['nws'], udm: ['12'] },
+        keywords: ['news', 'nachrichten', 'actualités', 'noticias', 'notizie', 'nieuws', 'notícias', 'wiadomości', 'haberler', 'nyheter', 'nyheder', 'uutiset', 'zprávy']
+      },
+      places: {
+        params: { udm: ['1'] },
+        domains: ['google.com/local', '/local'],
+        keywords: ['places', 'orte', 'lieux', 'lugares', 'luoghi', 'plaatsen', 'miejsca', 'yerler', 'platser', 'steder', 'paikat']
+      },
+      products: {
+        params: { tbm: ['shop'], udm: ['3', '28', '37'] },
+        keywords: ['products', 'produkte', 'produits', 'productos', 'prodotti', 'producten', 'produtos', 'produkty', 'ürünler', 'shopping', 'winkel', 'zakupy', 'alışveriş', 'produkter', 'tuotteet']
+      },
+      productsites: {
+        params: { udm: ['56'] },
+        keywords: ['product sites', 'productsites', 'produkt-websites', 'produkt-webseiten', 'sites de produits', 'sitios de productos', 'sito del prodotto', 'productwebsites', 'sites de produtos', 'strony produktów', 'ürün siteleri']
+      },
+      shopping: {
+        params: { tbm: ['shop'], udm: ['3', '28', '37'] },
+        keywords: ['shopping', 'winkel', 'zakupy', 'alışveriş', 'shopping', 'einkaufen', 'achat', 'compras']
+      },
+      shortvideos: {
+        params: { udm: ['39'] },
+        keywords: ['short videos', 'kurzvideos', 'vidéos courtes', 'videos cortos', 'brevi video', 'korte video\'s', 'vídeos curtos', 'krótkie filmy', 'kısa videolar', 'korta videor', 'lyhytvideot']
+      },
+      tools: {
+        keywords: TOOLS_TRANSLATIONS
+      },
+      videos: {
+        params: { tbm: ['vid'], udm: ['7'] },
+        keywords: ['videos', 'vidéos', 'vídeos', 'video\'s', 'filmy', 'videolar', 'videoer', 'videot', 'videa']
+      },
+      web: {
+        params: { udm: ['14'] },
+        keywords: ['web', 'web results', 'web-ergebnisse', 'résultats du web', 'resultados web', 'risultati web', 'webresultaten', 'resultados da web', 'wyniki wyszukiwania', 'web sonuçları', 'webb', 'nettet']
+      }
+    };
 
     // Tag the "More" button in the navigation bar to allow targeted CSS hiding.
     const tagMoreButton = () => {
       document.querySelectorAll('div[role="navigation"] span, div[role="navigation"] div, #hdtb span, #hdtb div').forEach(el => {
         if (el.children.length > 1) return;
         const text = (el.textContent || '').toLowerCase().trim();
-        if (text === 'more') {
+        if (MORE_TRANSLATIONS.includes(text)) {
           const wrapper = el.closest('.crJ18e') || el.closest('div[role="button"]') || el;
-          // Ensure we do not hide popups or sub-menus by accident
           if (!wrapper.closest('g-popup') && !wrapper.closest('[role="menu"]')) {
             wrapper.classList.add('sbf-more-wrapper');
           }
@@ -341,20 +415,49 @@
     tagMoreButton();
 
     /**
-     * Hides or shows top navigation tabs based on matched inner text.
-     * @param {string[]} texts - Keywords to match against tab text.
-     * @param {boolean} active - If true, hides the tab.
-     * @param {boolean} exactOnly - If true, requires strict string equality.
+     * Hides or shows top navigation tabs using URL analysis and translations.
      */
-    const killTabs = (texts, active, exactOnly = false) => {
+    const killTabs = (type, active, exactOnly = false) => {
       const allNativeTabs = document.querySelectorAll('div[role="navigation"] a, #hdtb a, #hdtb-tls, .t2051c, g-menu-item, div[role="button"]');
-      allNativeTabs.forEach(el => {
-        const text = (el.innerText || el.textContent || '').toLowerCase().trim();
-        if (!text || text === 'more' || el.classList.contains('sbf-more-wrapper')) return;
+      const rule = tabMatchRules[type];
+      if (!rule) return;
 
-        const isMatch = texts.some(t => exactOnly ? text === t : text.includes(t));
+      allNativeTabs.forEach(el => {
+        let isMatch = false;
+        const text = (el.innerText || el.textContent || '').toLowerCase().trim();
+        if (!text || MORE_TRANSLATIONS.includes(text) || el.classList.contains('sbf-more-wrapper')) return;
+
+        // Check by URL/domain for links
+        if (el.tagName.toLowerCase() === 'a' && el.href) {
+          try {
+            const url = new URL(el.href, window.location.origin);
+            if (rule.params) {
+              if (rule.params.tbm) {
+                const tbmVal = url.searchParams.get('tbm');
+                if (tbmVal && rule.params.tbm.includes(tbmVal)) isMatch = true;
+              }
+              if (!isMatch && rule.params.udm) {
+                const udmVal = url.searchParams.get('udm');
+                if (udmVal && rule.params.udm.includes(udmVal)) isMatch = true;
+              }
+            }
+            if (!isMatch && rule.domains) {
+              const fullHref = el.href.toLowerCase();
+              if (rule.domains.some(d => fullHref.includes(d))) isMatch = true;
+            }
+          } catch (e) {}
+        }
+
+        // Check by multilingual keyword fallback
+        if (!isMatch && rule.keywords) {
+          isMatch = rule.keywords.some(kw => exactOnly ? text === kw : text.includes(kw));
+        }
+
         if (isMatch) {
           let target = el.closest('g-menu-item') || el;
+          if (target === el && el.parentElement && el.parentElement.children.length === 1) {
+            target = el.parentElement;
+          }
           if (active) target.style.setProperty('display', 'none', 'important');
           else target.style.removeProperty('display');
         }
@@ -362,32 +465,31 @@
     };
 
     // Execution list for Tabs
-    killTabs(['books'], hiddenTabs.books, false);
-    killTabs(['finance'], hiddenTabs.finance, false);
-    killTabs(['forums'], hiddenTabs.forums, false);
-    killTabs(['images'], hiddenTabs.images, false);
-    killTabs(['maps'], hiddenTabs.maps, false);
-    killTabs(['news'], hiddenTabs.news, false);
-    killTabs(['places'], hiddenTabs.places, false);
-    killTabs(['products'], hiddenTabs.products, false);
-    killTabs(['product sites', 'productsites'], hiddenTabs.productsites, false);
-    killTabs(['shopping'], hiddenTabs.shopping, false);
-    killTabs(['short videos'], hiddenTabs.shortvideos, false);
-    killTabs(['tools'], hiddenTabs.tools, false);
-    killTabs(['videos'], hiddenTabs.videos, true);
-    killTabs(['web'], hiddenTabs.web, true);
+    killTabs('books', hiddenTabs.books, false);
+    killTabs('finance', hiddenTabs.finance, false);
+    killTabs('flights', hiddenTabs.flights, false);
+    killTabs('forums', hiddenTabs.forums, false);
+    killTabs('images', hiddenTabs.images, false);
+    killTabs('maps', hiddenTabs.maps, false);
+    killTabs('news', hiddenTabs.news, false);
+    killTabs('places', hiddenTabs.places, false);
+    killTabs('products', hiddenTabs.products, false);
+    killTabs('productsites', hiddenTabs.productsites, false);
+    killTabs('shopping', hiddenTabs.shopping, false);
+    killTabs('shortvideos', hiddenTabs.shortvideos, false);
+    killTabs('tools', hiddenTabs.tools, false);
+    killTabs('videos', hiddenTabs.videos, true);
+    killTabs('web', hiddenTabs.web, true);
+  }
 
+  function scanGoogleModules() {
     /**
-     * Scans headers to find and hide larger module blocks (e.g. "People also ask").
-     * @param {string[]} texts - Target header texts.
-     * @param {boolean} active - If true, appends the hidden class to the parent container.
+     * Scans headers to find and hide larger module blocks.
      */
     const bruteForceKill = (texts, active) => {
-      document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"], a, g-section-title, #rso span, #rso div, #botstuff span, #botstuff div').forEach(el => {
-        // Skip elements in navigation bar or header to prevent hiding top tabs or navigation controls
+      document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"], a, g-section-title, #center_col span, #center_col div, #botstuff span, #botstuff div').forEach(el => {
         if (el.closest('div[role="navigation"], #hdtb, #searchform, #header')) return;
 
-        // For generic div/span, only inspect leaf nodes with short text to keep performance high
         const tagName = el.tagName.toLowerCase();
         if ((tagName === 'div' || tagName === 'span') && (el.children.length > 0 || el.textContent.length > 50)) return;
 
@@ -395,7 +497,6 @@
         if (texts.some(t => text === t || text.startsWith(t) || (t.length > 3 && text.includes(t)))) {
           let container = el.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf, [data-attrid="images universal"], [data-attrid="people_also_search_for"], .nV_results, .K877S, .W67Drf, .Cl89te, .EyBRub');
           if (!container) {
-            // Traverse up to find the top-level block under #rso, #botstuff, or #center_col
             let parent = el.parentElement;
             while (parent && parent !== document.body) {
               const pParent = parent.parentElement;
@@ -419,19 +520,74 @@
     // Execution list for Modules
     const isImageTab = window.location.href.includes('tbm=isch') || window.location.href.includes('udm=2');
 
-    // In case of single-page navigation, update the body class here as well
     if (document.body) {
       document.body.classList.toggle('sbf-hide-mod-images', isImageTab ? false : !!googleModules.images);
     }
 
-    bruteForceKill(['ai overview', 'ai-übersicht', 'ai search'], googleModules.ai);
-    bruteForceKill(['images', 'bilder', 'bilderergebnisse', 'bilder für'], isImageTab ? false : googleModules.images);
-    bruteForceKill(['videos'], googleModules.videos);
-    bruteForceKill(['people also ask', 'nutzer fragen auch', 'ähnliche fragen', 'weitere fragen'], googleModules.ask);
-    bruteForceKill(['discussions and forums', 'discussions & forums', 'foren', 'diskussionen', 'diskussionen und foren', 'foren und diskussionen'], googleModules.forums);
-    bruteForceKill(['products', 'produkte'], googleModules.products);
-    bruteForceKill(['people also search for', 'related searches', 'nutzer suchen auch nach', 'ähnliche suchanfragen', 'weitere suchanfragen'], isImageTab ? false : googleModules.pasf);
-    bruteForceKill(['locations', 'map', 'karten', 'orte', 'standorte'], googleModules.locations);
+    bruteForceKill([
+      'ai overview', 'ai-übersicht', 'ai search', 'aperçu par ia', 'aperçu ia', 'información generada por ia', 
+      'perspectiva general de ia', 'panoramica dell\'ia', 'overzicht door ai', 'visão geral da ia',
+      'visão geral por ia', 'inteligentne podsumowanie', 'yapay zeka özeti'
+    ], googleModules.ai);
+
+    bruteForceKill([
+      'images', 'bilder', 'bilderergebnisse', 'bilder für', 'imágenes', 'immagini', 'afbeeldingen', 
+      'imagens', 'grafika', 'görseller', 'obrázky', 'kuvat'
+    ], isImageTab ? false : googleModules.images);
+
+    bruteForceKill([
+      'videos', 'vidéos', 'vídeos', 'video\'s', 'filmy', 'videolar', 'videoer', 'videot', 'videa'
+    ], googleModules.videos);
+
+    bruteForceKill([
+      'people also ask', 'nutzer fragen auch', 'ähnliche fragen', 'weitere fragen', 'autres questions posées', 
+      'questions associées', 'preguntas relacionadas', 'otras preguntas', 'le persone hanno chiesto anche', 
+      'domande frequenti', 'mensen vragen ook', 'as pessoas também perguntam', 'kullanıcılar bunları da sordu', 
+      'ludzie pytają również'
+    ], googleModules.ask);
+
+    bruteForceKill([
+      'discussions and forums', 'discussions & forums', 'foren', 'diskussionen', 'diskussionen und foren', 
+      'foren und diskussionen', 'discussions et forums', 'forums de discussion', 'forums', 'discussions', 
+      'debates y foros', 'foros y debates', 'foros', 'debates', 'discussioni e forum', 'forum e discussioni', 
+      'discussies en forums', 'discussões e fóruns', 'dyskusje i fora', 'fora i dyskusje', 'fora', 'dyskusje',
+      'tartışmalar ve forumlar', 'forumlar ve tartışmalar', 'forumlar', 'tartışmalar'
+    ], googleModules.forums);
+
+    bruteForceKill([
+      'products', 'produkte', 'produits', 'productos', 'prodotti', 'producten', 'produtos', 'produkty', 'ürünler'
+    ], googleModules.products);
+
+    bruteForceKill([
+      'people also search for', 'related searches', 'nutzer suchen auch nach', 'ähnliche suchanfragen', 
+      'weitere suchanfragen', 'verwandte suchanfragen', 'recherches associées', 'les gens recherchent aussi', 
+      'búsquedas relacionadas', 'otras personas también buscan', 'ricerche correlate', 'gerelateerde zoekopdrachten', 
+      'pesquisas relacionadas', 'wyszukiwania powiązane', 'ilgili aramalar'
+    ], isImageTab ? false : googleModules.pasf);
+
+    bruteForceKill([
+      'locations', 'map', 'karten', 'orte', 'standorte', 'adresses', 'carte', 'mapas', 'lugares', 
+      'ubicaciones', 'luoghi', 'mappa', 'locaties', 'lokalizacje', 'haritalar', 'yerler', 'kartor', 'kart', 'harita'
+    ], googleModules.locations);
+
+    // Robust selector fallback to hide images modules containing search images links
+    const hideImages = googleModules.images && !isImageTab;
+    document.querySelectorAll('a[href*="tbm=isch"], a[href*="udm=2"]').forEach(link => {
+      if (link.closest('div[role="navigation"], #hdtb, #searchform, #header')) return;
+      
+      const href = link.getAttribute('href') || '';
+      const isGoogleSearchLink = href.startsWith('/') || href.includes('google.com/search') || href.includes('google.de/search') || href.includes('google.ch/search') || href.includes('google.at/search') || href.includes('google.co.uk/search');
+      if (!isGoogleSearchLink) return;
+
+      const container = link.closest('.MjjYud, .g, .hlcw0c, .v7W49e, .ez8I9c, .ULSxyf');
+      if (container) {
+        if (hideImages) {
+          container.classList.add('sbf-hidden');
+        } else {
+          container.classList.remove('sbf-hidden');
+        }
+      }
+    });
   }
 
   // ==========================================================================
@@ -468,15 +624,17 @@
    * highlighting, and UI injection (Block button).
    */
   function incrementalScan() {
+    // Apply global tab modifications (runs on ALL tabs)
+    scanGoogleTabsOnly();
+
     if (!isAllTab()) {
-      cleanUpAllTabModifications();
+      cleanUpAllResultModifications();
       return;
     }
 
     const currentQuery = new URLSearchParams(window.location.search).get('q') || '';
     if (currentQuery !== lastQuery) {
       lastQuery = currentQuery;
-      noaiCountedOnPage = false;
     }
 
     checkAndRedirectBlockedMode();
@@ -492,7 +650,14 @@
       const dotsButton = dotsSvg?.closest('[role="button"], div[aria-haspopup="true"]');
       if (!dotsButton) return;
 
-      let resultBlock = dotsButton.closest('.g, .tF2Cxc, .Z26q7c, .Ww4FFb');
+      // Do not inject block/fav buttons on elements inside specific modules (e.g. Images grid, Knowledge Panel, People Also Ask, etc.)
+      const isInsideModule = dotsButton.closest(
+        '[data-attrid="images universal"], [data-rich-metadata-type="images"], .FAZ4jd, .YLwVgc, .nbl55b, .s61xbe, [data-lpage], [jscontroller*="images"], ' +
+        '#rhs, [data-attrid="wa_paa"], .WwS1pe, [data-attrid="discussions_and_forums"], .f4S95b, [data-attrid="local_universal"]'
+      );
+      if (isInsideModule) return;
+
+      let resultBlock = dotsButton.closest('.g');
       const outerBlock = dotsButton.closest('.MjjYud');
 
       if (outerBlock) {
@@ -504,7 +669,9 @@
         }
       }
 
-      if (!resultBlock) resultBlock = outerBlock || dotsButton.closest('div');
+      if (!resultBlock) {
+        resultBlock = dotsButton.closest('.tF2Cxc, .Z26q7c, .Ww4FFb') || outerBlock || dotsButton.closest('div');
+      }
       if (!resultBlock) return;
 
       // Find the primary external link for this result block
@@ -558,7 +725,7 @@
           resultBlock.dataset.sbfBtnsInjected = '1';
 
           // --- BLOCK BUTTON ---
-          const blockBtn = document.createElement('button');
+          const blockBtn = document.createElement('span');
           blockBtn.className = 'sbf-block-btn';
           blockBtn.title = `Block ${domain}`;
           blockBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line></svg>`;
@@ -573,7 +740,7 @@
           };
 
           // --- FAVORITE BUTTON ---
-          const favBtn = document.createElement('button');
+          const favBtn = document.createElement('span');
           favBtn.className = 'sbf-fav-btn';
           if (highlightFilters.includes(domain)) favBtn.classList.add('is-fav');
           favBtn.title = `Highlight ${domain}`;
@@ -701,9 +868,9 @@
   // Attach passive scroll listener for high-performance scroll handling
   window.addEventListener('scroll', onScroll, { passive: true });
 
-  // Intercept form submissions to append -noai in Blocked mode
+  // Intercept form submissions to append -noai when AI Overview is set to hide
   document.addEventListener('submit', (e) => {
-    if (noAiMode !== 'blocked') return;
+    if (!googleModules.ai) return;
     const form = e.target.closest('form');
     if (form && form.action && form.action.includes('/search')) {
       const input = form.querySelector('input[name="q"], textarea[name="q"]');

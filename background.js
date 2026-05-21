@@ -9,34 +9,15 @@ function isGoogleSearchUrl(urlStr) {
   }
 }
 
-function incrementBlockedCount() {
-  chrome.storage.local.get(['noAiBlockedCountLocal'], (result) => {
-    const current = result.noAiBlockedCountLocal || 0;
-    chrome.storage.local.set({ noAiBlockedCountLocal: current + 1 });
-  });
-}
-
-async function syncCountToChromeSync() {
-  const store = await chrome.storage.local.get(['noAiBlockedCountLocal', 'noAiSyncEnabled']);
-  if (store.noAiSyncEnabled) {
-    try {
-      await chrome.storage.sync.set({ noAiBlockedCountSync: store.noAiBlockedCountLocal || 0 });
-      console.log('[Search Optimizer] Blocked count synced to cloud:', store.noAiBlockedCountLocal);
-    } catch (e) {
-      console.error('[Search Optimizer] Cloud sync failed:', e);
-    }
-  }
-}
-
-// 1. Navigation Redirection for Blocked Mode
+// 1. Navigation Redirection for Hidden AI Overviews
 chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   if (details.frameId !== 0) return;
   
   const urlStr = details.url;
   if (!isGoogleSearchUrl(urlStr)) return;
 
-  const store = await chrome.storage.local.get(['noAiMode']);
-  if (store.noAiMode !== 'blocked') return;
+  const store = await chrome.storage.local.get(['googleModules']);
+  if (!store.googleModules?.ai) return;
 
   try {
     const url = new URL(urlStr);
@@ -46,9 +27,6 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
       
       // Redirect
       chrome.tabs.update(details.tabId, { url: url.toString() });
-      
-      // Increment blocked count since we redirected/appended -noai
-      incrementBlockedCount();
     }
   } catch (e) {
     console.error('[Search Optimizer] Error redirecting search:', e);
@@ -68,27 +46,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         console.log('[Search Optimizer] Download started:', downloadId);
       }
     });
-  } else if (request.action === 'increment_noai_count') {
-    incrementBlockedCount();
-  }
-});
-
-// 3. Alarms and Cloud Syncing
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create('noAiSyncAlarm', { periodInMinutes: 5 });
-});
-chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create('noAiSyncAlarm', { periodInMinutes: 5 });
-});
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'noAiSyncAlarm') {
-    syncCountToChromeSync();
-  }
-});
-
-chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && (changes.noAiSyncEnabled || changes.noAiBlockedCountLocal)) {
-    syncCountToChromeSync();
   }
 });

@@ -77,9 +77,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Sends a message to all open Google Search tabs to apply changes instantly
   const triggerLiveUpdate = async () => {
-    const tabs = await chrome.tabs.query({ url: "*://*.google.*/search*" });
-    for (let t of tabs) {
-      chrome.tabs.sendMessage(t.id, { action: "live_update" }).catch(() => {});
+    const googlePatterns = [
+      "*://*.google.com/search*",
+      "*://*.google.de/search*",
+      "*://*.google.at/search*",
+      "*://*.google.ch/search*",
+      "*://*.google.co.uk/search*",
+      "*://*.google.fr/search*",
+      "*://*.google.es/search*",
+      "*://*.google.it/search*",
+      "*://*.google.nl/search*",
+      "*://*.google.be/search*"
+    ];
+    try {
+      const tabs = await chrome.tabs.query({ url: googlePatterns });
+      for (let t of tabs) {
+        chrome.tabs.sendMessage(t.id, { action: "live_update" }).catch(() => {});
+      }
+    } catch (e) {
+      console.error('[Search Optimizer] Error querying Google tabs:', e);
     }
   };
 
@@ -125,82 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // --- No AI Blocker Initialization ---
-  const noAiSlider = document.getElementById('noai-mode-slider');
-  const noAiLabels = document.querySelectorAll('.noai-label');
-  const noAiDesc = document.getElementById('noai-mode-desc');
-  const noAiCount = document.getElementById('noai-blocked-count');
-  const noAiSyncSwitch = document.getElementById('noai-sync-enabled');
-  const syncStatusLabel = document.getElementById('sync-status');
 
-  const noAiModes = ['off', 'hidden', 'blocked'];
-  const noAiDescs = {
-    'off': 'Blocker is disabled. Standard search behavior.',
-    'hidden': 'AI Overview is hidden from the search results DOM. (Sends query).',
-    'blocked': 'Appends -noai to queries, blocking LLM generation at source. (Saves tokens!).'
-  };
-
-  let noAiMode = store.noAiMode || 'off';
-  let noAiSyncEnabled = !!store.noAiSyncEnabled;
-  let noAiBlockedCountLocal = store.noAiBlockedCountLocal || 0;
-
-  const updateNoAiStatsUI = async () => {
-    if (noAiSyncEnabled) {
-      try {
-        const syncStore = await chrome.storage.sync.get(['noAiBlockedCountSync']);
-        const syncCount = syncStore.noAiBlockedCountSync || 0;
-        if (syncCount > noAiBlockedCountLocal) {
-          noAiBlockedCountLocal = syncCount;
-          await chrome.storage.local.set({ noAiBlockedCountLocal });
-        }
-      } catch (e) {
-        console.error('Error fetching sync storage:', e);
-      }
-      syncStatusLabel.textContent = 'Synced with Cloud';
-    } else {
-      syncStatusLabel.textContent = 'Local only';
-    }
-    noAiCount.textContent = noAiBlockedCountLocal;
-  };
-
-  const setNoAiModeUI = (mode) => {
-    noAiMode = mode;
-    const valIndex = noAiModes.indexOf(mode);
-    noAiSlider.value = valIndex;
-    noAiDesc.textContent = noAiDescs[mode];
-    
-    noAiLabels.forEach(label => {
-      label.classList.toggle('active', parseInt(label.dataset.val) === valIndex);
-    });
-  };
-
-  noAiSlider.oninput = async () => {
-    const val = parseInt(noAiSlider.value);
-    const mode = noAiModes[val];
-    setNoAiModeUI(mode);
-    await chrome.storage.local.set({ noAiMode: mode });
-    await triggerLiveUpdate();
-  };
-
-  noAiLabels.forEach(label => {
-    label.onclick = async () => {
-      const val = parseInt(label.dataset.val);
-      const mode = noAiModes[val];
-      setNoAiModeUI(mode);
-      await chrome.storage.local.set({ noAiMode: mode });
-      await triggerLiveUpdate();
-    };
-  });
-
-  noAiSyncSwitch.checked = noAiSyncEnabled;
-  noAiSyncSwitch.onchange = async () => {
-    noAiSyncEnabled = noAiSyncSwitch.checked;
-    await chrome.storage.local.set({ noAiSyncEnabled });
-    await updateNoAiStatsUI();
-  };
-
-  setNoAiModeUI(noAiMode);
-  await updateNoAiStatsUI();
 
   // --- Event Listeners: Navigation ---
   
@@ -419,7 +360,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // --- Event Listeners: General Switches ---
 
   // Trigger save on any checkbox change
-  document.querySelectorAll('.switch input:not(#noai-sync-enabled)').forEach(s => {
+  document.querySelectorAll('.switch input').forEach(s => {
     s.onchange = async () => { await saveAll(); };
   });
 
@@ -485,17 +426,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         highlightKeywords = latestStore.highlightKeywords || [];
         render(highlightKeywords, 'highlight-keyword-list');
       }
-      
-      // Update No AI stats/slider UI if changed externally
-      if (changes.noAiMode) {
-        setNoAiModeUI(latestStore.noAiMode || 'off');
       }
-      if (changes.noAiBlockedCountLocal || changes.noAiSyncEnabled) {
-        noAiBlockedCountLocal = latestStore.noAiBlockedCountLocal || 0;
-        noAiSyncEnabled = !!latestStore.noAiSyncEnabled;
-        noAiSyncSwitch.checked = noAiSyncEnabled;
-        await updateNoAiStatsUI();
-      }
-    }
   });
 });
