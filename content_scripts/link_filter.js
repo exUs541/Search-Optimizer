@@ -110,7 +110,14 @@
 
       .sbf-hide-mod-ai [data-component-type="22"], .sbf-hide-mod-ai .SGE_container, .sbf-hide-mod-ai #super_results { display: none !important; }
       .sbf-hide-mod-products .wOPJ9c, .sbf-hide-mod-products .pla-unit, .sbf-hide-mod-products #tvcap { display: none !important; }
-      .sbf-hide-mod-images [data-attrid="images universal"], .sbf-hide-mod-images [data-rich-metadata-type="images"], .sbf-hide-mod-images .FAZ4jd, .sbf-hide-mod-images .YLwVgc { display: none !important; }
+      .sbf-hide-mod-images [data-attrid="images universal"],
+      .sbf-hide-mod-images [data-rich-metadata-type="images"],
+      .sbf-hide-mod-images .FAZ4jd,
+      .sbf-hide-mod-images .YLwVgc,
+      .sbf-hide-mod-images .nbl55b,
+      .sbf-hide-mod-images .s61xbe,
+      .sbf-hide-mod-images [data-lpage],
+      .sbf-hide-mod-images [jscontroller*="images"] { display: none !important; }
       .sbf-hide-mod-videos .MjjYud:has(.RzdJxc) { display: none !important; }
       .sbf-hide-mod-ask [data-attrid="wa_paa"], .sbf-hide-mod-ask .WwS1pe { display: none !important; }
       .sbf-hide-mod-pasf [data-attrid="people_also_search_for"], .sbf-hide-mod-pasf .nV_results, .sbf-hide-mod-pasf .K877S, .sbf-hide-mod-pasf .W67Drf, .sbf-hide-mod-pasf [jscontroller*="related_searches"] { display: none !important; }
@@ -376,9 +383,13 @@
      * @param {boolean} active - If true, appends the hidden class to the parent container.
      */
     const bruteForceKill = (texts, active) => {
-      document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"], a, g-section-title').forEach(el => {
+      document.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"], a, g-section-title, #rso span, #rso div, #botstuff span, #botstuff div').forEach(el => {
         // Skip elements in navigation bar or header to prevent hiding top tabs or navigation controls
         if (el.closest('div[role="navigation"], #hdtb, #searchform, #header')) return;
+
+        // For generic div/span, only inspect leaf nodes with short text to keep performance high
+        const tagName = el.tagName.toLowerCase();
+        if ((tagName === 'div' || tagName === 'span') && (el.children.length > 0 || el.textContent.length > 50)) return;
 
         const text = (el.textContent || el.innerText || '').toLowerCase().trim();
         if (texts.some(t => text === t || text.startsWith(t) || (t.length > 3 && text.includes(t)))) {
@@ -389,8 +400,10 @@
             while (parent && parent !== document.body) {
               const pParent = parent.parentElement;
               if (pParent && (pParent.id === 'rso' || pParent.id === 'botstuff' || pParent.id === 'center_col' || pParent.classList.contains('v7W49e'))) {
-                container = parent;
-                break;
+                if (parent.id !== 'rso' && parent.id !== 'botstuff' && parent.id !== 'center_col') {
+                  container = parent;
+                  break;
+                }
               }
               parent = parent.parentElement;
             }
