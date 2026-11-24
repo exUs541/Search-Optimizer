@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Search Optimizer logo">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#2CC8DC"/>
+      <stop offset="1" stop-color="#0A6585"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="0.55" stop-color="#FFFFFF" stop-opacity="0"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- tile (8 px padding on a 128 canvas); the soft gloss covers the whole tile so it has no visible edge -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#tile)"/>
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#gloss)"/>
+  <!-- magnifier: soft shadow first, then the white shape -->
+  <mask id="outside-lens"><rect width="128" height="128" fill="#fff"/><circle cx="56" cy="55" r="22" fill="#000"/></mask>
+  <g mask="url(#outside-lens)">
+    <g opacity="0.18" transform="translate(0 3)" fill="none" stroke="#000" stroke-linecap="round">
+      <circle cx="56" cy="55" r="26" stroke-width="9"/>
+      <line x1="76" y1="75" x2="98" y2="97" stroke-width="12"/>
+    </g>
+  </g>
+  <circle cx="56" cy="55" r="26" fill="#FFFFFF" fill-opacity="0.14" stroke="#FFFFFF" stroke-width="9"/>
+  <line x1="76" y1="75" x2="98" y2="97" stroke="#FFFFFF" stroke-width="12" stroke-linecap="round"/>
+  <!-- the result list inside the lens: clean, short, filtered -->
+  <rect x="42" y="43" width="28" height="5" rx="2.5" fill="#FFFFFF"/>
+  <rect x="42" y="53" width="28" height="5" rx="2.5" fill="#FFFFFF" opacity="0.8"/>
+  <rect x="42" y="63" width="16" height="5" rx="2.5" fill="#FFFFFF" opacity="0.55"/>
+</svg>
