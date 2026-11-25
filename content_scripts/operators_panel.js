@@ -2,7 +2,9 @@
   'use strict';
   
   let observer = null;
-  let isAdvancedSearchEnabled = true;
+  // False until syncConfig() has read the stored settings (including the master switch),
+  // so a switched-off extension never shows its gear icon, not even for a moment.
+  let isAdvancedSearchEnabled = false;
 
   function isAllTab() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -12,8 +14,8 @@
   }
 
   async function syncConfig() {
-    const data = await chrome.storage.local.get(['advancedSearch']);
-    isAdvancedSearchEnabled = data.advancedSearch !== false;
+    const data = await chrome.storage.local.get(['advancedSearch', 'extensionEnabled']);
+    isAdvancedSearchEnabled = data.advancedSearch !== false && data.extensionEnabled !== false;
     updateUIState();
   }
 

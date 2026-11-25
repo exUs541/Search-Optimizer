@@ -8,12 +8,17 @@
 </head>
 <body>
   <div class="container">
-    <header>
+    <header class="header-row">
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge" id="version">v2.5.3</span>
+        <span class="badge" id="version">v2.6.0</span>
       </div>
+      <label class="master-switch" title="Turn Search Optimizer on or off">
+        <input type="checkbox" id="master-enabled" role="switch" aria-label="Turn Search Optimizer on or off" checked>
+        <span class="slider"></span>
+      </label>
     </header>
+    <p id="off-note" class="off-note" role="status" hidden>Search Optimizer is off. Google looks the way Google made it.</p>
 
     <div class="tabs-nav">
       <button class="tab-btn active" data-tab="tab-general">General</button>
