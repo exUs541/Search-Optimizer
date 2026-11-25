@@ -5,6 +5,9 @@
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
+  const versionEl = document.getElementById('version');
+  if (versionEl) versionEl.textContent = 'v' + chrome.runtime.getManifest().version;
+
   // --- Icons Definitions ---
   // SVG strings for eye icons used in the visibility toggles
   const EYE_OPEN = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
@@ -129,6 +132,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('nav-btns-enabled').checked = store.navBtnsEnabled !== false;
   document.getElementById('highlight-enabled').checked = !!store.highlightEnabled;
 
+  // Master switch: while it is off Search Optimizer leaves Google's search pages untouched.
+  const masterEnabled = document.getElementById('master-enabled');
+  const offNote = document.getElementById('off-note');
+  const renderEnabled = (on) => {
+    masterEnabled.checked = on;
+    document.body.classList.toggle('ext-off', !on);
+    offNote.hidden = on;
+    document.querySelectorAll('.tabs-nav, .tab-content').forEach(el => { el.inert = !on; });
+  };
+  renderEnabled(store.extensionEnabled !== false);
+  masterEnabled.onchange = () => chrome.storage.local.set({ extensionEnabled: masterEnabled.checked });
+
   // Restore last active tab
   if (store.lastActiveTab) {
     const activeBtn = document.querySelector(`.tab-btn[data-tab="${store.lastActiveTab}"]`);
@@ -164,11 +179,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const a = document.getElementById(aId);
     if (h && c) {
         c.style.display = 'none'; // Default to collapsed
+        // Make the header a real control: focusable, announced as expandable, usable with Enter/Space
+        h.setAttribute('role', 'button');
+        h.setAttribute('tabindex', '0');
+        h.setAttribute('aria-expanded', 'false');
         h.onclick = () => {
           const isHidden = c.style.display === 'none';
           c.style.display = isHidden ? 'block' : 'none';
+          h.setAttribute('aria-expanded', String(isHidden));
           // Rotate arrow icon based on state
           if (a) a.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
+        };
+        h.onkeydown = (e) => {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); h.click(); }
         };
     }
   };
@@ -275,8 +298,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       li.textContent = it;
 
       const d = document.createElement('button'); 
-      d.textContent = '✕'; 
+      d.textContent = '✕';
       d.className = 'delete-btn';
+      d.setAttribute('aria-label', `Remove ${it}`);
+      d.title = 'Remove';
       
       // Delete logic using the value instead of index for robustness
       d.onclick = async (e) => {
@@ -390,13 +415,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       r.onload = async re => { 
         try {
           const config = JSON.parse(re.target.result);
+          // Validate BEFORE touching storage: clear() followed by a failing set() would wipe the user's settings.
+          if (!config || typeof config !== 'object' || Array.isArray(config)) {
+            throw new Error('Not a settings object');
+          }
           // Clear current storage and replace with imported config
           await chrome.storage.local.clear();
           await chrome.storage.local.set(config); 
           // Reload popup to apply changes
           window.location.reload(); 
         } catch (err) {
-          alert('Error parsing JSON file.');
+          alert('This file is not a valid Search Optimizer export. Your settings were not changed.');
         }
       };
       r.readAsText(file);
@@ -407,6 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Sync state with storage when changes occur externally (e.g. direct webpage clicks)
   chrome.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === 'local') {
+      if (changes.extensionEnabled) renderEnabled(changes.extensionEnabled.newValue !== false);
       const latestStore = await chrome.storage.local.get(null);
       
       // Update lists and counts (we do not sync googleModules or hiddenTabs as they are only modified in popup)

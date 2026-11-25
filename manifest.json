@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Search Filter & Site Blocker - Clean Search Results",
-  "version": "2.5.3",
-  "description": "Block sites from search results, hide ads, sponsored posts, videos & more. Infinite scroll for Google Search results.",
+  "version": "2.6.0",
+  "description": "Block sites and hide AI Overviews, ads and clutter in Google Search. Infinite scroll and one-click search operators included.",
   "permissions": [
     "storage",
     "tabs",

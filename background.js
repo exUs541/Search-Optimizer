@@ -16,7 +16,8 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   const urlStr = details.url;
   if (!isGoogleSearchUrl(urlStr)) return;
 
-  const store = await chrome.storage.local.get(['googleModules']);
+  const store = await chrome.storage.local.get(['googleModules', 'extensionEnabled']);
+  if (store.extensionEnabled === false) return;
   if (!store.googleModules?.ai) return;
 
   try {
@@ -31,6 +32,21 @@ chrome.webNavigation.onBeforeNavigate.addListener(async (details) => {
   } catch (e) {
     console.error('[Search Optimizer] Error redirecting search:', e);
   }
+});
+
+// Master switch: while it is off the toolbar badge shows OFF.
+function applyBadge(enabled) {
+  chrome.action.setBadgeText({ text: enabled ? '' : 'OFF' });
+  if (!enabled) chrome.action.setBadgeBackgroundColor({ color: '#6b7280' });
+}
+async function syncBadge() {
+  const { extensionEnabled } = await chrome.storage.local.get('extensionEnabled');
+  applyBadge(extensionEnabled !== false);
+}
+chrome.runtime.onInstalled.addListener(syncBadge);
+chrome.runtime.onStartup.addListener(syncBadge);
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.extensionEnabled) applyBadge(changes.extensionEnabled.newValue !== false);
 });
 
 // 2. Messaging Listener

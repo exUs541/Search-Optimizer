@@ -1,7 +1,22 @@
 (function() {
   'use strict';
 
+  // Master switch (popup toggle): while it is off no image buttons are added.
+  let enabled = false;
+  function setEnabled(on) {
+    enabled = on;
+    if (!on) {
+      document.querySelectorAll('#sbf-image-tools').forEach(el => el.remove());
+      document.querySelectorAll('[data-sbf-done]').forEach(el => delete el.dataset.sbfDone);
+    }
+  }
+  chrome.storage.local.get('extensionEnabled', (stored) => setEnabled(stored.extensionEnabled !== false));
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.extensionEnabled) setEnabled(changes.extensionEnabled.newValue !== false);
+  });
+
   function injectImageButtons() {
+    if (!enabled) return;
     // Target the expanded image view in Google Images
     // Google uses different classes, but 'role="region"' or specific containers are common
     const expandedContainer = document.querySelector('.Q4iAWc, .p7SThc, .e677ob');

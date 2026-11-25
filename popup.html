@@ -2,19 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Search Optimizer</title>
   <link rel="stylesheet" href="popup.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="container">
-    <header>
+    <header class="header-row">
       <div class="header-main">
         <h1>Search Optimizer</h1>
-        <span class="badge">v2.5.3</span>
+        <span class="badge" id="version">v2.6.0</span>
       </div>
-      <p>Master your Google Search experience</p>
+      <label class="master-switch" title="Turn Search Optimizer on or off">
+        <input type="checkbox" id="master-enabled" role="switch" aria-label="Turn Search Optimizer on or off" checked>
+        <span class="slider"></span>
+      </label>
     </header>
+    <p id="off-note" class="off-note" role="status" hidden>Search Optimizer is off. Google looks the way Google made it.</p>
 
     <div class="tabs-nav">
       <button class="tab-btn active" data-tab="tab-general">General</button>
@@ -276,7 +280,7 @@
     </div>
 
     <footer>
-      <p>Search Optimizer • Premium Build • <a class="feedback-link" href="https://exus541.github.io/portfolio/feedback.html" target="_blank">Feedback</a></p>
+      <p><a class="feedback-link" href="https://exus541.github.io/portfolio/feedback.html" target="_blank" rel="noopener">Send feedback</a></p>
     </footer>
   </div>
   <script src="popup.js"></script>
