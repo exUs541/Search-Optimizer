@@ -132,6 +132,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('nav-btns-enabled').checked = store.navBtnsEnabled !== false;
   document.getElementById('highlight-enabled').checked = !!store.highlightEnabled;
 
+  // Master switch: while it is off Search Optimizer leaves Google's search pages untouched.
+  const masterEnabled = document.getElementById('master-enabled');
+  const offNote = document.getElementById('off-note');
+  const renderEnabled = (on) => {
+    masterEnabled.checked = on;
+    document.body.classList.toggle('ext-off', !on);
+    offNote.hidden = on;
+    document.querySelectorAll('.tabs-nav, .tab-content').forEach(el => { el.inert = !on; });
+  };
+  renderEnabled(store.extensionEnabled !== false);
+  masterEnabled.onchange = () => chrome.storage.local.set({ extensionEnabled: masterEnabled.checked });
+
   // Restore last active tab
   if (store.lastActiveTab) {
     const activeBtn = document.querySelector(`.tab-btn[data-tab="${store.lastActiveTab}"]`);
@@ -424,6 +436,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Sync state with storage when changes occur externally (e.g. direct webpage clicks)
   chrome.storage.onChanged.addListener(async (changes, areaName) => {
     if (areaName === 'local') {
+      if (changes.extensionEnabled) renderEnabled(changes.extensionEnabled.newValue !== false);
       const latestStore = await chrome.storage.local.get(null);
       
       // Update lists and counts (we do not sync googleModules or hiddenTabs as they are only modified in popup)

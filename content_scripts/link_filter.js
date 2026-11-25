@@ -162,6 +162,9 @@
   let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
   let highlightEnabled = false, highlightColor = '#38bdf8';
   let lastQuery = '';
+  // Master switch (popup toggle). Stays false until loadConfig() has read the stored value,
+  // so a switched-off extension never touches the page, not even for a moment.
+  let masterOn = false;
 
   function isAllTab() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -259,10 +262,31 @@
   }
 
   /**
+   * Master switch is off: forget every setting and put the page back the way Google made it.
+   */
+  function disableEverything() {
+    googleModules = {}; hiddenTabs = {}; searchFilters = [];
+    highlightFilters = []; highlightKeywords = [];
+    infiniteScrollEnabled = false; navBtnsEnabled = false; highlightEnabled = false;
+    const b = document.body;
+    if (b) {
+      Array.from(b.classList).filter(c => c.startsWith('sbf-')).forEach(c => b.classList.remove(c));
+      document.querySelectorAll('.noai-hidden-card').forEach(el => {
+        el.classList.remove('noai-hidden-card');
+        el.style.removeProperty('display');
+      });
+      cleanUpAllResultModifications();
+      scanGoogleTabsOnly(); // hiddenTabs is empty now, so every navigation tab comes back
+    }
+  }
+
+  /**
    * Fetches latest configuration from Chrome Storage and applies global CSS variables/classes.
    */
   async function loadConfig() {
     const data = await chrome.storage.local.get(null);
+    masterOn = data.extensionEnabled !== false;
+    if (!masterOn) { disableEverything(); return; }
     googleModules = data.googleModules || {};
     hiddenTabs = data.hiddenTabs || {};
     searchFilters = data.searchFilters || [];
@@ -624,6 +648,7 @@
    * highlighting, and UI injection (Block button).
    */
   function incrementalScan() {
+    if (!masterOn) return;
     // Apply global tab modifications (runs on ALL tabs)
     scanGoogleTabsOnly();
 
