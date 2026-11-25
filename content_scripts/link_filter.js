@@ -18,6 +18,34 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  /**
+   * Builds one regular expression for the "Block Keywords" list. A keyword matches as a whole word or phrase,
+   * ignoring case: "ai" matches "AI tools" but not "said", and "running shoes" matches across line breaks.
+   * Returns null for an empty list, so the scan can skip the text check completely.
+   * @param {string[]} words - The keywords from the popup.
+   * @returns {RegExp|null}
+   */
+  const buildKeywordRegex = (words) => {
+    const parts = (words || [])
+      .map(w => String(w).trim().replace(/\s+/g, ' '))
+      .filter(Boolean)
+      .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+'));
+    if (!parts.length) return null;
+    return new RegExp('(?<![\\p{L}\\p{N}])(?:' + parts.join('|') + ')(?![\\p{L}\\p{N}])', 'iu');
+  };
+
+  // The visible text of a result block, remembered per block. A block we hid reports ALL of its text (also
+  // parts that were never visible), so we keep the text from the time it was still visible instead of re-reading it.
+  const resultTextCache = new WeakMap();
+  const getResultText = (block) => {
+    const len = block.textContent.length;
+    const hit = resultTextCache.get(block);
+    if (hit && hit.len === len) return hit.text;
+    const text = (block.innerText || block.textContent || '').replace(/\s+/g, ' ');
+    resultTextCache.set(block, { len, text });
+    return text;
+  };
+
   // ==========================================================================
   // 1. CSS INJECTION
   // ==========================================================================
@@ -157,6 +185,7 @@
   // during rapid DOM mutation events.
 
   let googleModules = {}, hiddenTabs = {}, searchFilters = [];
+  let blockedKeywordRe = null;
   let highlightFilters = [], highlightKeywords = [];
   let infiniteScrollEnabled = false, isFetching = false, loader = null;
   let navBtnColor = '#38bdf8', navBtnBgColor = '#1e293b', navBtnsEnabled = true;
@@ -290,6 +319,7 @@
     googleModules = data.googleModules || {};
     hiddenTabs = data.hiddenTabs || {};
     searchFilters = data.searchFilters || [];
+    blockedKeywordRe = buildKeywordRegex(data.blockedKeywords);
     highlightFilters = data.highlightFilters || [];
     highlightKeywords = data.highlightKeywords || [];
     infiniteScrollEnabled = data.infiniteScroll === true;
@@ -713,8 +743,8 @@
       try {
         const domain = new URL(link.href).hostname.replace(/^www\./, '');
 
-        // 1. Evaluate Visibility (Blocking logic)
-        const isBlocked = searchFilters.includes(domain);
+        // 1. Evaluate Visibility (Blocking logic): a blocked domain OR a blocked keyword anywhere in the result
+        const isBlocked = searchFilters.includes(domain) || (blockedKeywordRe !== null && blockedKeywordRe.test(getResultText(resultBlock)));
         if (isBlocked) {
           resultBlock.classList.add('sbf-hidden');
         } else {
